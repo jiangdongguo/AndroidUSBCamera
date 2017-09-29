@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="javapoet-1.9.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/javapoet/1.9.0/ecc5cf9c221d55481163e773b24336db149e51/javapoet-1.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.squareup/javapoet/1.9.0/71920669c77f467b56c8e3fb594758882b81f551/javapoet-1.9.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

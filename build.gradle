@@ -1,0 +1,31 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.1'
+    }
+}
+
+allprojects {
+    repositories {
+        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+ext {
+    supportLibVersion = '25.3.1'  // variable that can be referenced to keep support libs consistent
+    commonLibVersion= '1.5.20'
+    versionBuildTool = '25.0.2'
+    versionCompiler = 25
+    versionTarget = 23
+    versionNameString = '1.0.0'
+    javaSourceCompatibility = JavaVersion.VERSION_1_7
+    javaTargetCompatibility = JavaVersion.VERSION_1_7
+}

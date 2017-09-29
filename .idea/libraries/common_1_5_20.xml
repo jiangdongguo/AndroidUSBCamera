@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="common-1.5.20">
+    <ANNOTATIONS>
+      <root url="jar://$USER_HOME$/.android/build-cache/9cb24d48e4f17fd5184a5144bc99bdc343fa2f68/output/annotations.zip!/" />
+      <root url="jar://$USER_HOME$/.android/build-cache/9cb24d48e4f17fd5184a5144bc99bdc343fa2f68/output/annotations.zip!/" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="file://$USER_HOME$/.android/build-cache/9cb24d48e4f17fd5184a5144bc99bdc343fa2f68/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/9cb24d48e4f17fd5184a5144bc99bdc343fa2f68/output/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
