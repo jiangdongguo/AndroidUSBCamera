@@ -6,7 +6,7 @@
 ### 1.添加依赖到本地工程
   To get a Git project into your build:  
   
-第一步 添加JitPack仓库到工程gradle
+第一步 添加JitPack仓库到工程gradle  
 Step 1. Add the JitPack repository to your build file
 Add it in your root build.gradle at the end of repositories:
 ```	
@@ -18,7 +18,7 @@ allprojects {
 	}
 ```  
 
-第二步 添加依赖到app Module的gradle  
+第二步 添加依赖到app Module的gradle   
 Step 2. Add the dependency  
 
 ```
@@ -27,7 +27,7 @@ dependencies {
 } 
 ```  
 
-### 2.初始化引擎，注册USB设备事件监听器
+### 2.初始化引擎，注册USB设备事件监听器  
   Init AndroidUSBCamera engine，register the USB device event listener  
   
 ```
@@ -78,7 +78,7 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
     });
 ```  
 
-### 3. 注册USB设备广播事件监听器，开始Camera预览
+### 3. 注册USB设备广播事件监听器，开始Camera预览  
   Register the USB device broadcast event listener and start the Camera Preview
 ```
 // 注册USB事件广播监听器
@@ -91,7 +91,7 @@ if(mUSBManager != null){
  }
 ```  
 
-### 4. 注销USB设备广播事件监听器，停止Camera预览
+### 4. 注销USB设备广播事件监听器，停止Camera预览  
   Unregister the USB device broadcast event listener and stop the Camera Preview
 ```
 // 注销USB事件广播监听器
