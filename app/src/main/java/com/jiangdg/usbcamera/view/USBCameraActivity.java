@@ -2,8 +2,12 @@ package com.jiangdg.usbcamera.view;
 
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -12,7 +16,13 @@ import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.USBCameraManager;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.USBMonitor;
+import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -35,16 +45,32 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     private USBCameraManager mUSBManager;
     private CameraViewInterface mUVCCameraView;
 
+    private boolean isRequest;
+
     // USB设备监听器
     private USBCameraManager.OnMyDevConnectListener listener = new USBCameraManager.OnMyDevConnectListener() {
         @Override
         public void onAttachDev(UsbDevice device) {
-            showShortMsg("检测到设备："+device.getDeviceName());
+            if(mUSBManager == null || mUSBManager.getUsbDeviceCount() == 0){
+                showShortMsg("未检测到USB摄像头设备");
+                return;
+            }
+
+            if(! isRequest){
+                isRequest = true;
+                if(mUSBManager != null){
+                    mUSBManager.requestPermission(0);
+                }
+            }
         }
 
         @Override
         public void onDettachDev(UsbDevice device) {
-            showShortMsg(device.getDeviceName()+"已拨出");
+            if(isRequest){
+                isRequest = false;
+                mUSBManager.closeCamera();
+                showShortMsg(device.getDeviceName()+"已拨出");
+            }
         }
 
         @Override
@@ -57,6 +83,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             // 处理与设备断开后的逻辑
         }
     };
+    private FileOutputStream fos;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -101,15 +128,14 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         switch (vId) {
             // 开启或关闭Camera
             case R.id.camera_view:
-                if(mUSBManager != null){
-                    boolean isOpened = mUSBManager.isCameraOpened();
-                    if(! isOpened){
-                        CameraDialog.showDialog(USBCameraActivity.this);
-                    }else {
-                        mUSBManager.closeCamera();
-                    }
-                }
-
+//                if(mUSBManager != null){
+//                    boolean isOpened = mUSBManager.isCameraOpened();
+//                    if(! isOpened){
+//                        CameraDialog.showDialog(USBCameraActivity.this);
+//                    }else {
+//                        mUSBManager.closeCamera();
+//                    }
+//                }
                 break;
             case R.id.btn_capture_pic:
                 if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
@@ -127,15 +153,46 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("录制异常，摄像头未开启");
                     return;
                 }
+                File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                        +File.separator+System.currentTimeMillis()+".txt");
+                try {
+                    fos = new FileOutputStream(file);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
                 if(! mUSBManager.isRecording()){
                     String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
                             +USBCameraManager.SUFFIX_MP4;
-                    mUSBManager.startRecording(videoPath);
+                    mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+                        @Override
+                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+                            String tip = null;
+                            if(data == null){
+                                tip = "data = null";
+                            }else{
+                                tip = "大小"+data.length+ "类型"+type + ";";
+                            }
+                            try {
+                                if(fos != null){
+                                    fos.write(tip.getBytes());
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
 
                     mBtnRecord.setText("正在录制");
                 } else {
                     mUSBManager.stopRecording();
-
+                    try {
+                        if(fos != null){
+                            fos.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     mBtnRecord.setText("开始录制");
                 }
                 break;

@@ -45,7 +45,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * Camera业务处理抽象类
  *
  * */
-abstract class AbstractUVCCameraHandler extends Handler {
+public  abstract class AbstractUVCCameraHandler extends Handler {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
 
@@ -58,6 +58,12 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public void onStartRecording();
 		public void onStopRecording();
 		public void onError(final Exception e);
+	}
+
+	public static OnEncodeResultListener mListener;
+
+	public interface OnEncodeResultListener{
+		void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type);
 	}
 
 	private static final int MSG_OPEN = 0;
@@ -188,7 +194,8 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	// 开始录制
-	public void startRecording(final String path) {
+	public void startRecording(final String path, OnEncodeResultListener listener) {
+		AbstractUVCCameraHandler.mListener = listener;
 		checkReleased();
 //		sendEmptyMessage(MSG_CAPTURE_START);
 		sendMessage(obtainMessage(MSG_CAPTURE_START, path));
@@ -318,7 +325,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		}
 	}
 
-	static final class CameraThread extends Thread {
+	public  static final class CameraThread extends Thread {
 		private static final String TAG_THREAD = "CameraThread";
 		private final Object mSync = new Object();
 		private final Class<? extends AbstractUVCCameraHandler> mHandlerClass;
@@ -536,6 +543,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				MediaVideoBufferEncoder videoEncoder = null;
 				switch (mEncoderType) {
 				case 1:	// for video capturing using MediaVideoEncoder
+					// 开启视频编码线程
 					new MediaVideoEncoder(muxer,getWidth(), getHeight(), mMediaEncoderListener);
 					break;
 				case 2:	// for video capturing using MediaVideoBufferEncoder
@@ -546,6 +554,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					new MediaSurfaceEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
 					break;
 				}
+				// 开启音频编码线程
 				if (true) {
 					// for audio capturing
 					new MediaAudioEncoder(muxer, mMediaEncoderListener);
@@ -684,6 +693,14 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					Log.e(TAG, "onPrepared:", e);
 				}
 			}
+
+			@Override
+			public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+				if(mListener != null){
+					mListener.onEncodeResult(data, offset, length, timestamp, type);
+				}
+			}
+
 		};
 
 		private void loadShutterSound(final Context context) {

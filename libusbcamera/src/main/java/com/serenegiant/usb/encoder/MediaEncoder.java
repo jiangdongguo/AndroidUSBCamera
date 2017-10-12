@@ -34,6 +34,8 @@ import java.nio.ByteBuffer;
 public abstract class MediaEncoder implements Runnable {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "MediaEncoder";
+	public static final int TYPE_VIDEO = 0;		// 视频数据
+	public static final int TYPE_AUDIO = 1;		// 音频数据
 
 	protected static final int TIMEOUT_USEC = 10000;	// 10[msec]
 	protected static final int MSG_FRAME_AVAILABLE = 1;
@@ -42,6 +44,9 @@ public abstract class MediaEncoder implements Runnable {
 	public interface MediaEncoderListener {
 		public void onPrepared(MediaEncoder encoder);
 		public void onStopped(MediaEncoder encoder);
+		// 音频或视频流，type=0为视频，type=1为音频
+		void onEncodeResult(byte[] data, int offset,
+							int length, long timestamp, int type);
 	}
 
 	protected final Object mSync = new Object();
@@ -83,6 +88,27 @@ public abstract class MediaEncoder implements Runnable {
     private MediaCodec.BufferInfo mBufferInfo;		// API >= 16(Android4.1.2)
 
     protected final MediaEncoderListener mListener;
+
+	/**
+	 * There are 13 supported frequencies by ADTS.
+	 **/
+	public static final int[] AUDIO_SAMPLING_RATES = { 96000, // 0
+			88200, // 1
+			64000, // 2
+			48000, // 3
+			44100, // 4
+			32000, // 5
+			24000, // 6
+			22050, // 7
+			16000, // 8
+			12000, // 9
+			11025, // 10
+			8000, // 11
+			7350, // 12
+			-1, // 13
+			-1, // 14
+			-1, // 15
+	};
 
     public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
     	if (listener == null) throw new NullPointerException("MediaEncoderListener is null");
@@ -349,6 +375,10 @@ public abstract class MediaEncoder implements Runnable {
         	Log.w(TAG, "muxer is unexpectedly null");
         	return;
         }
+		byte[] mPpsSps = new byte[0];
+		byte[] h264 = new byte[640 * 480];
+		ByteBuffer mBuffer = ByteBuffer.allocate(10240);
+
 LOOP:	while (mIsCapturing) {
 			// get encoded data with maximum timeout duration of TIMEOUT_USEC(=10[msec])
             encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
@@ -416,6 +446,58 @@ LOOP:	while (mIsCapturing) {
                    	mBufferInfo.presentationTimeUs = getPTSUs();
                    	muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
 					prevOutputPTSUs = mBufferInfo.presentationTimeUs;
+
+					//  推流，获取h.264数据流
+//					if(mListener != null){
+//						byte[] temp = new byte[mBufferInfo.size];
+//							encodedData.get(temp);
+//						mListener.onEncodeResult(temp, 0,mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+//					}
+					// 根据mBufferInfo.size来判断音视频
+					// > 1000，视频；< 1000，音频
+					if(mBufferInfo.size > 1000){
+						boolean sync = false;
+						if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {// sps
+							sync = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
+							if (!sync) {
+								byte[] temp = new byte[mBufferInfo.size];
+								encodedData.get(temp);
+								mPpsSps = temp;
+								mMediaCodec.releaseOutputBuffer(encoderStatus, false);
+								continue;
+							} else {
+								mPpsSps = new byte[0];
+							}
+						}
+						sync |= (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
+						int len = mPpsSps.length + mBufferInfo.size;
+						if (len > h264.length) {
+							h264 = new byte[len];
+						}
+						if (sync) {
+							System.arraycopy(mPpsSps, 0, h264, 0, mPpsSps.length);
+							encodedData.get(h264, mPpsSps.length, mBufferInfo.size);
+
+							if(mListener != null){
+								mListener.onEncodeResult(h264, 0,mPpsSps.length + mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+							}
+						} else {
+							encodedData.get(h264, 0, mBufferInfo.size);
+							if(mListener != null){
+								mListener.onEncodeResult(h264, 0,mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+							}
+						}
+					} else {
+						mBuffer.clear();
+						encodedData.get(mBuffer.array(), 7, mBufferInfo.size);
+						encodedData.clear();
+						mBuffer.position(7 + mBufferInfo.size);
+						addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
+						mBuffer.flip();
+						if(mListener != null){
+							mListener.onEncodeResult(mBuffer.array(),0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000,TYPE_AUDIO);
+						}
+					}
                 }
                 // return buffer to encoder
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
@@ -427,6 +509,27 @@ LOOP:	while (mIsCapturing) {
             }
         }
     }
+
+	private void addADTStoPacket(byte[] packet, int packetLen) {
+		packet[0] = (byte) 0xFF;
+		packet[1] = (byte) 0xF1;
+		packet[2] = (byte) (((2 - 1) << 6) + (getSamplingRateIndex() << 2) + (1 >> 2));
+		packet[3] = (byte) (((1 & 3) << 6) + (packetLen >> 11));
+		packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
+		packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
+		packet[6] = (byte) 0xFC;
+	}
+
+	private int getSamplingRateIndex(){
+		int mSamplingRateIndex = -1;
+		for (int i=0;i < AUDIO_SAMPLING_RATES.length; i++) {
+			if (AUDIO_SAMPLING_RATES[i] == MediaAudioEncoder.SAMPLE_RATE) {
+				mSamplingRateIndex = i;
+				break;
+			}
+		}
+		return mSamplingRateIndex;
+	}
 
     /**
      * previous presentationTimeUs for writing

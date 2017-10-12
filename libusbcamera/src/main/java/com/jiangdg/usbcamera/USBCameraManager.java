@@ -1,16 +1,23 @@
 package com.jiangdg.usbcamera;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Environment;
 
+import com.jiangdg.libusbcamera.R;
 import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
+import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.common.UVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
 import java.io.File;
+import java.util.List;
+
+import static android.R.attr.filter;
 
 /**USB摄像头工具类
  *
@@ -34,6 +41,8 @@ public class USBCameraManager{
     private USBMonitor mUSBMonitor;
     // Camera业务逻辑处理
     private UVCCameraHandler mCameraHandler;
+
+    private Context mContext;
 
     private USBCameraManager(){}
 
@@ -60,6 +69,8 @@ public class USBCameraManager{
     public void init(Activity activity, final CameraViewInterface cameraView, final OnMyDevConnectListener listener){
         if(cameraView == null)
             throw new NullPointerException("CameraViewInterface cannot be null!");
+        mContext = activity.getApplicationContext();
+
         mUSBMonitor = new USBMonitor(activity.getApplicationContext(), new USBMonitor.OnDeviceConnectListener() {
             // 当检测到USB设备，被回调
             @Override
@@ -129,6 +140,40 @@ public class USBCameraManager{
     }
 
     /**
+     *  请求开启第index USB摄像头
+     */
+    public void requestPermission(int index){
+        List<UsbDevice> devList = getUsbDeviceList();
+        if(devList==null || devList.size() ==0){
+            return;
+        }
+        int count = devList.size();
+        if(index >= count)
+            new IllegalArgumentException("index illegal,should be < devList.size()");
+        if(mUSBMonitor != null) {
+            mUSBMonitor.requestPermission(getUsbDeviceList().get(index));
+        }
+    }
+
+    /**
+     * 返回
+     * */
+    public int getUsbDeviceCount(){
+        List<UsbDevice> devList = getUsbDeviceList();
+        if(devList==null || devList.size() ==0){
+            return 0;
+        }
+        return devList.size();
+    }
+
+    private List<UsbDevice> getUsbDeviceList(){
+        List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(mContext, R.xml.device_filter);
+        if(mUSBMonitor == null || deviceFilters == null)
+            return null;
+        return mUSBMonitor.getDeviceList(deviceFilters.get(0));
+    }
+
+    /**
      * 抓拍照片
      * */
     public void capturePicture(String savePath){
@@ -137,9 +182,9 @@ public class USBCameraManager{
         }
     }
 
-    public void startRecording(String videoPath){
+    public void startRecording(String videoPath, AbstractUVCCameraHandler.OnEncodeResultListener listener){
         if(mCameraHandler != null && ! isRecording()){
-            mCameraHandler.startRecording(videoPath);
+            mCameraHandler.startRecording(videoPath,listener);
         }
     }
 
@@ -169,6 +214,8 @@ public class USBCameraManager{
      * 释放资源
      * */
     public void release(){
+        // 关闭摄像头
+        closeCamera();
         //释放CameraHandler占用的相关资源
         if(mCameraHandler != null){
             mCameraHandler.release();
