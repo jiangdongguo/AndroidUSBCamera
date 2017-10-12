@@ -1,5 +1,6 @@
 # AndroidUSBCamera开源项目
-## AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和视频数据采集。主要功能包括：USB Camera实时预览；本地录制mp4格式视频；png格式图片抓拍；实时获取编码后的音视频数据流。
+### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和视频数据采集。主要功能包括：USB Camera实时预览；本地录制mp4格式视频；png格式图片抓拍；实时获取编码后的音视频数据流。  
+> AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include: USB Camera real-time preview; local recording MP4 format video; PNG format photo capture; real-time access to encoded audio and video data stream.  
 
 ## 如何使用AndroidUSBCamera项目  
 ### 1.添加依赖到本地工程
@@ -78,7 +79,7 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
 ```  
 
 ### 3. 注册USB设备广播事件监听器，开始Camera预览
-     Register the USB device broadcast event listener and start the Camera Preview
+  Register the USB device broadcast event listener and start the Camera Preview
 ```
 // 注册USB事件广播监听器
 if(mUSBManager != null){
@@ -91,7 +92,7 @@ if(mUSBManager != null){
 ```  
 
 ### 4. 注销USB设备广播事件监听器，停止Camera预览
-    Unregister the USB device broadcast event listener and stop the Camera Preview
+  Unregister the USB device broadcast event listener and stop the Camera Preview
 ```
 // 注销USB事件广播监听器
  if(mUSBManager != null){
@@ -104,7 +105,7 @@ if(mUSBManager != null){
 ```  
 
 ### 5. 图片抓拍
-    Picture capturing
+  Picture capturing
 ```
 if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
           showShortMsg("抓拍异常，摄像头未开启");
@@ -114,7 +115,7 @@ mUSBManager.capturePicture(picPath);
 ```  
 
 ### 6. 本地录制(可实时获取音视频数据流)
-     recoring mp4，and get media real-stream  
+   recoring mp4，and get media real-stream  
      
 ```
  if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
@@ -134,7 +135,7 @@ mUSBManager.stopRecording();
 ```  
 
 ### 7. 释放引擎资源
-    release resource  
+  release resource  
     
 ```
 // 释放资源
