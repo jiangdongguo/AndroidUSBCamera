@@ -47,15 +47,18 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
 
     private boolean isRequest;
 
-    // USB设备监听器
+    /**
+     * USB设备事件监听器
+     * */
     private USBCameraManager.OnMyDevConnectListener listener = new USBCameraManager.OnMyDevConnectListener() {
+        // 插入USB设备
         @Override
         public void onAttachDev(UsbDevice device) {
             if(mUSBManager == null || mUSBManager.getUsbDeviceCount() == 0){
                 showShortMsg("未检测到USB摄像头设备");
                 return;
             }
-
+            // 请求打开摄像头
             if(! isRequest){
                 isRequest = true;
                 if(mUSBManager != null){
@@ -64,23 +67,27 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             }
         }
 
+        // 拔出USB设备
         @Override
         public void onDettachDev(UsbDevice device) {
             if(isRequest){
+                // 关闭摄像头
                 isRequest = false;
                 mUSBManager.closeCamera();
                 showShortMsg(device.getDeviceName()+"已拨出");
             }
         }
 
+        // 连接USB设备成功
         @Override
         public void onConnectDev(UsbDevice device) {
-            // 处理连接到设备后的逻辑
+
         }
 
+        // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-            // 处理与设备断开后的逻辑
+
         }
     };
     private FileOutputStream fos;

@@ -7,7 +7,6 @@ import android.hardware.usb.UsbDevice;
 import android.os.Environment;
 
 import com.jiangdg.libusbcamera.R;
-import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
