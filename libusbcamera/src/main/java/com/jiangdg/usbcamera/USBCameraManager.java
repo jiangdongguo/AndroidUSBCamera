@@ -244,7 +244,7 @@ public class USBCameraManager{
         }
     }
 
-    private void startPreview(CameraViewInterface cameraView) {
+    public void startPreview(CameraViewInterface cameraView) {
         SurfaceTexture st = cameraView.getSurfaceTexture();
         if(mCameraHandler != null){
             mCameraHandler.startPreview(st);
