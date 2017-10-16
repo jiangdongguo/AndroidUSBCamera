@@ -339,8 +339,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		private boolean mIsRecording;
 
 		// 播放声音
-		private SoundPool mSoundPool;
-		private int mSoundId;
+//		private SoundPool mSoundPool;
+//		private int mSoundId;
 		private AbstractUVCCameraHandler mHandler;
 		// 处理与Camera相关的逻辑，比如获取byte数据流等
 		private UVCCamera mUVCCamera;
@@ -373,7 +373,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			mBandwidthFactor = bandwidthFactor;
 			mWeakParent = new WeakReference<>(parent);
 			mWeakCameraView = new WeakReference<>(cameraView);
-			loadShutterSound(parent);
+//			loadShutterSound(parent);
 		}
 
 		@Override
@@ -508,7 +508,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if (DEBUG) Log.v(TAG_THREAD, "handleCaptureStill:");
 			final Activity parent = mWeakParent.get();
 			if (parent == null) return;
-			mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);	// play shutter sound
+//			mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);	// play shutter sound
 			try {
 				final Bitmap bitmap = mWeakCameraView.get().captureStillImage();
 				// get buffered output stream for saving a captured still image as a file on external storage.
@@ -713,16 +713,16 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			} catch (final Exception e) {
 				streamType = AudioManager.STREAM_SYSTEM;	// set appropriate according to your app policy
 			}
-			if (mSoundPool != null) {
-				try {
-					mSoundPool.release();
-				} catch (final Exception e) {
-				}
-				mSoundPool = null;
-			}
-			// load shutter sound from resource
-			mSoundPool = new SoundPool(2, streamType, 0);
-			mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
+//			if (mSoundPool != null) {
+//				try {
+//					mSoundPool.release();
+//				} catch (final Exception e) {
+//				}
+//				mSoundPool = null;
+//			}
+//			// load shutter sound from resource
+//			mSoundPool = new SoundPool(2, streamType, 0);
+//			mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
 		}
 
 		/**
@@ -773,10 +773,10 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 					mSync.notifyAll();
 				}
 				Looper.loop();
-				if (mSoundPool != null) {
-					mSoundPool.release();
-					mSoundPool = null;
-				}
+//				if (mSoundPool != null) {
+//					mSoundPool.release();
+//					mSoundPool = null;
+//				}
 				if (mHandler != null) {
 					mHandler.mReleased = true;
 				}

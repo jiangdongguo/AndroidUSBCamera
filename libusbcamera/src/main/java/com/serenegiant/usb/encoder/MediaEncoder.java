@@ -34,17 +34,17 @@ import java.nio.ByteBuffer;
 public abstract class MediaEncoder implements Runnable {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "MediaEncoder";
-	public static final int TYPE_VIDEO = 0;		// 视频数据
-	public static final int TYPE_AUDIO = 1;		// 音频数据
+	public static final int TYPE_AUDIO = 0;		// 音频数据
+	public static final int TYPE_VIDEO = 1;		// 视频数据
 
 	protected static final int TIMEOUT_USEC = 10000;	// 10[msec]
 	protected static final int MSG_FRAME_AVAILABLE = 1;
 	protected static final int MSG_STOP_RECORDING = 9;
 
 	public interface MediaEncoderListener {
-		public void onPrepared(MediaEncoder encoder);
-		public void onStopped(MediaEncoder encoder);
-		// 音频或视频流，type=0为视频，type=1为音频
+		void onPrepared(MediaEncoder encoder);
+		void onStopped(MediaEncoder encoder);
+		// 音频或视频流，type=0为音频，type=1为视频
 		void onEncodeResult(byte[] data, int offset,
 							int length, long timestamp, int type);
 	}
