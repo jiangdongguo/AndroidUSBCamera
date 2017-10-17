@@ -1,5 +1,6 @@
 package com.serenegiant.usb.common;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.hardware.usb.UsbDevice;
 import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.media.SoundPool;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -614,6 +616,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			}
 		};
 
+		@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 		public void handleUpdateMedia(final String path) {
 			if (DEBUG) Log.v(TAG_THREAD, "handleUpdateMedia:path=" + path);
 			final Activity parent = mWeakParent.get();
@@ -666,6 +669,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				}
 			}
 
+			@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 			@Override
 			public void onStopped(final MediaEncoder encoder) {
 				if (DEBUG) Log.v(TAG_THREAD, "onStopped:encoder=" + encoder);
@@ -703,16 +707,16 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 
 		};
 
-		private void loadShutterSound(final Context context) {
-			// get system stream type using reflection
-			int streamType;
-			try {
-				final Class<?> audioSystemClass = Class.forName("android.media.AudioSystem");
-				final Field sseField = audioSystemClass.getDeclaredField("STREAM_SYSTEM_ENFORCED");
-				streamType = sseField.getInt(null);
-			} catch (final Exception e) {
-				streamType = AudioManager.STREAM_SYSTEM;	// set appropriate according to your app policy
-			}
+//		private void loadShutterSound(final Context context) {
+//			// get system stream type using reflection
+//			int streamType;
+//			try {
+//				final Class<?> audioSystemClass = Class.forName("android.media.AudioSystem");
+//				final Field sseField = audioSystemClass.getDeclaredField("STREAM_SYSTEM_ENFORCED");
+//				streamType = sseField.getInt(null);
+//			} catch (final Exception e) {
+//				streamType = AudioManager.STREAM_SYSTEM;	// set appropriate according to your app policy
+//			}
 //			if (mSoundPool != null) {
 //				try {
 //					mSoundPool.release();
@@ -723,7 +727,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //			// load shutter sound from resource
 //			mSoundPool = new SoundPool(2, streamType, 0);
 //			mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
-		}
+//		}
 
 		/**
 		 * prepare and load shutter sound for still image capturing
