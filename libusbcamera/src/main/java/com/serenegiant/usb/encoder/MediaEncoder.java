@@ -25,8 +25,14 @@ package com.serenegiant.usb.encoder;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -361,6 +367,11 @@ public abstract class MediaEncoder implements Runnable {
         }
     }
 
+	byte[] mPpsSps = new byte[0];
+	byte[] h264 = new byte[640 * 480 * 3 / 2];
+	ByteBuffer mBuffer = ByteBuffer.allocate(10240);
+	long timeStamp = System.currentTimeMillis();
+
     /**
      * drain encoded data and write them to muxer
      */
@@ -375,9 +386,7 @@ public abstract class MediaEncoder implements Runnable {
         	Log.w(TAG, "muxer is unexpectedly null");
         	return;
         }
-		byte[] mPpsSps = new byte[0];
-		byte[] h264 = new byte[640 * 480];
-		ByteBuffer mBuffer = ByteBuffer.allocate(10240);
+
 
 LOOP:	while (mIsCapturing) {
 			// get encoded data with maximum timeout duration of TIMEOUT_USEC(=10[msec])
@@ -447,57 +456,58 @@ LOOP:	while (mIsCapturing) {
                    	muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
 					prevOutputPTSUs = mBufferInfo.presentationTimeUs;
 
-					//  推流，获取h.264数据流
-//					if(mListener != null){
-//						byte[] temp = new byte[mBufferInfo.size];
-//							encodedData.get(temp);
-//						mListener.onEncodeResult(temp, 0,mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
-//					}
+					// 推流，获取h.264数据流
 					// 根据mBufferInfo.size来判断音视频
 					// > 1000，视频；< 1000，音频
-					if(mBufferInfo.size > 1000){
-						boolean sync = false;
-						if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {// sps
-							sync = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
-							if (!sync) {
-								byte[] temp = new byte[mBufferInfo.size];
-								encodedData.get(temp);
-								mPpsSps = temp;
-								mMediaCodec.releaseOutputBuffer(encoderStatus, false);
-								continue;
+					synchronized (this){
+						if(mBufferInfo.size > 1000) {
+							int type = encodedData.get(4) & 0x07;
+							if(type == 7 || type == 8) {
+								byte[] outData = new byte[mBufferInfo.size];
+								encodedData.get(outData);
+								mPpsSps = outData;
+							}else if(type == 5) {
+								System.arraycopy(mPpsSps,0,h264,0,mPpsSps.length);
+								if(mBufferInfo.size > h264.length) {
+									continue;
+								}
+								encodedData.get(h264,mPpsSps.length,mBufferInfo.size);
+								if(mListener != null) {
+									mListener.onEncodeResult(h264, 0,mPpsSps.length + mBufferInfo.size,
+											mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+								}
 							} else {
-								mPpsSps = new byte[0];
+								if(mBufferInfo.size > h264.length){
+									continue ;
+								}
+								encodedData.get(h264,0,mBufferInfo.size);
+								if(System.currentTimeMillis() - timeStamp >= 3000) {
+									timeStamp = System.currentTimeMillis();
+									if(Build.VERSION.SDK_INT >= 23) {
+										Bundle params = new Bundle();
+										params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+										mMediaCodec.setParameters(params);
+									}
+								}
+								if(mListener != null) {
+									mListener.onEncodeResult(h264, 0,mBufferInfo.size,
+											mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+								}
 							}
-						}
-						sync |= (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
-						int len = mPpsSps.length + mBufferInfo.size;
-						if (len > h264.length) {
-							h264 = new byte[len];
-						}
-						if (sync) {
-							System.arraycopy(mPpsSps, 0, h264, 0, mPpsSps.length);
-							encodedData.get(h264, mPpsSps.length, mBufferInfo.size);
 
-							if(mListener != null){
-								mListener.onEncodeResult(h264, 0,mPpsSps.length + mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
-							}
 						} else {
-							encodedData.get(h264, 0, mBufferInfo.size);
+							mBuffer.clear();
+							encodedData.get(mBuffer.array(), 7, mBufferInfo.size);
+							encodedData.clear();
+							mBuffer.position(7 + mBufferInfo.size);
+							addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
+							mBuffer.flip();
 							if(mListener != null){
-								mListener.onEncodeResult(h264, 0,mBufferInfo.size, mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+								mListener.onEncodeResult(mBuffer.array(),0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000,TYPE_AUDIO);
 							}
-						}
-					} else {
-						mBuffer.clear();
-						encodedData.get(mBuffer.array(), 7, mBufferInfo.size);
-						encodedData.clear();
-						mBuffer.position(7 + mBufferInfo.size);
-						addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
-						mBuffer.flip();
-						if(mListener != null){
-							mListener.onEncodeResult(mBuffer.array(),0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000,TYPE_AUDIO);
 						}
 					}
+
                 }
                 // return buffer to encoder
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);

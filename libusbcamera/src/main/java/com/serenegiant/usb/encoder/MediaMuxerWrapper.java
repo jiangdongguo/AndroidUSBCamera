@@ -1,8 +1,10 @@
 package com.serenegiant.usb.encoder;
 
+import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
@@ -27,6 +29,7 @@ public class MediaMuxerWrapper {
 	private boolean mIsStarted;
 	private MediaEncoder mVideoEncoder, mAudioEncoder;
 
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 	public MediaMuxerWrapper(String path) throws IOException {
 		try {
 			// 保存到自定义路径还是手机默认Movies路径

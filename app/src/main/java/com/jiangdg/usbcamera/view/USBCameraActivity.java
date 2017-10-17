@@ -160,13 +160,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("录制异常，摄像头未开启");
                     return;
                 }
-                File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                        +File.separator+System.currentTimeMillis()+".txt");
-                try {
-                    fos = new FileOutputStream(file);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
 
                 if(! mUSBManager.isRecording()){
                     String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
@@ -174,32 +167,13 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-                            String tip = null;
-                            if(data == null){
-                                tip = "data = null";
-                            }else{
-                                tip = "大小"+data.length+ "类型"+type + ";";
-                            }
-                            try {
-                                if(fos != null){
-                                    fos.write(tip.getBytes());
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+
                         }
                     });
 
                     mBtnRecord.setText("正在录制");
                 } else {
                     mUSBManager.stopRecording();
-                    try {
-                        if(fos != null){
-                            fos.close();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                     mBtnRecord.setText("开始录制");
                 }
                 break;
