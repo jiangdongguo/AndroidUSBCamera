@@ -18,6 +18,7 @@ import com.jiangdg.usbcamera.USBCameraManager;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
+import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
@@ -166,11 +167,13 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                 }
 
                 if(! mUSBManager.isRecording()){
-                    String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
-                            +USBCameraManager.SUFFIX_MP4;
+                    String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis();
                     FileUtils.createfile(FileUtils.ROOT_PATH+"test666.h264");
-
-                    mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+                    RecordParams params = new RecordParams();
+                    params.setRecordPath(videoPath);
+                    params.setRecordDuration(0);    // 设置为0，不分割保存
+                    params.setVoiceClose(false);    // 不屏蔽声音
+                    mUSBManager.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
                             // type = 0,aac格式音频流

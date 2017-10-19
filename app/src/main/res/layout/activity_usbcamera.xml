@@ -35,5 +35,4 @@
         android:textSize="16sp"
         android:text="开始录制"/>
 
-
 </RelativeLayout>

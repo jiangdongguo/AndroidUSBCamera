@@ -11,6 +11,7 @@ import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.common.UVCCameraHandler;
+import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
 import java.io.File;
@@ -182,11 +183,12 @@ public class USBCameraManager{
         }
     }
 
-    public void startRecording(String videoPath, AbstractUVCCameraHandler.OnEncodeResultListener listener){
+    public void startRecording(RecordParams params, AbstractUVCCameraHandler.OnEncodeResultListener listener){
         if(mCameraHandler != null && ! isRecording()){
-            mCameraHandler.startRecording(videoPath,listener);
+            mCameraHandler.startRecording(params,listener);
         }
     }
+
 
     public void stopRecording(){
         if(mCameraHandler != null && isRecording()){

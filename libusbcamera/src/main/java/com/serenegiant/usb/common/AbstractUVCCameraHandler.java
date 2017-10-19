@@ -26,6 +26,7 @@ import com.serenegiant.usb.encoder.MediaMuxerWrapper;
 import com.serenegiant.usb.encoder.MediaSurfaceEncoder;
 import com.serenegiant.usb.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.usb.encoder.MediaVideoEncoder;
+import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.encoder.biz.AACEncodeConsumer;
 import com.serenegiant.usb.encoder.biz.H264EncodeConsumer;
 import com.serenegiant.usb.encoder.biz.Mp4MediaMuxer;
@@ -79,6 +80,9 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_CAPTURE_STOP = 6;
 	private static final int MSG_MEDIA_UPDATE = 7;
 	private static final int MSG_RELEASE = 9;
+	// 音频线程
+//	private static final int MSG_AUDIO_START = 10;
+//	private static final int MSG_AUDIO_STOP = 11;
 
 	private final WeakReference<CameraThread> mWeakThread;
 	private volatile boolean mReleased;
@@ -111,6 +115,11 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		final CameraThread thread = mWeakThread.get();
 		return thread != null && thread.isRecording();
 	}
+
+//	public boolean isAudioThreadStart() {
+//		final CameraThread thread = mWeakThread.get();
+//		return thread != null && thread.isAudioRecording();
+//	}
 
 	public boolean isEqual(final UsbDevice device) {
 		final CameraThread thread = mWeakThread.get();
@@ -198,17 +207,27 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	// 开始录制
-	public void startRecording(final String path, OnEncodeResultListener listener) {
+	public void startRecording(final RecordParams params, OnEncodeResultListener listener) {
 		AbstractUVCCameraHandler.mListener = listener;
 		checkReleased();
 //		sendEmptyMessage(MSG_CAPTURE_START);
-		sendMessage(obtainMessage(MSG_CAPTURE_START, path));
+		sendMessage(obtainMessage(MSG_CAPTURE_START, params));
 	}
 
 	// 停止录制
 	public void stopRecording() {
 		sendEmptyMessage(MSG_CAPTURE_STOP);
 	}
+
+//	// 启动音频线程
+//	public void startAudioThread(){
+//		sendEmptyMessage(MSG_AUDIO_START);
+//	}
+//
+//	// 关闭音频线程
+//	public void stopAudioThread(){
+//		sendEmptyMessage(MSG_AUDIO_STOP);
+//	}
 
 	public void release() {
 		mReleased = true;
@@ -297,35 +316,43 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		final CameraThread thread = mWeakThread.get();
 		if (thread == null) return;
 		switch (msg.what) {
-		case MSG_OPEN:
-			thread.handleOpen((USBMonitor.UsbControlBlock)msg.obj);
-			break;
-		case MSG_CLOSE:
-			thread.handleClose();
-			break;
-		case MSG_PREVIEW_START:
-			thread.handleStartPreview(msg.obj);
-			break;
-		case MSG_PREVIEW_STOP:
-			thread.handleStopPreview();
-			break;
-		case MSG_CAPTURE_STILL:
-			thread.handleCaptureStill((String)msg.obj);
-			break;
-		case MSG_CAPTURE_START:
-			thread.handleStartRecording((String)msg.obj);
-			break;
-		case MSG_CAPTURE_STOP:
-			thread.handleStopRecording();
-			break;
-		case MSG_MEDIA_UPDATE:
-			thread.handleUpdateMedia((String)msg.obj);
-			break;
-		case MSG_RELEASE:
-			thread.handleRelease();
-			break;
-		default:
-			throw new RuntimeException("unsupported message:what=" + msg.what);
+			case MSG_OPEN:
+				thread.handleOpen((USBMonitor.UsbControlBlock)msg.obj);
+				break;
+			case MSG_CLOSE:
+				thread.handleClose();
+				break;
+			case MSG_PREVIEW_START:
+				thread.handleStartPreview(msg.obj);
+				break;
+			case MSG_PREVIEW_STOP:
+				thread.handleStopPreview();
+				break;
+			case MSG_CAPTURE_STILL:
+				thread.handleCaptureStill((String)msg.obj);
+				break;
+			case MSG_CAPTURE_START:
+//			thread.handleStartRecording((String)msg.obj);
+				thread.handleStartRecording((RecordParams)msg.obj);
+				break;
+			case MSG_CAPTURE_STOP:
+				thread.handleStopRecording();
+				break;
+			case MSG_MEDIA_UPDATE:
+				thread.handleUpdateMedia((String)msg.obj);
+				break;
+			case MSG_RELEASE:
+				thread.handleRelease();
+				break;
+			// 音频线程
+//			case MSG_AUDIO_START:
+//				thread.startAudioRecord();
+//				break;
+//			case MSG_AUDIO_STOP:
+//				thread.stopAudioRecord();
+//				break;
+			default:
+				throw new RuntimeException("unsupported message:what=" + msg.what);
 		}
 	}
 
@@ -352,6 +379,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //		private MediaMuxerWrapper mMuxer;
 		private MediaVideoBufferEncoder mVideoEncoder;
 		private Mp4MediaMuxer mMuxer;
+//		private boolean isAudioThreadStart;
 
 		/** 构造方法
 		 *
@@ -428,6 +456,12 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				return (mUVCCamera != null) && (mMuxer != null);
 			}
 		}
+
+//		public boolean isAudioRecording(){
+//			synchronized (mSync){
+//				return isAudioThreadStart;
+//			}
+//		}
 
 		public boolean isEqual(final UsbDevice device) {
 			return (mUVCCamera != null) && (mUVCCamera.getDevice() != null) && mUVCCamera.getDevice().equals(device);
@@ -583,12 +617,48 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		private AACEncodeConsumer mAacConsumer;
 		private H264EncodeConsumer mH264Consumer;
 
-		public void handleStartRecording(String path){
+		public void handleStartRecording(RecordParams params){
 			if ((mUVCCamera == null) || (mMuxer != null))
 				return;
+			if (params == null)
+				throw new NullPointerException("RecordParams can not be null!");
 			// 获取USB Camera预览数据
 			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
-			// 启动视频编码线程，type=1
+			// 初始化混合器
+			mMuxer = new Mp4MediaMuxer(params.getRecordPath(),
+					params.getRecordDuration() * 60 * 1000);
+
+			// 启动视频编码线程
+			startVideoRecord();
+			// 启动音频编码线程
+			if(! params.isVoiceClose()) {
+				startAudioRecord();
+			}
+			callOnStartRecording();
+		}
+
+
+		public void handleStopRecording(){
+			// 停止混合器
+			if (mMuxer != null){
+				mMuxer.release();
+				mMuxer = null;
+				Log.i(TAG,TAG+"---->停止本地录制");
+			}
+			// 停止音视频编码线程
+			stopAudioRecord();
+			stopVideoRecord();
+			// 停止捕获视频数据
+			if (mUVCCamera != null) {
+				mUVCCamera.stopCapture();
+				mUVCCamera.setFrameCallback(null, 0);
+			}
+			mWeakCameraView.get().setVideoEncoder(null);
+			// you should not wait here
+			callOnStopRecording();
+		}
+
+		private void startVideoRecord() {
 			mH264Consumer = new H264EncodeConsumer();
 			mH264Consumer.setOnH264EncodeResultListener(new H264EncodeConsumer.OnH264EncodeResultListener() {
 				@Override
@@ -599,45 +669,16 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				}
 			});
 			mH264Consumer.start();
-			// 启动音频编码线程，type=0
-			mAacConsumer = new AACEncodeConsumer();
-			mAacConsumer.setOnAACEncodeResultListener(new AACEncodeConsumer.OnAACEncodeResultListener() {
-				@Override
-				public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
-					if(mListener != null){
-						mListener.onEncodeResult(data,offset,length,timestamp,0);
-					}
-				}
-			});
-			mAacConsumer.start();
-			// 启动混合器
-			long millis = 30 * 60 * 1000;
-			mMuxer = new Mp4MediaMuxer(new File(FileUtils.ROOT_PATH, new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date())).toString(), millis);
+			// 添加混合器
 			if(mH264Consumer != null){
 				mH264Consumer.setTmpuMuxer(mMuxer);
 			}
-			if(mAacConsumer != null){
-				mAacConsumer.setTmpuMuxer(mMuxer);
-			}
-			callOnStartRecording();
 		}
 
-		public void handleStopRecording(){
-			// 停止混合器
-			if (mMuxer != null){
-				mMuxer.release();
-				mMuxer = null;
-				Log.i(TAG,TAG+"---->停止本地录制");
-			}
-			// 停止音视频编码线程
-			if(mH264Consumer != null){
-				mH264Consumer.setTmpuMuxer(null);
-			}
-			if(mAacConsumer != null){
-				mAacConsumer.setTmpuMuxer(null);
-			}
+		private void stopVideoRecord(){
 			if(mH264Consumer != null){
 				mH264Consumer.exit();
+				mH264Consumer.setTmpuMuxer(null);
 				try {
 					Thread t2 = mH264Consumer;
 					mH264Consumer = null;
@@ -649,8 +690,30 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 					e.printStackTrace();
 				}
 			}
+		}
+
+		private void startAudioRecord(){
+			mAacConsumer = new AACEncodeConsumer();
+			mAacConsumer.setOnAACEncodeResultListener(new AACEncodeConsumer.OnAACEncodeResultListener() {
+				@Override
+				public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
+					if(mListener != null){
+						mListener.onEncodeResult(data,offset,length,timestamp,0);
+					}
+				}
+			});
+			mAacConsumer.start();
+			// 添加混合器
+			if(mAacConsumer != null){
+				mAacConsumer.setTmpuMuxer(mMuxer);
+			}
+//			isAudioThreadStart = true;
+		}
+
+		private void stopAudioRecord(){
 			if(mAacConsumer != null){
 				mAacConsumer.exit();
+				mAacConsumer.setTmpuMuxer(null);
 				try {
 					Thread t1 = mAacConsumer;
 					mAacConsumer = null;
@@ -662,14 +725,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 					e.printStackTrace();
 				}
 			}
-			// 停止捕获视频数据
-			if (mUVCCamera != null) {
-				mUVCCamera.stopCapture();
-				mUVCCamera.setFrameCallback(null, 0);
-			}
-			mWeakCameraView.get().setVideoEncoder(null);
-			// you should not wait here
-			callOnStopRecording();
+
+//			isAudioThreadStart = false;
 		}
 
 		// 停止录制视频

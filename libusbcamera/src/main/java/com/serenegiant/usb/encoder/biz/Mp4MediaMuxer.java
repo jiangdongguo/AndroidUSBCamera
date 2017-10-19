@@ -44,6 +44,8 @@ public class Mp4MediaMuxer {
         }
     }
 
+
+
     public synchronized void addTrack(MediaFormat format, boolean isVideo) {
         // now that we have the Magic Goodies, start the muxer
         if (mAudioTrackIndex != -1 && mVideoTrackIndex != -1)
@@ -102,7 +104,7 @@ public class Mp4MediaMuxer {
 //                Log.i(TAG, "BUFFER_FLAG_END_OF_STREAM received");
         }
 
-        if (System.currentTimeMillis() - mBeginMillis >= durationMillis) {
+        if (durationMillis!=0 && System.currentTimeMillis() - mBeginMillis >= durationMillis) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
 //                if (VERBOSE)
 //                    Log.i(TAG, String.format("record file reach expiration.create new file:" + index));
