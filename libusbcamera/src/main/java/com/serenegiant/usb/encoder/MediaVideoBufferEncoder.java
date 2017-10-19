@@ -27,24 +27,18 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/**
- * This class receives video images as ByteBuffer(strongly recommend direct ByteBuffer) as NV21(YUV420SP)
- * and encode them to h.264.
- * If you use this directly with IFrameCallback, you should know UVCCamera and it backend native libraries
- * never execute color space conversion. This means that color tone of resulted movie will be different
- * from that you expected/can see on screen.
- */
 public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "MediaVideoBufferEncoder";
 
 	private static final String MIME_TYPE = "video/avc";
-	// parameters for recording
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
 
@@ -59,11 +53,11 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
 	}
 
 	public void encode(final ByteBuffer buffer) {
-//    	if (DEBUG) Log.v(TAG, "encode:buffer=" + buffer);
 		synchronized (mSync) {
 			if (!mIsCapturing || mRequestStop) return;
 		}
-		encode(buffer, buffer.capacity(), getPTSUs());
+//		encode(buffer, buffer.capacity(), getPTSUs());
+		encode(buffer, buffer.capacity());
     }
 
 	@Override
@@ -89,6 +83,12 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
         mMediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mMediaCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         mMediaCodec.start();
+
+		Bundle params = new Bundle();
+		params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			mMediaCodec.setParameters(params);
+		}
         if (DEBUG) Log.i(TAG, "prepare finishing");
         if (mListener != null) {
         	try {
@@ -105,11 +105,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
 		return bitrate;
 	}
 
-    /**
-     * select the first codec that match a specific MIME type
-     * @param mimeType
-     * @return null if no codec matched
-     */
+	// 选择第一个与制定MIME类型匹配的编码器
     @SuppressWarnings("deprecation")
 	protected final MediaCodecInfo selectVideoCodec(final String mimeType) {
     	if (DEBUG) Log.v(TAG, "selectVideoCodec:");
@@ -138,10 +134,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
         return null;
     }
 
-    /**
-     * select color format available on specific codec and we can use.
-     * @return 0 if no colorFormat is matched
-     */
+    // 选择编码器支持的格式
     protected static final int selectColorFormat(final MediaCodecInfo codecInfo, final String mimeType) {
 		if (DEBUG) Log.i(TAG, "selectColorFormat: ");
     	int result = 0;
@@ -166,9 +159,7 @@ public class MediaVideoBufferEncoder extends MediaEncoder implements IVideoEncod
         return result;
     }
 
-	/**
-	 * color formats that we can use in this class
-	 */
+	// YUV颜色格式
     protected static int[] recognizedFormats;
 	static {
 		recognizedFormats = new int[] {

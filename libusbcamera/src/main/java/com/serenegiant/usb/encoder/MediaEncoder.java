@@ -1,26 +1,3 @@
-/*
- *  UVCCamera
- *  library and sample to access to UVC web camera on non-rooted Android device
- *
- * Copyright (c) 2014-2017 saki t_saki@serenegiant.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
- *  All files in the folder are under this Apache License, Version 2.0.
- *  Files in the libjpeg-turbo, libusb, libuvc, rapidjson folder
- *  may have a different license, see the respective files.
- */
-
 package com.serenegiant.usb.encoder;
 
 import android.media.MediaCodec;
@@ -30,11 +7,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
+import com.jiangdg.usbcamera.FileUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public abstract class MediaEncoder implements Runnable {
@@ -43,9 +23,12 @@ public abstract class MediaEncoder implements Runnable {
 	public static final int TYPE_AUDIO = 0;		// 音频数据
 	public static final int TYPE_VIDEO = 1;		// 视频数据
 
-	protected static final int TIMEOUT_USEC = 10000;	// 10[msec]
+	protected static final int TIMEOUT_USEC = 10000;	// 10毫秒
 	protected static final int MSG_FRAME_AVAILABLE = 1;
 	protected static final int MSG_STOP_RECORDING = 9;
+	private long lastPush;
+	private long millisPerframe;
+	private boolean isExit;
 
 	public interface MediaEncoderListener {
 		void onPrepared(MediaEncoder encoder);
@@ -169,6 +152,10 @@ public abstract class MediaEncoder implements Runnable {
         final boolean isRunning = true;
         boolean localRequestStop;
         boolean localRequestDrain;
+		boolean localIsNotExit;
+		// 创建h264
+		FileUtils.createfile(Environment.getExternalStorageDirectory().getAbsolutePath()+"/test222.h264");
+
         while (isRunning) {
         	synchronized (mSync) {
         		localRequestStop = mRequestStop;
@@ -198,11 +185,11 @@ public abstract class MediaEncoder implements Runnable {
 	        	}
         	}
         } // end of while
-		if (DEBUG) Log.d(TAG, "Encoder thread exiting");
         synchronized (mSync) {
         	mRequestStop = true;
             mIsCapturing = false;
         }
+		FileUtils.releaseFile();
 	}
 
 	/*
@@ -217,6 +204,7 @@ public abstract class MediaEncoder implements Runnable {
 		synchronized (mSync) {
 			mIsCapturing = true;
 			mRequestStop = false;
+			isExit = false;
 			mSync.notifyAll();
 		}
 	}
@@ -231,6 +219,7 @@ public abstract class MediaEncoder implements Runnable {
 				return;
 			}
 			mRequestStop = true;	// for rejecting newer frame
+			isExit = true;
 			mSync.notifyAll();
 	        // We can not know when the encoding and writing finish.
 	        // so we return immediately after request to avoid delay of caller thread
@@ -288,7 +277,6 @@ public abstract class MediaEncoder implements Runnable {
      */
     @SuppressWarnings("deprecation")
 	protected void encode(final byte[] buffer, final int length, final long presentationTimeUs) {
-//    	if (DEBUG) Log.v(TAG, "encode:buffer=" + buffer);
     	if (!mIsCapturing) return;
     	int ix = 0, sz;
         final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
@@ -322,6 +310,46 @@ public abstract class MediaEncoder implements Runnable {
 	        }
         }
     }
+
+	protected void encode(ByteBuffer yuvBuffer,int len){
+		if (!mIsCapturing) return;
+		try {
+			if (lastPush == 0) {
+				lastPush = System.currentTimeMillis();
+			}
+			long time = System.currentTimeMillis() - lastPush;
+			if (time >= 0) {
+				time = millisPerframe - time;
+				if (time > 0)
+					Thread.sleep(time / 2);
+			}
+			final ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
+			int bufferIndex = -1;
+			try{
+				bufferIndex = mMediaCodec.dequeueInputBuffer(0);
+			}catch (IllegalStateException e){
+				e.printStackTrace();
+			}
+			if (bufferIndex >= 0) {
+				ByteBuffer mBuffer;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					mBuffer = mMediaCodec.getInputBuffer(bufferIndex);
+				} else {
+					mBuffer = inputBuffers[bufferIndex];
+				}
+				byte[] yuvData = new byte[yuvBuffer.capacity()];
+				yuvBuffer.get(yuvData);
+
+				mBuffer.clear();
+				mBuffer.put(yuvData);
+				mBuffer.clear();
+				mMediaCodec.queueInputBuffer(bufferIndex, 0, yuvData.length, System.nanoTime() / 1000, MediaCodec.BUFFER_FLAG_KEY_FRAME);
+			}
+			lastPush = System.currentTimeMillis();
+		} catch (InterruptedException ex) {
+			ex.printStackTrace();
+		}
+	}
 
     /**
      * Method to set ByteBuffer to the MediaCodec encoder
@@ -367,155 +395,147 @@ public abstract class MediaEncoder implements Runnable {
         }
     }
 
-	byte[] mPpsSps = new byte[0];
-	byte[] h264 = new byte[640 * 480 * 3 / 2];
 	ByteBuffer mBuffer = ByteBuffer.allocate(10240);
-	long timeStamp = System.currentTimeMillis();
 
     /**
      * drain encoded data and write them to muxer
      */
     @SuppressWarnings("deprecation")
 	protected void drain() {
-    	if (mMediaCodec == null) return;
+    	if (mMediaCodec == null)
+			return;
         ByteBuffer[] encoderOutputBuffers = mMediaCodec.getOutputBuffers();
         int encoderStatus, count = 0;
         final MediaMuxerWrapper muxer = mWeakMuxer.get();
         if (muxer == null) {
-//        	throw new NullPointerException("muxer is unexpectedly null");
         	Log.w(TAG, "muxer is unexpectedly null");
         	return;
         }
+		byte[] mPpsSps = new byte[0];
+		byte[] h264 = new byte[640 * 480];
 
-
-LOOP:	while (mIsCapturing) {
-			// get encoded data with maximum timeout duration of TIMEOUT_USEC(=10[msec])
+		while (mIsCapturing) {
             encoderStatus = mMediaCodec.dequeueOutputBuffer(mBufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                // wait 5 counts(=TIMEOUT_USEC x 5 = 50msec) until data/EOS come
+				// 等待 TIMEOUT_USEC x 5 = 50毫秒
+				// 如果还没有数据，终止循环
                 if (!mIsEOS) {
                 	if (++count > 5)
-                		break LOOP;		// out of while
+                		break;
                 }
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-            	if (DEBUG) Log.v(TAG, "INFO_OUTPUT_BUFFERS_CHANGED");
-                // this shoud not come when encoding
                 encoderOutputBuffers = mMediaCodec.getOutputBuffers();
             } else if (encoderStatus == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-            	if (DEBUG) Log.v(TAG, "INFO_OUTPUT_FORMAT_CHANGED");
-            	// this status indicate the output format of codec is changed
-                // this should come only once before actual encoded data
-            	// but this status never come on Android4.3 or less
-            	// and in that case, you should treat when MediaCodec.BUFFER_FLAG_CODEC_CONFIG come.
-                if (mMuxerStarted) {	// second time request is error
+                if (mMuxerStarted) {
                     throw new RuntimeException("format changed twice");
                 }
-				// get output format from codec and pass them to muxer
-				// getOutputFormat should be called after INFO_OUTPUT_FORMAT_CHANGED otherwise crash.
-                final MediaFormat format = mMediaCodec.getOutputFormat(); // API >= 16
+                final MediaFormat format = mMediaCodec.getOutputFormat();
                	mTrackIndex = muxer.addTrack(format);
                	mMuxerStarted = true;
                	if (!muxer.start()) {
-               		// we should wait until muxer is ready
                		synchronized (muxer) {
 	               		while (!muxer.isStarted())
 						try {
 							muxer.wait(100);
 						} catch (final InterruptedException e) {
-							break LOOP;
+							break;
 						}
                		}
                	}
             } else if (encoderStatus < 0) {
-            	// unexpected status
             	if (DEBUG) Log.w(TAG, "drain:unexpected result from encoder#dequeueOutputBuffer: " + encoderStatus);
             } else {
-                final ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
+				ByteBuffer encodedData;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					encodedData = mMediaCodec.getOutputBuffer(encoderStatus);
+				} else {
+					encodedData = encoderOutputBuffers[encoderStatus];
+				}
+				encodedData.position(mBufferInfo.offset);
+				encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+
+//                final ByteBuffer encodedData = encoderOutputBuffers[encoderStatus];
                 if (encodedData == null) {
-                	// this never should come...may be a MediaCodec internal error
                     throw new RuntimeException("encoderOutputBuffer " + encoderStatus + " was null");
                 }
+				// BUFFER_FLAG_CODEC_CONFIG标志
+				// BufferInfo清零
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
-                	// You shoud set output format to muxer here when you target Android4.3 or less
-                	// but MediaCodec#getOutputFormat can not call here(because INFO_OUTPUT_FORMAT_CHANGED don't come yet)
-                	// therefor we should expand and prepare output format from buffer data.
-                	// This sample is for API>=18(>=Android 4.3), just ignore this flag here
 					if (DEBUG) Log.d(TAG, "drain:BUFFER_FLAG_CODEC_CONFIG");
 					mBufferInfo.size = 0;
                 }
-
+				// BUFFER_FLAG_END_OF_STREAM标志
+				// 流结束，终止循环
+				if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+					mMuxerStarted = mIsCapturing = false;
+					break;
+				}
+				// 有效编码数据流
                 if (mBufferInfo.size != 0) {
-                	// encoded data is ready, clear waiting counter
             		count = 0;
-                    if (!mMuxerStarted) {
-                    	// muxer is not ready...this will prrograming failure.
-                        throw new RuntimeException("drain:muxer hasn't started");
-                    }
-                    // write encoded data to muxer(need to adjust presentationTimeUs.
-                   	mBufferInfo.presentationTimeUs = getPTSUs();
-                   	muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
+					if (!mMuxerStarted) {
+						throw new RuntimeException("drain:muxer hasn't started");
+					}
+					// 写入音频流或视频流到混合器
+					mBufferInfo.presentationTimeUs = getPTSUs();
+					muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
 					prevOutputPTSUs = mBufferInfo.presentationTimeUs;
 
 					// 推流，获取h.264数据流
-					// 根据mBufferInfo.size来判断音视频
-					// > 1000，视频；< 1000，音频
-					synchronized (this){
-						if(mBufferInfo.size > 1000) {
-							int type = encodedData.get(4) & 0x07;
-							if(type == 7 || type == 8) {
-								byte[] outData = new byte[mBufferInfo.size];
-								encodedData.get(outData);
-								mPpsSps = outData;
-							}else if(type == 5) {
-								System.arraycopy(mPpsSps,0,h264,0,mPpsSps.length);
-								if(mBufferInfo.size > h264.length) {
-									continue;
-								}
-								encodedData.get(h264,mPpsSps.length,mBufferInfo.size);
-								if(mListener != null) {
-									mListener.onEncodeResult(h264, 0,mPpsSps.length + mBufferInfo.size,
-											mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
-								}
+					// mTrackIndex=0 视频；mTrackIndex=1 音频
+					if(mTrackIndex == 0) {
+						encodedData.position(mBufferInfo.offset);
+						encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
+						boolean sync = false;
+						if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {// sps
+							sync = (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
+							if (!sync) {
+								byte[] temp = new byte[mBufferInfo.size];
+								encodedData.get(temp);
+								mPpsSps = temp;
+								mMediaCodec.releaseOutputBuffer(encoderStatus, false);
+								continue;
 							} else {
-								if(mBufferInfo.size > h264.length){
-									continue ;
-								}
-								encodedData.get(h264,0,mBufferInfo.size);
-								if(System.currentTimeMillis() - timeStamp >= 3000) {
-									timeStamp = System.currentTimeMillis();
-									if(Build.VERSION.SDK_INT >= 23) {
-										Bundle params = new Bundle();
-										params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
-										mMediaCodec.setParameters(params);
-									}
-								}
-								if(mListener != null) {
-									mListener.onEncodeResult(h264, 0,mBufferInfo.size,
-											mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
-								}
-							}
-
-						} else {
-							mBuffer.clear();
-							encodedData.get(mBuffer.array(), 7, mBufferInfo.size);
-							encodedData.clear();
-							mBuffer.position(7 + mBufferInfo.size);
-							addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
-							mBuffer.flip();
-							if(mListener != null){
-								mListener.onEncodeResult(mBuffer.array(),0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000,TYPE_AUDIO);
+								mPpsSps = new byte[0];
 							}
 						}
+						sync |= (mBufferInfo.flags & MediaCodec.BUFFER_FLAG_SYNC_FRAME) != 0;
+						int len = mPpsSps.length + mBufferInfo.size;
+						if (len > h264.length) {
+							h264 = new byte[len];
+						}
+						if (sync) {
+							System.arraycopy(mPpsSps, 0, h264, 0, mPpsSps.length);
+							encodedData.get(h264, mPpsSps.length, mBufferInfo.size);
+							if(mListener != null) {
+								mListener.onEncodeResult(h264, 0,mPpsSps.length + mBufferInfo.size,
+										mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+							}
+							// 保存数据流到文件
+							FileUtils.putFileStream(h264, 0,mPpsSps.length + mBufferInfo.size);
+						} else {
+							encodedData.get(h264, 0, mBufferInfo.size);
+							if(mListener != null) {
+								mListener.onEncodeResult(h264, 0,mBufferInfo.size,
+										mBufferInfo.presentationTimeUs / 1000,TYPE_VIDEO);
+							}
+							FileUtils.putFileStream(h264, 0,mBufferInfo.size);
+						}
+					} else if(mTrackIndex == 1){
+						mBuffer.clear();
+						encodedData.get(mBuffer.array(), 7, mBufferInfo.size);
+						encodedData.clear();
+						mBuffer.position(7 + mBufferInfo.size);
+						addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
+						mBuffer.flip();
+						if(mListener != null){
+							mListener.onEncodeResult(mBuffer.array(),0, mBufferInfo.size + 7,
+									mBufferInfo.presentationTimeUs / 1000,TYPE_AUDIO);
+						}
 					}
-
                 }
-                // return buffer to encoder
+                // 释放输出缓存，将其还给编码器
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                	// when EOS come.
-               		mMuxerStarted = mIsCapturing = false;
-                    break;      // out of while
-                }
             }
         }
     }
@@ -541,18 +561,11 @@ LOOP:	while (mIsCapturing) {
 		return mSamplingRateIndex;
 	}
 
-    /**
-     * previous presentationTimeUs for writing
-     */
+
 	private long prevOutputPTSUs = 0;
-	/**
-	 * get next encoding presentationTimeUs
-	 * @return
-	 */
+
     protected long getPTSUs() {
 		long result = System.nanoTime() / 1000L;
-		// presentationTimeUs should be monotonic
-		// otherwise muxer fail to write
 		if (result < prevOutputPTSUs)
 			result = (prevOutputPTSUs - result) + result;
 		return result;

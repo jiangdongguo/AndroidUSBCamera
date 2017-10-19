@@ -31,9 +31,10 @@ public class USBCameraManager{
     private static final String TAG = "USBCameraManager";
     private static final int PREVIEW_WIDTH = 640;
     private static final int PREVIEW_HEIGHT = 480;
-    private static final int ENCODER_TYPE = 1;
+    // 使用MediaVideoBufferEncoder
+    private static final int ENCODER_TYPE = 2;
     //0为YUYV，1为MJPEG
-    private static final int PREVIEW_FORMAT = 1;
+    private static final int PREVIEW_FORMAT = 0;
 
     private static USBCameraManager mUsbCamManager;
     // USB设备管理类

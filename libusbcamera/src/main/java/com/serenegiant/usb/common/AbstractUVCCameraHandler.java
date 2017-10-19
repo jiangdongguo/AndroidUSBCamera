@@ -2,13 +2,10 @@ package com.serenegiant.usb.common;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
-import android.media.AudioManager;
 import android.media.MediaScannerConnection;
-import android.media.SoundPool;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -19,7 +16,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.jiangdg.libusbcamera.R;
+import com.jiangdg.usbcamera.FileUtils;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
@@ -29,6 +26,9 @@ import com.serenegiant.usb.encoder.MediaMuxerWrapper;
 import com.serenegiant.usb.encoder.MediaSurfaceEncoder;
 import com.serenegiant.usb.encoder.MediaVideoBufferEncoder;
 import com.serenegiant.usb.encoder.MediaVideoEncoder;
+import com.serenegiant.usb.encoder.biz.AACEncodeConsumer;
+import com.serenegiant.usb.encoder.biz.H264EncodeConsumer;
+import com.serenegiant.usb.encoder.biz.Mp4MediaMuxer;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
@@ -37,9 +37,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -48,6 +49,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  *
  * */
 public  abstract class AbstractUVCCameraHandler extends Handler {
+
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
 
@@ -347,8 +349,9 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		// 处理与Camera相关的逻辑，比如获取byte数据流等
 		private UVCCamera mUVCCamera;
 
-		private MediaMuxerWrapper mMuxer;
+//		private MediaMuxerWrapper mMuxer;
 		private MediaVideoBufferEncoder mVideoEncoder;
+		private Mp4MediaMuxer mMuxer;
 
 		/** 构造方法
 		 *
@@ -536,82 +539,180 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		}
 
 		// 开始录制视频
-		public void handleStartRecording(String path) {
-			if (DEBUG) Log.v(TAG_THREAD, "handleStartRecording:");
-			try {
-				if ((mUVCCamera == null) || (mMuxer != null)) return;
-//				final MediaMuxerWrapper muxer = new MediaMuxerWrapper(".mp4");	// if you record audio only, ".m4a" is also OK.
-				final MediaMuxerWrapper muxer = new MediaMuxerWrapper(path);
-				MediaVideoBufferEncoder videoEncoder = null;
-				switch (mEncoderType) {
-				case 1:	// for video capturing using MediaVideoEncoder
-					// 开启视频编码线程
-					new MediaVideoEncoder(muxer,getWidth(), getHeight(), mMediaEncoderListener);
-					break;
-				case 2:	// for video capturing using MediaVideoBufferEncoder
-					videoEncoder = new MediaVideoBufferEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
-					break;
-				// case 0:	// for video capturing using MediaSurfaceEncoder
-				default:
-					new MediaSurfaceEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
-					break;
+//		public void handleStartRecording2(String path) {
+//			if (DEBUG) Log.v(TAG_THREAD, "handleStartRecording:");
+//			try {
+//				if ((mUVCCamera == null) || (mMuxer != null)) return;
+////				final MediaMuxerWrapper muxer = new MediaMuxerWrapper(".mp4");	// if you record audio only, ".m4a" is also OK.
+//				final MediaMuxerWrapper muxer = new MediaMuxerWrapper(path);
+//				MediaVideoBufferEncoder videoEncoder = null;
+//				switch (mEncoderType) {
+//				case 1:	// for video capturing using MediaVideoEncoder
+//					// 开启视频编码线程
+//					new MediaVideoEncoder(muxer,getWidth(), getHeight(), mMediaEncoderListener);
+//					break;
+//				case 2:	// for video capturing using MediaVideoBufferEncoder
+//					videoEncoder = new MediaVideoBufferEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
+//					break;
+//				// case 0:	// for video capturing using MediaSurfaceEncoder
+//				default:
+//					new MediaSurfaceEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
+//					break;
+//				}
+//				// 开启音频编码线程
+//				if (true) {
+//					// for audio capturing
+////					new MediaAudioEncoder(muxer, mMediaEncoderListener);
+//				}
+//				muxer.prepare();
+//				muxer.startRecording();
+//				if (videoEncoder != null) {
+//					mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+//				}
+//				synchronized (mSync) {
+//					mMuxer = muxer;
+//					mVideoEncoder = videoEncoder;
+//				}
+//				callOnStartRecording();
+//			} catch (final IOException e) {
+//				callOnError(e);
+//				Log.e(TAG, "startCapture:", e);
+//			}
+//		}
+
+		private AACEncodeConsumer mAacConsumer;
+		private H264EncodeConsumer mH264Consumer;
+
+		public void handleStartRecording(String path){
+			if ((mUVCCamera == null) || (mMuxer != null))
+				return;
+			// 获取USB Camera预览数据
+			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+			// 启动视频编码线程，type=1
+			mH264Consumer = new H264EncodeConsumer();
+			mH264Consumer.setOnH264EncodeResultListener(new H264EncodeConsumer.OnH264EncodeResultListener() {
+				@Override
+				public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
+					if(mListener != null){
+						mListener.onEncodeResult(data,offset,length,timestamp,1);
+					}
 				}
-				// 开启音频编码线程
-				if (true) {
-					// for audio capturing
-					new MediaAudioEncoder(muxer, mMediaEncoderListener);
+			});
+			mH264Consumer.start();
+			// 启动音频编码线程，type=0
+			mAacConsumer = new AACEncodeConsumer();
+			mAacConsumer.setOnAACEncodeResultListener(new AACEncodeConsumer.OnAACEncodeResultListener() {
+				@Override
+				public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
+					if(mListener != null){
+						mListener.onEncodeResult(data,offset,length,timestamp,0);
+					}
 				}
-				muxer.prepare();
-				muxer.startRecording();
-				if (videoEncoder != null) {
-					mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
-				}
-				synchronized (mSync) {
-					mMuxer = muxer;
-					mVideoEncoder = videoEncoder;
-				}
-				callOnStartRecording();
-			} catch (final IOException e) {
-				callOnError(e);
-				Log.e(TAG, "startCapture:", e);
+			});
+			mAacConsumer.start();
+			// 启动混合器
+			long millis = 30 * 60 * 1000;
+			mMuxer = new Mp4MediaMuxer(new File(FileUtils.ROOT_PATH, new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date())).toString(), millis);
+			if(mH264Consumer != null){
+				mH264Consumer.setTmpuMuxer(mMuxer);
 			}
+			if(mAacConsumer != null){
+				mAacConsumer.setTmpuMuxer(mMuxer);
+			}
+			callOnStartRecording();
+		}
+
+		public void handleStopRecording(){
+			// 停止混合器
+			if (mMuxer != null){
+				mMuxer.release();
+				mMuxer = null;
+				Log.i(TAG,TAG+"---->停止本地录制");
+			}
+			// 停止音视频编码线程
+			if(mH264Consumer != null){
+				mH264Consumer.setTmpuMuxer(null);
+			}
+			if(mAacConsumer != null){
+				mAacConsumer.setTmpuMuxer(null);
+			}
+			if(mH264Consumer != null){
+				mH264Consumer.exit();
+				try {
+					Thread t2 = mH264Consumer;
+					mH264Consumer = null;
+					if(t2 != null){
+						t2.interrupt();
+						t2.join();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			if(mAacConsumer != null){
+				mAacConsumer.exit();
+				try {
+					Thread t1 = mAacConsumer;
+					mAacConsumer = null;
+					if(t1 != null){
+						t1.interrupt();
+						t1.join();
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			// 停止捕获视频数据
+			if (mUVCCamera != null) {
+				mUVCCamera.stopCapture();
+				mUVCCamera.setFrameCallback(null, 0);
+			}
+			mWeakCameraView.get().setVideoEncoder(null);
+			// you should not wait here
+			callOnStopRecording();
 		}
 
 		// 停止录制视频
-		public void handleStopRecording() {
-			if (DEBUG) Log.v(TAG_THREAD, "handleStopRecording:mMuxer=" + mMuxer);
-			final MediaMuxerWrapper muxer;
-			synchronized (mSync) {
-				muxer = mMuxer;
-				mMuxer = null;
-				mVideoEncoder = null;
-				if (mUVCCamera != null) {
-					mUVCCamera.stopCapture();
-				}
-			}
-			try {
-				mWeakCameraView.get().setVideoEncoder(null);
-			} catch (final Exception e) {
-				// ignore
-			}
-			if (muxer != null) {
-				muxer.stopRecording();
-				mUVCCamera.setFrameCallback(null, 0);
-				// you should not wait here
-				callOnStopRecording();
-			}
-		}
+//		public void handleStopRecording2() {
+//			if (DEBUG) Log.v(TAG_THREAD, "handleStopRecording:mMuxer=" + mMuxer);
+//			final MediaMuxerWrapper muxer;
+//			synchronized (mSync) {
+//				muxer = mMuxer;
+//				mMuxer = null;
+//				mVideoEncoder = null;
+//				if (mUVCCamera != null) {
+//					mUVCCamera.stopCapture();
+//				}
+//			}
+//			try {
+//				mWeakCameraView.get().setVideoEncoder(null);
+//			} catch (final Exception e) {
+//				// ignore
+//			}
+//			if (muxer != null) {
+//				muxer.stopRecording();
+//				mUVCCamera.setFrameCallback(null, 0);
+//				// you should not wait here
+//				callOnStopRecording();
+//			}
+//		}
 
 		private final IFrameCallback mIFrameCallback = new IFrameCallback() {
 			@Override
 			public void onFrame(final ByteBuffer frame) {
-				final MediaVideoBufferEncoder videoEncoder;
-				synchronized (mSync) {
-					videoEncoder = mVideoEncoder;
-				}
-				if (videoEncoder != null) {
-					videoEncoder.frameAvailableSoon();
-					videoEncoder.encode(frame);
+//				final MediaVideoBufferEncoder videoEncoder;
+//				synchronized (mSync) {
+//					videoEncoder = mVideoEncoder;
+//				}
+//				if (videoEncoder != null) {
+//					videoEncoder.frameAvailableSoon();
+//					videoEncoder.encode(frame);
+//				}
+				int len = frame.capacity();
+				byte[] yuv = new byte[len];
+				frame.get(yuv);
+				if(mH264Consumer != null){
+					mH264Consumer.setRawYuv(yuv,640,480);
 				}
 			}
 		};

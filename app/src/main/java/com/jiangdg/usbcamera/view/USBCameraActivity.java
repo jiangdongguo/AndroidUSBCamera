@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.jiangdg.usbcamera.FileUtils;
 import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.USBCameraManager;
 import com.serenegiant.usb.CameraDialog;
@@ -19,6 +20,7 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -46,6 +48,8 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     private CameraViewInterface mUVCCameraView;
 
     private boolean isRequest;
+    private static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test1.h264";
+    private BufferedOutputStream outputStream;
 
     /**
      * USB设备事件监听器
@@ -164,15 +168,22 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                 if(! mUSBManager.isRecording()){
                     String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
                             +USBCameraManager.SUFFIX_MP4;
+                    FileUtils.createfile(FileUtils.ROOT_PATH+"test666.h264");
+
                     mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-
+                            // type = 0,aac格式音频流
+                            // type = 1,h264格式视频流
+                            if(type == 1){
+                                FileUtils.putFileStream(data,offset,length);
+                            }
                         }
                     });
 
                     mBtnRecord.setText("正在录制");
                 } else {
+                    FileUtils.releaseFile();
                     mUSBManager.stopRecording();
                     mBtnRecord.setText("开始录制");
                 }
