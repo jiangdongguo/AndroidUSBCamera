@@ -24,7 +24,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.0.3'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.1.0'
 } 
 ```  
 
@@ -128,7 +128,7 @@ if( !mUSBManager.isRecording()){
 mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
         @Override
         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-// type=0为视频流，type=1为音频流
+              // type=0为音频流，type=1为视频流
         });
 }
 // 停止录制
