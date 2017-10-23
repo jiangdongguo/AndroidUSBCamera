@@ -17,8 +17,6 @@ import com.serenegiant.usb.widget.CameraViewInterface;
 import java.io.File;
 import java.util.List;
 
-import static android.R.attr.filter;
-
 /**USB摄像头工具类
  *
  * Created by jiangdongguo on 2017/9/30.
@@ -30,8 +28,8 @@ public class USBCameraManager{
     public static final String SUFFIX_PNG = ".png";
     public static final String SUFFIX_MP4 = ".mp4";
     private static final String TAG = "USBCameraManager";
-    private static final int PREVIEW_WIDTH = 640;
-    private static final int PREVIEW_HEIGHT = 480;
+    private int previewWidth = 640;
+    private int previewHeight = 480;
     // 使用MediaVideoBufferEncoder
     private static final int ENCODER_TYPE = 2;
     //0为YUYV，1为MJPEG
@@ -44,6 +42,7 @@ public class USBCameraManager{
     private UVCCameraHandler mCameraHandler;
 
     private Context mContext;
+    private USBMonitor.UsbControlBlock mCtrlBlock;
 
     private USBCameraManager(){}
 
@@ -57,8 +56,12 @@ public class USBCameraManager{
     public interface OnMyDevConnectListener{
         void onAttachDev(UsbDevice device);
         void onDettachDev(UsbDevice device);
-        void onConnectDev(UsbDevice device);
+        void onConnectDev(UsbDevice device,boolean isConnected);
         void onDisConnectDev(UsbDevice device);
+    }
+
+    public interface OnPreviewListener{
+        void onPreviewResult(boolean isSuccess);
     }
 
     /** 初始化
@@ -73,6 +76,7 @@ public class USBCameraManager{
         mContext = activity.getApplicationContext();
 
         mUSBMonitor = new USBMonitor(activity.getApplicationContext(), new USBMonitor.OnDeviceConnectListener() {
+
             // 当检测到USB设备，被回调
             @Override
             public void onAttach(UsbDevice device) {
@@ -91,14 +95,19 @@ public class USBCameraManager{
 
             // 当连接到USB Camera时，被回调
             @Override
-            public void onConnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
-                if(listener != null){
-                    listener.onConnectDev(device);
-                }
+            public void onConnect(final UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
+                mCtrlBlock = ctrlBlock;
                 // 打开摄像头
                 openCamera(ctrlBlock);
                 // 开启预览
-                startPreview(cameraView);
+                startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+                    @Override
+                    public void onPreviewResult(boolean isConnected) {
+                        if(listener != null){
+                            listener.onConnectDev(device,isConnected);
+                        }
+                    }
+                });
             }
 
             // 当与USB Camera断开连接时，被回调
@@ -115,11 +124,37 @@ public class USBCameraManager{
             public void onCancel(UsbDevice device) {
             }
         });
-
-        // 设置长宽比
-        cameraView.setAspectRatio(PREVIEW_WIDTH / (float)PREVIEW_HEIGHT);
+        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
-                PREVIEW_WIDTH,PREVIEW_HEIGHT,PREVIEW_FORMAT);
+                previewWidth,previewHeight,PREVIEW_FORMAT);
+    }
+
+    // 切换分辨率
+    public void updateResolution(Activity activity, CameraViewInterface cameraView, int width, int height, final OnPreviewListener mPreviewListener){
+        this.previewWidth = width;
+        this.previewHeight = height;
+
+        // 关闭摄像头
+        closeCamera();
+        // 释放CameraHandler占用的相关资源
+        if(mCameraHandler != null){
+            mCameraHandler.release();
+            mCameraHandler = null;
+        }
+        // 重新初始化mCameraHandler
+        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
+        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
+                previewWidth,previewHeight,PREVIEW_FORMAT);
+        openCamera(mCtrlBlock);
+        // 开始预览
+        startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+            @Override
+            public void onPreviewResult(boolean result) {
+                if(mPreviewListener != null){
+                    mPreviewListener.onPreviewResult(result);
+                }
+            }
+        });
     }
 
     /**
@@ -247,10 +282,10 @@ public class USBCameraManager{
         }
     }
 
-    public void startPreview(CameraViewInterface cameraView) {
+    public void startPreview(CameraViewInterface cameraView,AbstractUVCCameraHandler.OnPreViewResultListener mPreviewListener) {
         SurfaceTexture st = cameraView.getSurfaceTexture();
         if(mCameraHandler != null){
-            mCameraHandler.startPreview(st);
+            mCameraHandler.startPreview(st,mPreviewListener);
         }
     }
 }

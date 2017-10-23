@@ -66,9 +66,14 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	public static OnEncodeResultListener mListener;
+	public static OnPreViewResultListener mPreviewListener;
 
 	public interface OnEncodeResultListener{
 		void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type);
+	}
+
+	public interface OnPreViewResultListener{
+		void onPreviewResult(boolean result);
 	}
 
 	private static final int MSG_OPEN = 0;
@@ -163,11 +168,13 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	// 开启Camera预览
-	protected void startPreview(final Object surface) {
+	protected void startPreview(final Object surface,OnPreViewResultListener listener) {
 		checkReleased();
 		if (!((surface instanceof SurfaceHolder) || (surface instanceof Surface) || (surface instanceof SurfaceTexture))) {
 			throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture");
 		}
+
+		this.mPreviewListener = listener;
 		sendMessage(obtainMessage(MSG_PREVIEW_START, surface));
 	}
 
@@ -210,7 +217,6 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	public void startRecording(final RecordParams params, OnEncodeResultListener listener) {
 		AbstractUVCCameraHandler.mListener = listener;
 		checkReleased();
-//		sendEmptyMessage(MSG_CAPTURE_START);
 		sendMessage(obtainMessage(MSG_CAPTURE_START, params));
 	}
 
@@ -503,14 +509,21 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			try {
 				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
-			} catch (final IllegalArgumentException e) {
-				try {
-					// fallback to YUV mode
-					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
-				} catch (final IllegalArgumentException e1) {
-					callOnError(e1);
-					return;
+				if(mPreviewListener != null){
+					mPreviewListener.onPreviewResult(true);
 				}
+			} catch (final IllegalArgumentException e) {
+				// 添加分辨率参数合法性检测
+				if(mPreviewListener != null){
+					mPreviewListener.onPreviewResult(false);
+				}
+//				try {
+//					// fallback to YUV mode
+//					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
+//				} catch (final IllegalArgumentException e1) {
+//					callOnError(e1);
+//					return;
+//				}
 			}
 			if (surface instanceof SurfaceHolder) {
 				mUVCCamera.setPreviewDisplay((SurfaceHolder)surface);
@@ -659,7 +672,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		}
 
 		private void startVideoRecord() {
-			mH264Consumer = new H264EncodeConsumer();
+			mH264Consumer = new H264EncodeConsumer(getWidth(),getHeight());
 			mH264Consumer.setOnH264EncodeResultListener(new H264EncodeConsumer.OnH264EncodeResultListener() {
 				@Override
 				public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {

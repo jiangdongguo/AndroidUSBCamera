@@ -60,6 +60,15 @@ public class H264EncodeConsumer extends Thread {
         this.listener = listener;
     }
 
+    public H264EncodeConsumer(){
+
+    }
+
+    public H264EncodeConsumer(int width,int height){
+        this.mWidth = width;
+        this.mHeight = height;
+    }
+
     public synchronized void setTmpuMuxer(Mp4MediaMuxer mMuxer){
         this.mMuxerRef =  new WeakReference<>(mMuxer);
         Mp4MediaMuxer muxer = mMuxerRef.get();
@@ -77,8 +86,11 @@ public class H264EncodeConsumer extends Thread {
         // 根据编码器支持转换颜色空间格式
         // 即 nv21 ---> YUV420sp(21)
         //    nv21 ---> YUV420p (19)
-        mWidth = width;
-        mHeight = height;
+        if(mWidth != width || mHeight != height){
+            mWidth = width;
+            mHeight = height;
+            return;
+        }
         try {
             if (lastPush == 0) {
                 lastPush = System.currentTimeMillis();
@@ -240,7 +252,7 @@ public class H264EncodeConsumer extends Thread {
             return;
         }
 
-        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, 640, 480);
+        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
@@ -283,7 +295,7 @@ public class H264EncodeConsumer extends Thread {
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
     private int calcBitRate() {
-        final int bitrate = (int)(BPP * FRAME_RATE * 640 * 480);
+        final int bitrate = (int)(BPP * FRAME_RATE * mWidth * mHeight);
         Log.i(TAG, String.format("bitrate=%5.2f[Mbps]", bitrate / 1024f / 1024f));
         return bitrate;
     }

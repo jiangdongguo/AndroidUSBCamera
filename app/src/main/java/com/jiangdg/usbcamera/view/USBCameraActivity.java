@@ -44,13 +44,13 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     public Button mBtnCapture;
     @BindView(R.id.btn_rec_video)
     public Button mBtnRecord;
+    @BindView(R.id.btn_update_resolution)
+    public Button mBtnUpdateResultion;
 
     private USBCameraManager mUSBManager;
     private CameraViewInterface mUVCCameraView;
 
     private boolean isRequest;
-    private static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test1.h264";
-    private BufferedOutputStream outputStream;
 
     /**
      * USB设备事件监听器
@@ -85,8 +85,10 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
 
         // 连接USB设备成功
         @Override
-        public void onConnectDev(UsbDevice device) {
-
+        public void onConnectDev(UsbDevice device,boolean isConnected) {
+            if(! isConnected) {
+                showShortMsg("连接失败，请检查分辨率参数是否正确");
+            }
         }
 
         // 与USB设备断开连接
@@ -115,10 +117,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         if(mUSBManager != null){
             mUSBManager.registerUSB();
         }
-        // 恢复Camera预览
-        if(mUVCCameraView != null){
-            mUVCCameraView.onResume();
-        }
     }
 
     @Override
@@ -128,16 +126,27 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         if(mUSBManager != null){
             mUSBManager.unregisterUSB();
         }
-        // 暂停Camera预览
-        if(mUVCCameraView != null){
-            mUVCCameraView.onPause();
-        }
     }
 
-    @OnClick({R.id.camera_view, R.id.btn_capture_pic, R.id.btn_rec_video})
+    @OnClick({R.id.camera_view, R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution})
     public void onViewClick(View view) {
         int vId = view.getId();
         switch (vId) {
+            // 切换分辨率
+            case R.id.btn_update_resolution:
+                if(mUSBManager == null)
+                    return;
+                mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManager.OnPreviewListener() {
+                    @Override
+                    public void onPreviewResult(boolean isSuccess) {
+                        if(! isSuccess) {
+                            showShortMsg("预览失败，不支持该分辨率");
+                        }else {
+                            showShortMsg("以切换到分辨率为320x240");
+                        }
+                    }
+                });
+                break;
             // 开启或关闭Camera
             case R.id.camera_view:
 //                if(mUSBManager != null){

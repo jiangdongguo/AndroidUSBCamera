@@ -35,4 +35,14 @@
         android:textSize="16sp"
         android:text="开始录制"/>
 
+    <Button
+        android:layout_above="@id/btn_rec_video"
+        android:id="@+id/btn_update_resolution"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:textSize="16sp"
+        android:text="切换分辨率为320x240"/>
+
 </RelativeLayout>
