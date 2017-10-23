@@ -24,7 +24,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.1.0'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.0'
 } 
 ```  
 
@@ -53,7 +53,7 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
                 }
             }
         }
-        
+
         // 拔出USB设备
         @Override
         public void onDettachDev(UsbDevice device) {
@@ -67,16 +67,18 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
 
         // 连接USB设备成功
         @Override
-        public void onConnectDev(UsbDevice device) {
-        
+        public void onConnectDev(UsbDevice device,boolean isConnected) {
+            if(! isConnected) {
+                showShortMsg("连接失败，请检查分辨率参数是否正确");
+            }
         }
 
         // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-          
+
         }
-    });
+    };
 ```  
 
 ### 3. 注册USB设备广播事件监听器，开始Camera预览  
@@ -135,7 +137,23 @@ mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResul
 mUSBManager.stopRecording();
 ```  
 
-### 7. 释放引擎资源
+### 7. 切换分辨率
+  update Resulotion  
+    
+```
+mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManager.OnPreviewListener() {
+             @Override
+             public void onPreviewResult(boolean isSuccess) {
+                    if(! isSuccess) {
+                            showShortMsg("预览失败，不支持该分辨率");
+                        }else {
+                            showShortMsg("以切换到分辨率为320x240");
+                        }
+                    }
+      });
+```  
+
+### 8. 释放引擎资源
   release resource  
     
 ```
