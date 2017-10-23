@@ -1,11 +1,10 @@
 # AndroidUSBCamera开源项目
 ### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和音视频数据采集。主要功能包括：  
-
-  ### (1)支持USB Camera设备检测，画面实时预览；  
-  ### (2)支持本地录制mp4格式视频,支持实时获取音视频数据流；  
-  ### (3)支持jpg格式图片抓拍；     
-  ### (4)支持多种分辨率切换；  
-  ### (5)支持屏蔽声音；  
+  ### (1)支持USB Camera设备检测，画面实时预览;  
+  ### (2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
+  ### (3)支持jpg格式图片抓拍;  
+  ### (4)支持多种分辨率切换;  
+  ### (5)支持屏蔽声音;  
   
 > AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
    (1)supports detecting USB Camera equipment, and previewing;  
