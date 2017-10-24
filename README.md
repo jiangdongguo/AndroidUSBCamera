@@ -173,7 +173,13 @@ if(mUSBManager != null){
        mUSBManager.release();
  }
 ```  
-
+### 9. 添加权限
+  add permissions  
+    
+```
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+``` 
 ### USBCameraManager  API (Other)
 ```
 (1) void requestPermission(int index)：请求授予开启USB摄像头权限；
