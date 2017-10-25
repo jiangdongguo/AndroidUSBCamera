@@ -89,15 +89,15 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             if(! isConnected) {
                 showShortMsg("连接失败，请检查分辨率参数是否正确");
             }
+            showShortMsg("连接成功");
         }
 
         // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-
+            showShortMsg("连接失败");
         }
     };
-    private FileOutputStream fos;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

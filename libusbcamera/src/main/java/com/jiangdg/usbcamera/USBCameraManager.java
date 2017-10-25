@@ -91,6 +91,8 @@ public class USBCameraManager{
                 if(listener != null){
                     listener.onDettachDev(device);
                 }
+                // 释放资源
+                release();
             }
 
             // 当连接到USB Camera时，被回调
@@ -116,8 +118,6 @@ public class USBCameraManager{
                 if(listener != null){
                     listener.onDisConnectDev(device);
                 }
-                // 关闭摄像头
-                closeCamera();
             }
 
             @Override
@@ -131,9 +131,12 @@ public class USBCameraManager{
 
     // 切换分辨率
     public void updateResolution(Activity activity, CameraViewInterface cameraView, int width, int height, final OnPreviewListener mPreviewListener){
+        // 如果分辨率无变化，则无需重启Camera
+        if(previewWidth == width && previewHeight == height){
+            return;
+        }
         this.previewWidth = width;
         this.previewHeight = height;
-
         // 关闭摄像头
         closeCamera();
         // 释放CameraHandler占用的相关资源
