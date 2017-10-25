@@ -14,7 +14,7 @@
    (5)support shielding sound;    
 
 ## 如何使用AndroidUSBCamera项目 
-![效果图](http://img.blog.csdn.net/20171025213631816?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvQW5kckV4cGVydA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center)
+![效果图](http://img.blog.csdn.net/20171025213631816)
 ### 1.添加依赖到本地工程
   To get a Git project into your build:  
   
