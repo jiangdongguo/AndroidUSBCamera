@@ -1,6 +1,17 @@
 # AndroidUSBCamera开源项目
-### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和视频数据采集。主要功能包括：USB Camera实时预览；本地录制mp4格式视频；png格式图片抓拍；实时获取编码后的音视频数据流。  
-> AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include: USB Camera real-time preview; local recording MP4 format video; PNG format photo capture; real-time access to encoded audio and video data stream.  
+### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和音视频数据采集。主要功能包括：  
+(1)支持USB Camera设备检测，画面实时预览;  
+(2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
+(3)支持jpg格式图片抓拍;  
+(4)支持多种分辨率切换;  
+(5)支持屏蔽声音;  
+  
+> AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
+   (1)supports detecting USB Camera equipment, and previewing;  
+   (2)supports recording MP4 format video, and acquiring real-time audio and video data;  
+   (3)supports capturing JPG format image;  
+   (4)supports switching resolution;  
+   (5)support shielding sound;    
 
 ## 如何使用AndroidUSBCamera项目  
 ### 1.添加依赖到本地工程
@@ -24,7 +35,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.1.0'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.0'
 } 
 ```  
 
@@ -53,7 +64,7 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
                 }
             }
         }
-        
+
         // 拔出USB设备
         @Override
         public void onDettachDev(UsbDevice device) {
@@ -67,16 +78,18 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
 
         // 连接USB设备成功
         @Override
-        public void onConnectDev(UsbDevice device) {
-        
+        public void onConnectDev(UsbDevice device,boolean isConnected) {
+            if(! isConnected) {
+                showShortMsg("连接失败，请检查分辨率参数是否正确");
+            }
         }
 
         // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-          
+
         }
-    });
+    };
 ```  
 
 ### 3. 注册USB设备广播事件监听器，开始Camera预览  
@@ -135,7 +148,23 @@ mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResul
 mUSBManager.stopRecording();
 ```  
 
-### 7. 释放引擎资源
+### 7. 切换分辨率
+  update Resulotion  
+    
+```
+mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManager.OnPreviewListener() {
+             @Override
+             public void onPreviewResult(boolean isSuccess) {
+                    if(! isSuccess) {
+                            showShortMsg("预览失败，不支持该分辨率");
+                        }else {
+                            showShortMsg("以切换到分辨率为320x240");
+                        }
+                    }
+      });
+```  
+
+### 8. 释放引擎资源
   release resource  
     
 ```
@@ -144,7 +173,13 @@ if(mUSBManager != null){
        mUSBManager.release();
  }
 ```  
-
+### 9. 添加权限
+  add permissions  
+    
+```
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+``` 
 ### USBCameraManager  API (Other)
 ```
 (1) void requestPermission(int index)：请求授予开启USB摄像头权限；
