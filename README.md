@@ -1,5 +1,5 @@
 # AndroidUSBCamera开源项目
-### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和音视频数据采集。主要功能包括：  
+### AndroidUSBCamera基于[saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera)开发，该项目对USB Camera(UVC设备)的使用和视频数据采集进行了高度封装，能够帮助开发者通过几个简单的API实现USB Camera设备的检测、连接、预览和音视频数据采集，最重要的是手机无需root，只需支持otg功能即可驱动。主要功能包括：  
 (1)支持USB Camera设备检测，画面实时预览;  
 (2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
 (3)支持jpg格式图片抓拍;  
@@ -13,7 +13,8 @@
    (4)supports switching resolution;  
    (5)support shielding sound;    
 
-## 如何使用AndroidUSBCamera项目  
+## 如何使用AndroidUSBCamera项目 
+![效果图](http://img.blog.csdn.net/20171025213631816)
 ### 1.添加依赖到本地工程
   To get a Git project into your build:  
   
@@ -35,7 +36,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.0'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.1'
 } 
 ```  
 
