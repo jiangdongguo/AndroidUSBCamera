@@ -16,6 +16,7 @@ import com.jiangdg.usbcamera.FileUtils;
 import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.USBCameraManager;
 import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -147,16 +149,19 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     }
                 });
                 break;
-            // 开启或关闭Camera
+            // 点击后自动对焦
             case R.id.camera_view:
-//                if(mUSBManager != null){
-//                    boolean isOpened = mUSBManager.isCameraOpened();
-//                    if(! isOpened){
-//                        CameraDialog.showDialog(USBCameraActivity.this);
-//                    }else {
-//                        mUSBManager.closeCamera();
-//                    }
-//                }
+                if(mUSBManager == null)
+                    return;
+//                mUSBManager.startCameraFoucs();
+//                showShortMsg("对焦相机");
+                List<Size> list = mUSBManager.getSupportedPreviewSizes();
+                StringBuilder sb = new StringBuilder();
+                for(Size size:list){
+                    sb.append(size.width+"x"+size.height);
+                    sb.append("\n");
+                }
+                showShortMsg(sb.toString());
                 break;
             case R.id.btn_capture_pic:
                 if(mUSBManager == null || ! mUSBManager.isCameraOpened()){

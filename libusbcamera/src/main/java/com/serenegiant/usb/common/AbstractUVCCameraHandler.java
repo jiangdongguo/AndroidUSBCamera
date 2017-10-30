@@ -18,6 +18,7 @@ import android.view.SurfaceHolder;
 
 import com.jiangdg.usbcamera.FileUtils;
 import com.serenegiant.usb.IFrameCallback;
+import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.usb.encoder.MediaAudioEncoder;
@@ -42,6 +43,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -53,6 +55,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 
 	private static final boolean DEBUG = true;	// TODO set false on release
 	private static final String TAG = "AbsUVCCameraHandler";
+
 
 	// 对外回调接口
 	public interface CameraCallback {
@@ -85,6 +88,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	private static final int MSG_CAPTURE_STOP = 6;
 	private static final int MSG_MEDIA_UPDATE = 7;
 	private static final int MSG_RELEASE = 9;
+	private static final int MSG_CAMERA_FOUCS = 10;
 	// 音频线程
 //	private static final int MSG_AUDIO_START = 10;
 //	private static final int MSG_AUDIO_STOP = 11;
@@ -225,6 +229,14 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		sendEmptyMessage(MSG_CAPTURE_STOP);
 	}
 
+	public void startCameraFoucs(){
+		sendEmptyMessage(MSG_CAMERA_FOUCS);
+	}
+
+	public List<Size> getSupportedPreviewSizes(){
+		return mWeakThread.get().getSupportedSizes();
+	}
+
 //	// 启动音频线程
 //	public void startAudioThread(){
 //		sendEmptyMessage(MSG_AUDIO_START);
@@ -349,6 +361,10 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				break;
 			case MSG_RELEASE:
 				thread.handleRelease();
+				break;
+			// 自动对焦
+			case MSG_CAMERA_FOUCS:
+				thread.handleCameraFoucs();
 				break;
 			// 音频线程
 //			case MSG_AUDIO_START:
@@ -818,6 +834,21 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				Looper.myLooper().quit();
 			}
 			if (DEBUG) Log.v(TAG_THREAD, "handleRelease:finished");
+		}
+
+		// 自动对焦
+		public void handleCameraFoucs() {
+			if (DEBUG) Log.v(TAG_THREAD, "handleStartPreview:");
+			if ((mUVCCamera == null) || !mIsPreviewing)
+				return;
+			mUVCCamera.setAutoFocus(true);
+		}
+
+		// 获取支持的分辨率
+		public List<Size> getSupportedSizes() {
+			if ((mUVCCamera == null) || !mIsPreviewing)
+				return null;
+			return mUVCCamera.getSupportedSizeList();
 		}
 
 		private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {

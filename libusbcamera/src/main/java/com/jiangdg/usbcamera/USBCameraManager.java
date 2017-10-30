@@ -8,6 +8,7 @@ import android.os.Environment;
 
 import com.jiangdg.libusbcamera.R;
 import com.serenegiant.usb.DeviceFilter;
+import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.common.UVCCameraHandler;
@@ -194,9 +195,7 @@ public class USBCameraManager{
         }
     }
 
-    /**
-     * 返回
-     * */
+    // 返回USB设备列表数量
     public int getUsbDeviceCount(){
         List<UsbDevice> devList = getUsbDeviceList();
         if(devList==null || devList.size() ==0){
@@ -205,6 +204,7 @@ public class USBCameraManager{
         return devList.size();
     }
 
+    // 返回USB设备列表
     private List<UsbDevice> getUsbDeviceList(){
         List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(mContext, R.xml.device_filter);
         if(mUSBMonitor == null || deviceFilters == null)
@@ -212,28 +212,28 @@ public class USBCameraManager{
         return mUSBMonitor.getDeviceList(deviceFilters.get(0));
     }
 
-    /**
-     * 抓拍照片
-     * */
+    // 拍照
     public void capturePicture(String savePath){
         if(mCameraHandler != null && mCameraHandler.isOpened()){
             mCameraHandler.captureStill(savePath);
         }
     }
 
+    // 开始录像
     public void startRecording(RecordParams params, AbstractUVCCameraHandler.OnEncodeResultListener listener){
         if(mCameraHandler != null && ! isRecording()){
             mCameraHandler.startRecording(params,listener);
         }
     }
 
-
+    // 停止录像
     public void stopRecording(){
         if(mCameraHandler != null && isRecording()){
             mCameraHandler.stopRecording();
         }
     }
 
+    // 是否正在录像
     public boolean isRecording(){
         if(mCameraHandler != null){
             return mCameraHandler.isRecording();
@@ -241,6 +241,7 @@ public class USBCameraManager{
         return false;
     }
 
+    // 是否打开Camera
     public boolean isCameraOpened(){
         if(mCameraHandler != null){
             return mCameraHandler.isOpened();
@@ -248,11 +249,7 @@ public class USBCameraManager{
         return false;
     }
 
-
-
-    /**
-     * 释放资源
-     * */
+    // 释放资源
     public void release(){
         // 关闭摄像头
         closeCamera();
@@ -272,23 +269,39 @@ public class USBCameraManager{
         return mUSBMonitor;
     }
 
-
+    // 关闭Camera
     public void closeCamera() {
         if(mCameraHandler != null){
             mCameraHandler.close();
         }
     }
 
+    // 打开Camera
     private void openCamera(USBMonitor.UsbControlBlock ctrlBlock) {
         if(mCameraHandler != null){
             mCameraHandler.open(ctrlBlock);
         }
     }
 
+    // 开始预览
     public void startPreview(CameraViewInterface cameraView,AbstractUVCCameraHandler.OnPreViewResultListener mPreviewListener) {
         SurfaceTexture st = cameraView.getSurfaceTexture();
         if(mCameraHandler != null){
             mCameraHandler.startPreview(st,mPreviewListener);
         }
+    }
+
+    // Camera对焦
+    public void startCameraFoucs(){
+        if(mCameraHandler != null){
+            mCameraHandler.startCameraFoucs();
+        }
+    }
+
+    // 获取Camera支持的所有分辨率参数
+    public List<Size> getSupportedPreviewSizes(){
+        if(mCameraHandler == null)
+            return null;
+        return mCameraHandler.getSupportedPreviewSizes();
     }
 }
