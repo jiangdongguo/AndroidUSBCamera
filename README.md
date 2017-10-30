@@ -3,7 +3,7 @@
 (1)支持USB Camera设备检测，画面实时预览;  
 (2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
 (3)支持jpg格式图片抓拍;  
-(4)支持获取camera支持的分辨率，和分辨率切换;  
+(4)支持获取camera支持的分辨率，和分辨率切换;  
 (5)支持屏蔽声音;  
 (6)支持相机自动对焦；  
 
@@ -11,7 +11,7 @@
    (1)supports detecting USB Camera equipment, and previewing;  
    (2)supports recording MP4 format video, and acquiring real-time audio and video data;  
    (3)supports capturing JPG format image;  
-   (4)supports getting supported preview sizes，and switching resolution;  
+   (4)supports getting supported preview sizes，and switching resolution;  
    (5)supports shielding sound;  
    (6)supports camera auto foucs;  
 
@@ -166,10 +166,10 @@ mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManage
                     }
       });  
  // 获取Camera支持得分辨率  
- List<Size> list = mUSBManager.getSupportedPreviewSizes();  
+ List<Size> list = mUSBManager.getSupportedPreviewSizes();
  // Camera自动对焦  
- mUSBManager.startCameraFoucs();  
-```  
+ mUSBManager.startCameraFoucs();
+```  
 
 ### 8. 释放引擎资源
   release resource  
