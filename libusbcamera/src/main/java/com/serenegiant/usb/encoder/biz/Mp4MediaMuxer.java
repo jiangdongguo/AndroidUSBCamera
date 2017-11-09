@@ -18,9 +18,9 @@ import java.nio.ByteBuffer;
 public class Mp4MediaMuxer {
     private static final boolean VERBOSE = false;
     private static final String TAG = Mp4MediaMuxer.class.getSimpleName();
-    private final String mFilePath;
+    private String mFilePath;
     private MediaMuxer mMuxer;
-    private final long durationMillis;
+    private long durationMillis;
     private int index = 0;
     private int mVideoTrackIndex = -1;
     private int mAudioTrackIndex = -1;
@@ -30,12 +30,17 @@ public class Mp4MediaMuxer {
 
     // 文件路径；文件时长
     public Mp4MediaMuxer(String path, long durationMillis) {
-        mFilePath = path;
+        String mFilePath;
         this.durationMillis = durationMillis;
+        if(durationMillis != 0) {
+            mFilePath = path + "-" + index++ + ".mp4";
+        }else{
+            mFilePath = path+".mp4";
+        }
         Object mux = null;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                mux = new MediaMuxer(path + "-" + index++ + ".mp4", MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+                mux = new MediaMuxer(mFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             }
         } catch (IOException e) {
             e.printStackTrace();

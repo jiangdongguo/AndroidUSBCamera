@@ -57,6 +57,7 @@ public class USBCameraManager{
     public interface OnMyDevConnectListener{
         void onAttachDev(UsbDevice device);
         void onDettachDev(UsbDevice device);
+
         void onConnectDev(UsbDevice device,boolean isConnected);
         void onDisConnectDev(UsbDevice device);
     }
@@ -213,9 +214,9 @@ public class USBCameraManager{
     }
 
     // 拍照
-    public void capturePicture(String savePath){
+    public void capturePicture(String savePath,AbstractUVCCameraHandler.OnCaptureListener listener){
         if(mCameraHandler != null && mCameraHandler.isOpened()){
-            mCameraHandler.captureStill(savePath);
+            mCameraHandler.captureStill(savePath,listener);
         }
     }
 

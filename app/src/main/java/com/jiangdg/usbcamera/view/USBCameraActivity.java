@@ -156,6 +156,10 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
 //                mUSBManager.startCameraFoucs();
 //                showShortMsg("对焦相机");
                 List<Size> list = mUSBManager.getSupportedPreviewSizes();
+                if(list == null) {
+                    return;
+                }
+
                 StringBuilder sb = new StringBuilder();
                 for(Size size:list){
                     sb.append(size.width+"x"+size.height);
@@ -170,9 +174,12 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                 }
                 String picPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
                         +USBCameraManager.SUFFIX_PNG;
-                mUSBManager.capturePicture(picPath);
-
-                showShortMsg("保存路径："+picPath);
+                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                    @Override
+                    public void onCaptureResult(String path) {
+                        showShortMsg("保存路径："+path);
+                    }
+                });
                 break;
             case R.id.btn_rec_video:
                 if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
@@ -195,6 +202,11 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                             if(type == 1){
                                 FileUtils.putFileStream(data,offset,length);
                             }
+                        }
+
+                        @Override
+                        public void onRecordResult(String videoPath) {
+                            showShortMsg(videoPath);
                         }
                     });
 

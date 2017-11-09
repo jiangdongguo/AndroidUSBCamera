@@ -9,6 +9,7 @@ public class RecordParams {
     private String recordPath;
     private int recordDuration;
     private boolean voiceClose;
+    private boolean isAutoSave;
 
     public boolean isVoiceClose() {
         return voiceClose;
@@ -32,5 +33,13 @@ public class RecordParams {
 
     public void setRecordDuration(int recordDuration) {
         this.recordDuration = recordDuration;
+    }
+
+    public boolean isAutoSave() {
+        return isAutoSave;
+    }
+
+    public void setAutoSave(boolean autoSave) {
+        isAutoSave = autoSave;
     }
 }

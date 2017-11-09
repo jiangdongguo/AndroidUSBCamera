@@ -70,13 +70,19 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 
 	public static OnEncodeResultListener mListener;
 	public static OnPreViewResultListener mPreviewListener;
+	public static OnCaptureListener mCaptureListener;
 
 	public interface OnEncodeResultListener{
 		void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type);
+		void onRecordResult(String videoPath);
 	}
 
 	public interface OnPreViewResultListener{
 		void onPreviewResult(boolean result);
+	}
+
+	public interface OnCaptureListener {
+		void onCaptureResult(String picPath);
 	}
 
 	private static final int MSG_OPEN = 0;
@@ -175,7 +181,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	protected void startPreview(final Object surface,OnPreViewResultListener listener) {
 		checkReleased();
 		if (!((surface instanceof SurfaceHolder) || (surface instanceof Surface) || (surface instanceof SurfaceTexture))) {
-			throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture");
+			throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture: "+surface);
 		}
 
 		this.mPreviewListener = listener;
@@ -212,7 +218,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		sendEmptyMessage(MSG_CAPTURE_STILL);
 	}
 
-	protected void captureStill(final String path) {
+	public void captureStill(final String path,AbstractUVCCameraHandler.OnCaptureListener listener) {
+		AbstractUVCCameraHandler.mCaptureListener = listener;
 		checkReleased();
 		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
 	}
@@ -401,6 +408,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //		private MediaMuxerWrapper mMuxer;
 		private MediaVideoBufferEncoder mVideoEncoder;
 		private Mp4MediaMuxer mMuxer;
+		private String videoPath;
 //		private boolean isAudioThreadStart;
 
 		/** 构造方法
@@ -583,18 +591,21 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				// the file name is came from current time.
 				// You should use extension name as same as CompressFormat when calling Bitmap#compress.
 				final File outputFile = TextUtils.isEmpty(path)
-					? MediaMuxerWrapper.getCaptureFile(Environment.DIRECTORY_DCIM, ".png")
+					? MediaMuxerWrapper.getCaptureFile(Environment.DIRECTORY_DCIM, ".jpg")
 					: new File(path);
 				final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outputFile));
 				try {
 					try {
-						bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+						bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
 						os.flush();
 						mHandler.sendMessage(mHandler.obtainMessage(MSG_MEDIA_UPDATE, outputFile.getPath()));
 					} catch (final IOException e) {
 					}
 				} finally {
 					os.close();
+				}
+				if(mCaptureListener != null) {
+					mCaptureListener.onCaptureResult(path);
 				}
 			} catch (final Exception e) {
 				callOnError(e);
@@ -654,6 +665,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			// 获取USB Camera预览数据
 			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
 			// 初始化混合器
+			videoPath = params.getRecordPath();
 			mMuxer = new Mp4MediaMuxer(params.getRecordPath(),
 					params.getRecordDuration() * 60 * 1000);
 
@@ -685,6 +697,10 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			mWeakCameraView.get().setVideoEncoder(null);
 			// you should not wait here
 			callOnStopRecording();
+			// 返回路径
+			if(mListener != null) {
+				mListener.onRecordResult(videoPath+".mp4");
+			}
 		}
 
 		private void startVideoRecord() {
