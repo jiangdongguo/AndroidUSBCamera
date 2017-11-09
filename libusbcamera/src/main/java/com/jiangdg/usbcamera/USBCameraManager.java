@@ -93,8 +93,6 @@ public class USBCameraManager{
                 if(listener != null){
                     listener.onDettachDev(device);
                 }
-                // 释放资源
-                release();
             }
 
             // 当连接到USB Camera时，被回调
