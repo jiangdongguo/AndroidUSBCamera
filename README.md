@@ -3,15 +3,17 @@
 (1)支持USB Camera设备检测，画面实时预览;  
 (2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
 (3)支持jpg格式图片抓拍;  
-(4)支持多种分辨率切换;  
+(4)支持获取camera支持的分辨率，和分辨率切换;  
 (5)支持屏蔽声音;  
-  
-> AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
+(6)支持相机自动对焦；  
+
+> AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
    (1)supports detecting USB Camera equipment, and previewing;  
    (2)supports recording MP4 format video, and acquiring real-time audio and video data;  
    (3)supports capturing JPG format image;  
-   (4)supports switching resolution;  
-   (5)support shielding sound;    
+   (4)supports getting supported preview sizes，and switching resolution;  
+   (5)supports shielding sound;  
+   (6)supports camera auto foucs;  
 
 ## 如何使用AndroidUSBCamera项目 
 ![效果图](http://img.blog.csdn.net/20171025213631816)
@@ -36,7 +38,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.1'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.2'
 } 
 ```  
 
@@ -162,7 +164,11 @@ mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManage
                             showShortMsg("以切换到分辨率为320x240");
                         }
                     }
-      });
+      });  
+ // 获取Camera支持得分辨率  
+ List<Size> list = mUSBManager.getSupportedPreviewSizes();
+ // Camera自动对焦  
+ mUSBManager.startCameraFoucs();
 ```  
 
 ### 8. 释放引擎资源
