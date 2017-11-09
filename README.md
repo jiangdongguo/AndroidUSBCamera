@@ -38,7 +38,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.2'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.3'
 } 
 ```  
 
