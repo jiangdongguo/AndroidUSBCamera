@@ -27,10 +27,12 @@ public class Mp4MediaMuxer {
     private long mBeginMillis;
     private MediaFormat mVideoFormat;
     private MediaFormat mAudioFormat;
+    private boolean isVoiceClose;
 
     // 文件路径；文件时长
-    public Mp4MediaMuxer(String path, long durationMillis) {
+    public Mp4MediaMuxer(String path, long durationMillis,boolean isVoiceClose) {
         String mFilePath;
+        this.isVoiceClose = isVoiceClose;
         this.durationMillis = durationMillis;
         if(durationMillis != 0) {
             mFilePath = path + "-" + index++ + ".mp4";
@@ -49,11 +51,9 @@ public class Mp4MediaMuxer {
         }
     }
 
-
-
     public synchronized void addTrack(MediaFormat format, boolean isVideo) {
         // now that we have the Magic Goodies, start the muxer
-        if (mAudioTrackIndex != -1 && mVideoTrackIndex != -1)
+        if ((!isVoiceClose && mAudioTrackIndex != -1) && mVideoTrackIndex != -1)
             throw new RuntimeException("already add all tracks");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -63,7 +63,9 @@ public class Mp4MediaMuxer {
             if (isVideo) {
                 mVideoFormat = format;
                 mVideoTrackIndex = track;
-                if (mAudioTrackIndex != -1) {
+                // 当音频轨道添加
+                // 或者开启静音就start
+                if (isVoiceClose || mAudioTrackIndex != -1) {
                     if (VERBOSE)
                         Log.i(TAG, "both audio and video added,and muxer is started");
                     mMuxer.start();
@@ -81,7 +83,7 @@ public class Mp4MediaMuxer {
     }
 
     public synchronized void pumpStream(ByteBuffer outputBuffer, MediaCodec.BufferInfo bufferInfo, boolean isVideo) {
-        if (mAudioTrackIndex == -1 || mVideoTrackIndex == -1) {
+        if ((!isVoiceClose && mAudioTrackIndex == -1) || mVideoTrackIndex == -1) {
 //            Log.i(TAG, String.format("pumpStream [%s] but muxer is not start.ignore..", isVideo ? "video" : "audio"));
             return;
         }
@@ -131,7 +133,8 @@ public class Mp4MediaMuxer {
     public synchronized void release() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             if (mMuxer != null) {
-                if (mAudioTrackIndex != -1 && mVideoTrackIndex != -1) {
+                //(!isVoiceClose&&mAudioTrackIndex != -1)
+                if (mVideoTrackIndex  != -1) {
                     if (VERBOSE)
                         Log.i(TAG, String.format("muxer is started. now it will be stoped."));
                     try {

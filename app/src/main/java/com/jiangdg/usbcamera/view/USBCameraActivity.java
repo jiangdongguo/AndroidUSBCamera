@@ -48,6 +48,8 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     public Button mBtnRecord;
     @BindView(R.id.btn_update_resolution)
     public Button mBtnUpdateResultion;
+    @BindView(R.id.btn_restart_camera)
+    Button mBtnRestartCamera;
 
     private USBCameraManager mUSBManager;
     private CameraViewInterface mUVCCameraView;
@@ -130,10 +132,23 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         }
     }
 
-    @OnClick({R.id.camera_view, R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution})
+    @OnClick({R.id.camera_view, R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution,R.id.btn_restart_camera})
     public void onViewClick(View view) {
         int vId = view.getId();
         switch (vId) {
+            // 重启Camera
+            case R.id.btn_restart_camera:
+                if(mUSBManager == null)
+                    return;
+                mUSBManager.restartUSBCamera(USBCameraActivity.this, mUVCCameraView, new USBCameraManager.OnPreviewListener() {
+                    @Override
+                    public void onPreviewResult(boolean isSuccess) {
+                        if(isSuccess) {
+                            showShortMsg("重启成功");
+                        }
+                    }
+                });
+                break;
             // 切换分辨率
             case R.id.btn_update_resolution:
                 if(mUSBManager == null)

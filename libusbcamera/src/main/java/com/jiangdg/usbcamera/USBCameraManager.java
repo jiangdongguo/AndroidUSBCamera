@@ -93,8 +93,6 @@ public class USBCameraManager{
                 if(listener != null){
                     listener.onDettachDev(device);
                 }
-                // 释放资源
-                release();
             }
 
             // 当连接到USB Camera时，被回调
@@ -161,6 +159,31 @@ public class USBCameraManager{
             }
         });
     }
+
+    public void restartUSBCamera(Activity activity, CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
+        // 关闭摄像头
+        closeCamera();
+        // 释放CameraHandler占用的相关资源
+        if(mCameraHandler != null){
+            mCameraHandler.release();
+            mCameraHandler = null;
+        }
+        // 重新初始化mCameraHandler
+        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
+        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
+                previewWidth,previewHeight,PREVIEW_FORMAT);
+        openCamera(mCtrlBlock);
+        // 开始预览
+        startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+            @Override
+            public void onPreviewResult(boolean result) {
+                if(mPreviewListener != null){
+                    mPreviewListener.onPreviewResult(result);
+                }
+            }
+        });
+    }
+
 
     /**
      * 注册检测USB设备广播接收器

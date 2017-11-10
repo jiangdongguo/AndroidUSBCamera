@@ -45,4 +45,14 @@
         android:textSize="16sp"
         android:text="切换分辨率为320x240"/>
 
+    <Button
+        android:layout_above="@id/btn_update_resolution"
+        android:id="@+id/btn_restart_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:textSize="16sp"
+        android:text="重启摄像头"/>
+
 </RelativeLayout>
