@@ -4,7 +4,7 @@
 (2)支持本地录制mp4格式视频,支持实时获取音视频数据流;  
 (3)支持jpg格式图片抓拍;  
 (4)支持获取camera支持的分辨率，和分辨率切换;  
-(5)支持屏蔽声音;  
+(5)支持屏蔽声音,重启Camera; 
 (6)支持相机自动对焦；  
 
 > AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
@@ -38,7 +38,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.3'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.5'
 } 
 ```  
 
