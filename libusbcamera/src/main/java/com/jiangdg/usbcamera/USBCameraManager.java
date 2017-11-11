@@ -105,7 +105,9 @@ public class USBCameraManager{
                 startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
                     @Override
                     public void onPreviewResult(boolean isConnected) {
-
+                        if(listener != null){
+                            listener.onConnectDev(device,isConnected);
+                        }
                     }
                 });
             }
