@@ -130,15 +130,13 @@ public class USBCameraManager{
     public void createUVCCamera(CameraViewInterface cameraView) {
         if(cameraView == null)
             throw new NullPointerException("CameraViewInterface cannot be null!");
-        this.cameraView = cameraView;
-        // 关闭摄像头
-        closeCamera();
         // 释放CameraHandler占用的相关资源
         if(mCameraHandler != null){
             mCameraHandler.release();
             mCameraHandler = null;
         }
         // 重新初始化mCameraHandler
+        this.cameraView = cameraView;
         cameraView.setAspectRatio(previewWidth / (float)previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity,cameraView,ENCODER_TYPE,
                 previewWidth,previewHeight,PREVIEW_FORMAT);
@@ -152,8 +150,6 @@ public class USBCameraManager{
         }
         this.previewWidth = width;
         this.previewHeight = height;
-        // 关闭摄像头
-        closeCamera();
         // 释放CameraHandler占用的相关资源
         if(mCameraHandler != null){
             mCameraHandler.release();
@@ -176,17 +172,6 @@ public class USBCameraManager{
     }
 
     public void restartUSBCamera(CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
-//        // 关闭摄像头
-//        closeCamera();
-//        // 释放CameraHandler占用的相关资源
-//        if(mCameraHandler != null){
-//            mCameraHandler.release();
-//            mCameraHandler = null;
-//        }
-//        // 重新初始化mCameraHandler
-//        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
-//        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
-//                previewWidth,previewHeight,PREVIEW_FORMAT);
         // 创建Camera管理线程
         createUVCCamera(cameraView);
         // 创建Camera
@@ -293,8 +278,6 @@ public class USBCameraManager{
 
     // 释放资源
     public void release(){
-        // 关闭摄像头
-        closeCamera();
         //释放CameraHandler占用的相关资源
         if(mCameraHandler != null){
             mCameraHandler.release();
@@ -314,7 +297,7 @@ public class USBCameraManager{
     // 关闭Camera
     public void closeCamera() {
         if(mCameraHandler != null){
-            mCameraHandler.close();
+            mCameraHandler.release();
         }
     }
 

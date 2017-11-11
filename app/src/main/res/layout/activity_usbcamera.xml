@@ -14,6 +14,13 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"/>
 
+    <com.serenegiant.usb.widget.UVCCameraTextureView
+        android:id="@+id/camera_view2"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"/>
+
     <Button
         android:id="@+id/btn_capture_pic"
         android:layout_width="match_parent"

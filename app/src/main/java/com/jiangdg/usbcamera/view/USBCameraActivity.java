@@ -42,6 +42,8 @@ import butterknife.OnClick;
 public class USBCameraActivity extends AppCompatActivity implements CameraDialog.CameraDialogParent{
     @BindView(R.id.camera_view)
     public View mTextureView;
+    @BindView(R.id.camera_view2)
+    public View mTextureView2;
     @BindView(R.id.btn_capture_pic)
     public Button mBtnCapture;
     @BindView(R.id.btn_rec_video)
@@ -140,7 +142,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             case R.id.btn_restart_camera:
                 if(mUSBManager == null)
                     return;
-                mUSBManager.restartUSBCamera(mUVCCameraView,new USBCameraManager.OnPreviewListener() {
+                mUSBManager.restartUSBCamera((CameraViewInterface) mTextureView2,new USBCameraManager.OnPreviewListener() {
                     @Override
                     public void onPreviewResult(boolean isSuccess) {
                         if(isSuccess) {
