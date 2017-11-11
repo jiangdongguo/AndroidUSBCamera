@@ -41,9 +41,11 @@ public class USBCameraManager{
     private USBMonitor mUSBMonitor;
     // Camera业务逻辑处理
     private UVCCameraHandler mCameraHandler;
+    // 上下文
+    private Activity mActivity;
 
-    private Context mContext;
     private USBMonitor.UsbControlBlock mCtrlBlock;
+    private CameraViewInterface cameraView;
 
     private USBCameraManager(){}
 
@@ -72,10 +74,8 @@ public class USBCameraManager{
      *  cameraView Camera要渲染的Surface
      *  listener USB设备检测与连接状态事件监听器
      * */
-    public void init(Activity activity, final CameraViewInterface cameraView, final OnMyDevConnectListener listener){
-        if(cameraView == null)
-            throw new NullPointerException("CameraViewInterface cannot be null!");
-        mContext = activity.getApplicationContext();
+    public void initUSBMonitor(Activity activity,final OnMyDevConnectListener listener){
+        this.mActivity = activity;
 
         mUSBMonitor = new USBMonitor(activity.getApplicationContext(), new USBMonitor.OnDeviceConnectListener() {
 
@@ -105,9 +105,7 @@ public class USBCameraManager{
                 startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
                     @Override
                     public void onPreviewResult(boolean isConnected) {
-                        if(listener != null){
-                            listener.onConnectDev(device,isConnected);
-                        }
+
                     }
                 });
             }
@@ -124,13 +122,28 @@ public class USBCameraManager{
             public void onCancel(UsbDevice device) {
             }
         });
+
+    }
+
+    public void createUVCCamera(CameraViewInterface cameraView) {
+        if(cameraView == null)
+            throw new NullPointerException("CameraViewInterface cannot be null!");
+        this.cameraView = cameraView;
+        // 关闭摄像头
+        closeCamera();
+        // 释放CameraHandler占用的相关资源
+        if(mCameraHandler != null){
+            mCameraHandler.release();
+            mCameraHandler = null;
+        }
+        // 重新初始化mCameraHandler
         cameraView.setAspectRatio(previewWidth / (float)previewHeight);
-        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
+        mCameraHandler = UVCCameraHandler.createHandler(mActivity,cameraView,ENCODER_TYPE,
                 previewWidth,previewHeight,PREVIEW_FORMAT);
     }
 
     // 切换分辨率
-    public void updateResolution(Activity activity, CameraViewInterface cameraView, int width, int height, final OnPreviewListener mPreviewListener){
+    public void updateResolution(int width, int height, final OnPreviewListener mPreviewListener){
         // 如果分辨率无变化，则无需重启Camera
         if(previewWidth == width && previewHeight == height){
             return;
@@ -146,7 +159,7 @@ public class USBCameraManager{
         }
         // 重新初始化mCameraHandler
         cameraView.setAspectRatio(previewWidth / (float)previewHeight);
-        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
+        mCameraHandler = UVCCameraHandler.createHandler(mActivity,cameraView,ENCODER_TYPE,
                 previewWidth,previewHeight,PREVIEW_FORMAT);
         openCamera(mCtrlBlock);
         // 开始预览
@@ -160,18 +173,21 @@ public class USBCameraManager{
         });
     }
 
-    public void restartUSBCamera(Activity activity, CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
-        // 关闭摄像头
-        closeCamera();
-        // 释放CameraHandler占用的相关资源
-        if(mCameraHandler != null){
-            mCameraHandler.release();
-            mCameraHandler = null;
-        }
-        // 重新初始化mCameraHandler
-        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
-        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
-                previewWidth,previewHeight,PREVIEW_FORMAT);
+    public void restartUSBCamera(CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
+//        // 关闭摄像头
+//        closeCamera();
+//        // 释放CameraHandler占用的相关资源
+//        if(mCameraHandler != null){
+//            mCameraHandler.release();
+//            mCameraHandler = null;
+//        }
+//        // 重新初始化mCameraHandler
+//        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
+//        mCameraHandler = UVCCameraHandler.createHandler(activity,cameraView,ENCODER_TYPE,
+//                previewWidth,previewHeight,PREVIEW_FORMAT);
+        // 创建Camera管理线程
+        createUVCCamera(cameraView);
+        // 创建Camera
         openCamera(mCtrlBlock);
         // 开始预览
         startPreview(cameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
@@ -230,7 +246,7 @@ public class USBCameraManager{
 
     // 返回USB设备列表
     private List<UsbDevice> getUsbDeviceList(){
-        List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(mContext, R.xml.device_filter);
+        List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(mActivity.getApplicationContext(), R.xml.device_filter);
         if(mUSBMonitor == null || deviceFilters == null)
             return null;
         return mUSBMonitor.getDeviceList(deviceFilters.get(0));

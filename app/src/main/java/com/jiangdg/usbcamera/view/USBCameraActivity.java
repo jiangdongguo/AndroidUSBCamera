@@ -93,7 +93,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             if(! isConnected) {
                 showShortMsg("连接失败，请检查分辨率参数是否正确");
             }
-            showShortMsg("连接成功");
         }
 
         // 与USB设备断开连接
@@ -108,10 +107,11 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);
         ButterKnife.bind(this);
+        mUVCCameraView = (CameraViewInterface) mTextureView;
         // 初始化引擎
         mUSBManager = USBCameraManager.getInstance();
-        mUVCCameraView = (CameraViewInterface) mTextureView;
-        mUSBManager.init(this, mUVCCameraView, listener);
+        mUSBManager.initUSBMonitor(this,listener);
+        mUSBManager.createUVCCamera(mUVCCameraView);
     }
 
     @Override
@@ -140,7 +140,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             case R.id.btn_restart_camera:
                 if(mUSBManager == null)
                     return;
-                mUSBManager.restartUSBCamera(USBCameraActivity.this, mUVCCameraView, new USBCameraManager.OnPreviewListener() {
+                mUSBManager.restartUSBCamera(mUVCCameraView,new USBCameraManager.OnPreviewListener() {
                     @Override
                     public void onPreviewResult(boolean isSuccess) {
                         if(isSuccess) {
@@ -153,7 +153,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             case R.id.btn_update_resolution:
                 if(mUSBManager == null)
                     return;
-                mUSBManager.updateResolution(this, mUVCCameraView, 320, 240, new USBCameraManager.OnPreviewListener() {
+                mUSBManager.updateResolution(320, 240, new USBCameraManager.OnPreviewListener() {
                     @Override
                     public void onPreviewResult(boolean isSuccess) {
                         if(! isSuccess) {
