@@ -176,7 +176,7 @@ public class USBCameraManager{
 
     public void restartUSBCamera(CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
         if(mCtrlBlock == null || cameraView == null)
-            new Throwable("mCtrlBlock or cameraView is null---jiangdongguo");
+           throw new NullPointerException("mCtrlBlock or cameraView is null,please connected to camera");
         // 创建Camera管理线程
         createUVCCamera(cameraView);
         // 创建Camera
@@ -253,7 +253,7 @@ public class USBCameraManager{
     }
 
     // 返回USB设备列表
-    private List<UsbDevice> getUsbDeviceList(){
+    public List<UsbDevice> getUsbDeviceList(){
         List<DeviceFilter> deviceFilters = DeviceFilter.getDeviceFilters(mActivity.getApplicationContext(), R.xml.device_filter);
         if(mUSBMonitor == null || deviceFilters == null)
             return null;
