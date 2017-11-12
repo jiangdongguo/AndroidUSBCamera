@@ -10,6 +10,7 @@ import com.jiangdg.libusbcamera.R;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
+import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.common.UVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
@@ -31,6 +32,8 @@ public class USBCameraManager{
     private static final String TAG = "USBCameraManager";
     private int previewWidth = 640;
     private int previewHeight = 480;
+    public static int MODE_BRIGHTNESS = UVCCamera.PU_BRIGHTNESS;
+    public static int MODE_CONTRAST = UVCCamera.PU_CONTRAST;
     // 使用MediaVideoBufferEncoder
     private static final int ENCODER_TYPE = 2;
     //0为YUYV，1为MJPEG
@@ -172,6 +175,8 @@ public class USBCameraManager{
     }
 
     public void restartUSBCamera(CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
+        if(mCtrlBlock == null || cameraView == null)
+            new Throwable("mCtrlBlock or cameraView is null---jiangdongguo");
         // 创建Camera管理线程
         createUVCCamera(cameraView);
         // 创建Camera
@@ -204,6 +209,22 @@ public class USBCameraManager{
         if(mUSBMonitor != null){
             mUSBMonitor.unregister();
         }
+    }
+
+    public boolean checkSupportFlag(final int flag) {
+        return mCameraHandler != null && mCameraHandler.checkSupportFlag(flag);
+    }
+
+    public int getModelValue(final int flag) {
+        return mCameraHandler != null ? mCameraHandler.getValue(flag) : 0;
+    }
+
+    public int setModelValue(final int flag, final int value) {
+        return mCameraHandler != null ? mCameraHandler.setValue(flag, value) : 0;
+    }
+
+    public int resetModelValue(final int flag) {
+        return mCameraHandler != null ? mCameraHandler.resetValue(flag) : 0;
     }
 
     /**
