@@ -1,25 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="#ff000000"
     tools:context=".view.USBCameraActivity"
     tools:ignore="MergeRootFrame">
+
+    <Button
+        android:id="@+id/btn_contrast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="对比度调整" />
+
+    <Button
+        android:id="@+id/btn_brightness"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:text="亮度调整" />
 
     <com.serenegiant.usb.widget.UVCCameraTextureView
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
-
-    <com.serenegiant.usb.widget.UVCCameraTextureView
-        android:id="@+id/camera_view2"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"/>
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" />
 
     <Button
         android:id="@+id/btn_capture_pic"
@@ -27,39 +36,39 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
-        android:layout_marginRight="10dp"
         android:layout_marginLeft="10dp"
-        android:textSize="16sp"
-        android:text="抓拍"/>
+        android:layout_marginRight="10dp"
+        android:text="抓拍"
+        android:textSize="16sp" />
 
     <Button
-        android:layout_above="@id/btn_capture_pic"
         android:id="@+id/btn_rec_video"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
+        android:layout_above="@id/btn_capture_pic"
         android:layout_marginLeft="10dp"
-        android:textSize="16sp"
-        android:text="开始录制"/>
+        android:layout_marginRight="10dp"
+        android:text="开始录制"
+        android:textSize="16sp" />
 
     <Button
-        android:layout_above="@id/btn_rec_video"
         android:id="@+id/btn_update_resolution"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
+        android:layout_above="@id/btn_rec_video"
         android:layout_marginLeft="10dp"
-        android:textSize="16sp"
-        android:text="切换分辨率为320x240"/>
+        android:layout_marginRight="10dp"
+        android:text="切换分辨率为320x240"
+        android:textSize="16sp" />
 
     <Button
-        android:layout_above="@id/btn_update_resolution"
         android:id="@+id/btn_restart_camera"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
+        android:layout_above="@id/btn_update_resolution"
         android:layout_marginLeft="10dp"
-        android:textSize="16sp"
-        android:text="重启摄像头"/>
+        android:layout_marginRight="10dp"
+        android:text="重启摄像头"
+        android:textSize="16sp" />
 
 </RelativeLayout>

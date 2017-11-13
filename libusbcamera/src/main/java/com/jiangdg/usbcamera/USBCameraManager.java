@@ -59,6 +59,12 @@ public class USBCameraManager{
         return mUsbCamManager;
     }
 
+    public void closeCamera() {
+        if(mCameraHandler != null){
+            mCameraHandler.close();
+        }
+    }
+
     public interface OnMyDevConnectListener{
         void onAttachDev(UsbDevice device);
         void onDettachDev(UsbDevice device);
@@ -127,12 +133,12 @@ public class USBCameraManager{
             public void onCancel(UsbDevice device) {
             }
         });
-
     }
 
     public void createUVCCamera(CameraViewInterface cameraView) {
         if(cameraView == null)
             throw new NullPointerException("CameraViewInterface cannot be null!");
+
         // 释放CameraHandler占用的相关资源
         if(mCameraHandler != null){
             mCameraHandler.release();
@@ -177,6 +183,7 @@ public class USBCameraManager{
     public void restartUSBCamera(CameraViewInterface cameraView,final OnPreviewListener mPreviewListener){
         if(mCtrlBlock == null || cameraView == null)
            throw new NullPointerException("mCtrlBlock or cameraView is null,please connected to camera");
+
         // 创建Camera管理线程
         createUVCCamera(cameraView);
         // 创建Camera
@@ -315,12 +322,6 @@ public class USBCameraManager{
         return mUSBMonitor;
     }
 
-    // 关闭Camera
-    public void closeCamera() {
-        if(mCameraHandler != null){
-            mCameraHandler.release();
-        }
-    }
 
     // 打开Camera
     private void openCamera(USBMonitor.UsbControlBlock ctrlBlock) {

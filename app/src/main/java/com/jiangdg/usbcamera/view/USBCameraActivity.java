@@ -6,6 +6,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -42,8 +44,6 @@ import butterknife.OnClick;
 public class USBCameraActivity extends AppCompatActivity implements CameraDialog.CameraDialogParent{
     @BindView(R.id.camera_view)
     public View mTextureView;
-    @BindView(R.id.camera_view2)
-    public View mTextureView2;
     @BindView(R.id.btn_capture_pic)
     public Button mBtnCapture;
     @BindView(R.id.btn_rec_video)
@@ -52,8 +52,13 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     public Button mBtnUpdateResultion;
     @BindView(R.id.btn_restart_camera)
     Button mBtnRestartCamera;
+    @BindView(R.id.btn_contrast)
+    Button mBtnContrast;
+    @BindView(R.id.btn_brightness)
+    Button mBtnBrightness;
 
     private USBCameraManager mUSBManager;
+
     private CameraViewInterface mUVCCameraView;
 
     private boolean isRequest;
@@ -116,6 +121,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         mUSBManager.createUVCCamera(mUVCCameraView);
     }
 
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -134,26 +140,31 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         }
     }
 
-    @OnClick({R.id.camera_view, R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution,R.id.btn_restart_camera})
+    @OnClick({ R.id.btn_contrast,R.id.btn_brightness,R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution,R.id.btn_restart_camera})
     public void onViewClick(View view) {
         int vId = view.getId();
         switch (vId) {
+            // 对比度
+            case R.id.btn_contrast:
+                if(mUSBManager == null || !mUSBManager.isCameraOpened())
+                    return;
+                int contrast = mUSBManager.getModelValue(USBCameraManager.MODE_CONTRAST);
+                mUSBManager.setModelValue(USBCameraManager.MODE_CONTRAST,contrast++);
+                break;
+            // 亮度
+            case R.id.btn_brightness:
+                if(mUSBManager == null || !mUSBManager.isCameraOpened())
+                    return;
+                int brightness = mUSBManager.getModelValue(USBCameraManager.MODE_BRIGHTNESS);
+                mUSBManager.setModelValue(USBCameraManager.MODE_BRIGHTNESS,brightness++);
+                break;
             // 重启Camera
             case R.id.btn_restart_camera:
-                if(mUSBManager == null)
-                    return;
-                mUSBManager.restartUSBCamera((CameraViewInterface) mTextureView2,new USBCameraManager.OnPreviewListener() {
-                    @Override
-                    public void onPreviewResult(boolean isSuccess) {
-                        if(isSuccess) {
-                            showShortMsg("重启成功");
-                        }
-                    }
-                });
+
                 break;
             // 切换分辨率
             case R.id.btn_update_resolution:
-                if(mUSBManager == null)
+                if(mUSBManager == null || !mUSBManager.isCameraOpened())
                     return;
                 mUSBManager.updateResolution(320, 240, new USBCameraManager.OnPreviewListener() {
                     @Override
@@ -240,7 +251,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // 释放资源
         if(mUSBManager != null){
             mUSBManager.release();
         }
@@ -260,5 +270,9 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         if(canceled){
             showShortMsg("取消操作");
         }
+    }
+
+    public boolean isCameraOpened() {
+        return mUSBManager.isCameraOpened();
     }
 }

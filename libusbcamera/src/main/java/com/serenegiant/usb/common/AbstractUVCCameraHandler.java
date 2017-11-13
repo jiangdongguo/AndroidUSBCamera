@@ -814,7 +814,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				byte[] yuv = new byte[len];
 				frame.get(yuv);
 				if(mH264Consumer != null){
-					mH264Consumer.setRawYuv(yuv,640,480);
+					// 修改分辨率参数
+					mH264Consumer.setRawYuv(yuv,mWidth,mHeight);
 				}
 			}
 		};
