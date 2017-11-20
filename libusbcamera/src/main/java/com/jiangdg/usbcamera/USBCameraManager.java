@@ -338,6 +338,13 @@ public class USBCameraManager{
         }
     }
 
+    // 停止预览
+    public void stopPreview() {
+        if(mCameraHandler != null){
+            mCameraHandler.stopPreview();
+        }
+    }
+
     // Camera对焦
     public void startCameraFoucs(){
         if(mCameraHandler != null){

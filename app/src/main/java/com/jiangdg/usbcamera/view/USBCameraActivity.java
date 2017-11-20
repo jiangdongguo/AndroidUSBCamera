@@ -62,6 +62,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     private CameraViewInterface mUVCCameraView;
 
     private boolean isRequest;
+    private boolean isPreview;
 
     /**
      * USB设备事件监听器
@@ -99,6 +100,9 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         public void onConnectDev(UsbDevice device,boolean isConnected) {
             if(! isConnected) {
                 showShortMsg("连接失败，请检查分辨率参数是否正确");
+                isPreview = false;
+            }else{
+                isPreview = true;
             }
         }
 
@@ -125,10 +129,20 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     @Override
     protected void onStart() {
         super.onStart();
+        if(mUSBManager == null)
+            return;
         // 注册USB事件广播监听器
-        if(mUSBManager != null){
-            mUSBManager.registerUSB();
+        mUSBManager.registerUSB();
+        if(!isPreview && mUSBManager.isCameraOpened()) {
+            mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+                @Override
+                public void onPreviewResult(boolean result) {
+
+                }
+            });
+            isPreview = true;
         }
+
     }
 
     @Override
@@ -137,6 +151,10 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         // 注销USB事件广播监听器
         if(mUSBManager != null){
             mUSBManager.unregisterUSB();
+        }
+        if(isPreview && mUSBManager.isCameraOpened()) {
+            mUSBManager.stopPreview();
+            isPreview = false;
         }
     }
 
