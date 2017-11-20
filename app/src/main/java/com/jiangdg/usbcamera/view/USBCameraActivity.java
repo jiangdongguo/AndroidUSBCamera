@@ -125,7 +125,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         mUSBManager.createUVCCamera(mUVCCameraView);
     }
 
-
     @Override
     protected void onStart() {
         super.onStart();

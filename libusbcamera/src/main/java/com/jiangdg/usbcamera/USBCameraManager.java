@@ -198,8 +198,7 @@ public class USBCameraManager{
             }
         });
     }
-
-
+    
     /**
      * 注册检测USB设备广播接收器
      * */
