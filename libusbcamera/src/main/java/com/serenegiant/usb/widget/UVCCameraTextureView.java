@@ -79,7 +79,10 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	@Override
 	public void onResume() {
 		if (DEBUG) Log.v(TAG, "onResume:");
-		if (mHasSurface) {
+//		if (mHasSurface) {
+//			mRenderHandler = RenderHandler.createHandler(mFpsCounter, super.getSurfaceTexture(), getWidth(), getHeight());
+//		}
+		if (mRenderHandler == null) {
 			mRenderHandler = RenderHandler.createHandler(mFpsCounter, super.getSurfaceTexture(), getWidth(), getHeight());
 		}
 	}
@@ -87,10 +90,10 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	@Override
 	public void onPause() {
 		if (DEBUG) Log.v(TAG, "onPause:");
-		if (mRenderHandler != null) {
-			mRenderHandler.release();
-			mRenderHandler = null;
-		}
+//		if (mRenderHandler != null) {
+//			mRenderHandler.release();
+//			mRenderHandler = null;
+//		}
 		if (mTempBitmap != null) {
 			mTempBitmap.recycle();
 			mTempBitmap = null;
