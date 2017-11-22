@@ -79,10 +79,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	@Override
 	public void onResume() {
 		if (DEBUG) Log.v(TAG, "onResume:");
-//		if (mHasSurface) {
-//			mRenderHandler = RenderHandler.createHandler(mFpsCounter, super.getSurfaceTexture(), getWidth(), getHeight());
-//		}
-		if (mRenderHandler == null) {
+		if (mHasSurface) {
 			mRenderHandler = RenderHandler.createHandler(mFpsCounter, super.getSurfaceTexture(), getWidth(), getHeight());
 		}
 	}
@@ -90,10 +87,10 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	@Override
 	public void onPause() {
 		if (DEBUG) Log.v(TAG, "onPause:");
-//		if (mRenderHandler != null) {
-//			mRenderHandler.release();
-//			mRenderHandler = null;
-//		}
+		if (mRenderHandler != null) {
+			mRenderHandler.release();
+			mRenderHandler = null;
+		}
 		if (mTempBitmap != null) {
 			mTempBitmap.recycle();
 			mTempBitmap = null;
@@ -102,7 +99,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 	@Override
 	public void onSurfaceTextureAvailable(final SurfaceTexture surface, final int width, final int height) {
-		if (DEBUG) Log.v(TAG, "onSurfaceTextureAvailable:" + surface);
+		if (DEBUG) Log.i(TAG, "onSurfaceTextureAvailable:" + surface);
 		if (mRenderHandler == null) {
 			mRenderHandler = RenderHandler.createHandler(mFpsCounter, surface, width, height);
 		} else {
@@ -116,7 +113,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 	@Override
 	public void onSurfaceTextureSizeChanged(final SurfaceTexture surface, final int width, final int height) {
-		if (DEBUG) Log.v(TAG, "onSurfaceTextureSizeChanged:" + surface);
+		if (DEBUG) Log.i(TAG, "onSurfaceTextureSizeChanged:" + surface);
 		if (mRenderHandler != null) {
 			mRenderHandler.resize(width, height);
 		}
@@ -127,7 +124,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
 	@Override
 	public boolean onSurfaceTextureDestroyed(final SurfaceTexture surface) {
-		if (DEBUG) Log.v(TAG, "onSurfaceTextureDestroyed:" + surface);
+		if (DEBUG) Log.i(TAG, "onSurfaceTextureDestroyed:" + surface);
 		if (mRenderHandler != null) {
 			mRenderHandler.release();
 			mRenderHandler = null;

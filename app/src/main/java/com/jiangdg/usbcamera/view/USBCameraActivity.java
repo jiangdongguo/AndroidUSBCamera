@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -119,10 +120,38 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         setContentView(R.layout.activity_usbcamera);
         ButterKnife.bind(this);
         mUVCCameraView = (CameraViewInterface) mTextureView;
+        mUVCCameraView.setCallback(new CameraViewInterface.Callback() {
+            @Override
+            public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+                if(!isPreview && mUSBManager.isCameraOpened()) {
+                    mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+                        @Override
+                        public void onPreviewResult(boolean result) {
+
+                        }
+                    });
+                    isPreview = true;
+                }
+            }
+
+            @Override
+            public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+
+            }
+
+            @Override
+            public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+                if(isPreview && mUSBManager.isCameraOpened()) {
+                    mUSBManager.stopPreview();
+                    isPreview = false;
+                }
+            }
+        });
         // 初始化引擎
         mUSBManager = USBCameraManager.getInstance();
         mUSBManager.initUSBMonitor(this,listener);
         mUSBManager.createUVCCamera(mUVCCameraView);
+
     }
 
     @Override
@@ -132,16 +161,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             return;
         // 注册USB事件广播监听器
         mUSBManager.registerUSB();
-        if(!isPreview && mUSBManager.isCameraOpened()) {
-            mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
-                @Override
-                public void onPreviewResult(boolean result) {
-
-                }
-            });
-            isPreview = true;
-        }
-
+        mUVCCameraView.onResume();
     }
 
     @Override
@@ -151,10 +171,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         if(mUSBManager != null){
             mUSBManager.unregisterUSB();
         }
-        if(isPreview && mUSBManager.isCameraOpened()) {
-            mUSBManager.stopPreview();
-            isPreview = false;
-        }
+        mUVCCameraView.onPause();
     }
 
     @OnClick({ R.id.btn_contrast,R.id.btn_brightness,R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution,R.id.btn_restart_camera})
