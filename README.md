@@ -6,6 +6,7 @@
 (4)支持获取camera支持的分辨率，和分辨率切换;  
 (5)支持屏蔽声音,重启Camera; 
 (6)支持相机自动对焦；  
+(7)支持调整对比度和亮度
 
 > AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices to connect, preview and video data collection by a few simple API. The main functions include:   
    (1)supports detecting USB Camera equipment, and previewing;  
@@ -14,6 +15,7 @@
    (4)supports getting supported preview sizes，and switching resolution;  
    (5)supports shielding sound;  
    (6)supports camera auto foucs;  
+   (7)supports change camera's contrast and brightness
 
 ## 如何使用AndroidUSBCamera项目 
 ![效果图](http://img.blog.csdn.net/20171025213631816)
@@ -38,7 +40,7 @@ Step 2. Add the dependency
 
 ```
 dependencies {
-	 compile 'com.github.jiangdongguo:AndroidUSBCamera:v1.2.5'
+	 compile 'com.github.jiangdongguo:AndroidUSBCamera:1.3.8'
 } 
 ```  
 
@@ -46,12 +48,7 @@ dependencies {
   Init AndroidUSBCamera engine，register the USB device event listener  
   
 ```
-USBCameraManager mUSBManager = USBCameraManager.getInstance();
-// mTextureView为UVCCameraTextureView实例，继承于TextureView
-// 用于渲染图像，需要在xml文件中定义
-CameraViewInterface mUVCCameraView = (CameraViewInterface) mTextureView;
-// 初始化引擎，注册事件监听器
-mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListener() {
+    private USBCameraManager.OnMyDevConnectListener listener = new USBCameraManager.OnMyDevConnectListener() {
         // 插入USB设备
         @Override
         public void onAttachDev(UsbDevice device) {
@@ -84,15 +81,51 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
         public void onConnectDev(UsbDevice device,boolean isConnected) {
             if(! isConnected) {
                 showShortMsg("连接失败，请检查分辨率参数是否正确");
+                isPreview = false;
+            }else{
+                isPreview = true;
             }
         }
 
         // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-
+            showShortMsg("连接失败");
         }
     };
+    
+    mUVCCameraView = (CameraViewInterface) mTextureView;
+    mUVCCameraView.setCallback(new CameraViewInterface.Callback() {
+        @Override
+        public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+            if(!isPreview && mUSBManager.isCameraOpened()) {
+                 mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+                 @Override
+                 public void onPreviewResult(boolean result) {
+
+                 }
+              });
+              isPreview = true;
+              }
+         }
+            @Override
+            public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+
+            }
+
+            @Override
+            public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+                if(isPreview && mUSBManager.isCameraOpened()) {
+                    mUSBManager.stopPreview();
+                    isPreview = false;
+                }
+            }
+        });
+        // 初始化引擎
+        mUSBManager = USBCameraManager.getInstance();
+        mUSBManager.initUSBMonitor(this,listener);
+        mUSBManager.createUVCCamera(mUVCCameraView);
+    
 ```  
 
 ### 3. 注册USB设备广播事件监听器，开始Camera预览  
@@ -100,11 +133,11 @@ mUSBManager.init(this, mUVCCameraView, new USBCameraManager.OnMyDevConnectListen
 ```
 // 注册USB事件广播监听器
 if(mUSBManager != null){
-        mUSBManager.registerUSB();
+      mUSBManager.registerUSB();
 }
 // 恢复Camera预览
  if(mUVCCameraView != null){
-         mUVCCameraView.onResume();
+      mUVCCameraView.onResume();
  }
 ```  
 
@@ -128,7 +161,13 @@ if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
           showShortMsg("抓拍异常，摄像头未开启");
           return;
  }
-mUSBManager.capturePicture(picPath);
+ mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+          @Override
+          public void onCaptureResult(String path) {
+               showShortMsg("保存路径："+path);
+          }
+ });
+		
 ```  
 
 ### 6. 本地录制(可实时获取音视频数据流)
@@ -139,14 +178,28 @@ mUSBManager.capturePicture(picPath);
            showShortMsg("录制异常，摄像头未开启");
            return;
  }
-// 开始录制
-if( !mUSBManager.isRecording()){
-mUSBManager.startRecording(videoPath, new AbstractUVCCameraHandler.OnEncodeResultListener() {
-        @Override
-        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-              // type=0为音频流，type=1为视频流
-        });
-}
+if(! mUSBManager.isRecording()){
+                    String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis();
+                    FileUtils.createfile(FileUtils.ROOT_PATH+"test666.h264");
+                    RecordParams params = new RecordParams();
+                    params.setRecordPath(videoPath);
+                    params.setRecordDuration(0);    // 设置为0，不分割保存
+                    params.setVoiceClose(false);    // 不屏蔽声音
+                    mUSBManager.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+                        @Override
+                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+                            // type = 0,aac格式音频流
+                            // type = 1,h264格式视频流
+                            if(type == 1){
+                                FileUtils.putFileStream(data,offset,length);
+                            }
+                        }
+
+                        @Override
+                        public void onRecordResult(String videoPath) {
+                            showShortMsg(videoPath);
+                        }
+                    });
 // 停止录制
 mUSBManager.stopRecording();
 ```  
@@ -195,4 +248,6 @@ if(mUSBManager != null){
 (4) boolean isCameraOpened()：判断USB摄像头是否正常打开；
 (5) void release()：释放资源
 (6) USBMonitor getUSBMonitor()：返回USBMonitor实例；
+(7) mUSBManager.setModelValue(USBCameraManager.MODE_CONTRAST,contrast++); 调整对比度
+(8) mUSBManager.setModelValue(USBCameraManager.MODE_BRIGHTNESS,brightness++);调整亮度
 ```
