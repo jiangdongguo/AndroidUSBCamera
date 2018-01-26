@@ -56,6 +56,7 @@ public class AspectRatioTextureView extends TextureView	// API >= 14
 		super(context, attrs, defStyle);
 	}
 
+	// 设置屏幕宽高比
 	@Override
     public void setAspectRatio(final double aspectRatio) {
         if (aspectRatio < 0) {

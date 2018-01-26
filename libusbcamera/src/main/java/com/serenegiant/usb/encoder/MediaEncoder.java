@@ -3,18 +3,13 @@ package com.serenegiant.usb.encoder;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
-import com.jiangdg.usbcamera.FileUtils;
+import com.jiangdg.usbcamera.utils.FileUtils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 public abstract class MediaEncoder implements Runnable {

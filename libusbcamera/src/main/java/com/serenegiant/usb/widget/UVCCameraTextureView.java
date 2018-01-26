@@ -60,6 +60,9 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     private Bitmap mTempBitmap;
     private boolean mReqesutCaptureStillImage;
 	private Callback mCallback;
+	// Camera分辨率宽度
+
+
 	/** for calculation of frame rate */
 	private final FpsCounter mFpsCounter = new FpsCounter();
 
@@ -169,7 +172,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 	 * you should change this method(copy and return)
 	 */
 	@Override
-	public Bitmap captureStillImage() {
+	public Bitmap captureStillImage(int width,int height) {
 		synchronized (mCaptureSync) {
 			mReqesutCaptureStillImage = true;
 			try {

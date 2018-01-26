@@ -16,12 +16,10 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.jiangdg.usbcamera.FileUtils;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
-import com.serenegiant.usb.encoder.MediaAudioEncoder;
 import com.serenegiant.usb.encoder.MediaEncoder;
 import com.serenegiant.usb.encoder.MediaMuxerWrapper;
 import com.serenegiant.usb.encoder.MediaSurfaceEncoder;
@@ -41,8 +39,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -536,6 +532,9 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				if(mPreviewListener != null){
 					mPreviewListener.onPreviewResult(true);
 				}
+				// 获取USB Camera预览数据
+				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+
 			} catch (final IllegalArgumentException e) {
 				// 添加分辨率参数合法性检测
 				if(mPreviewListener != null){
@@ -586,7 +585,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if (parent == null) return;
 //			mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);	// play shutter sound
 			try {
-				final Bitmap bitmap = mWeakCameraView.get().captureStillImage();
+				final Bitmap bitmap = mWeakCameraView.get().captureStillImage(mWidth,mHeight);
 				// get buffered output stream for saving a captured still image as a file on external storage.
 				// the file name is came from current time.
 				// You should use extension name as same as CompressFormat when calling Bitmap#compress.
@@ -662,8 +661,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				return;
 			if (params == null)
 				throw new NullPointerException("RecordParams can not be null!");
-			// 获取USB Camera预览数据
-			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+//			// 获取USB Camera预览数据
+//			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
 			// 初始化混合器
 			videoPath = params.getRecordPath();
 			mMuxer = new Mp4MediaMuxer(params.getRecordPath(),
@@ -774,30 +773,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //			isAudioThreadStart = false;
 		}
 
-		// 停止录制视频
-//		public void handleStopRecording2() {
-//			if (DEBUG) Log.v(TAG_THREAD, "handleStopRecording:mMuxer=" + mMuxer);
-//			final MediaMuxerWrapper muxer;
-//			synchronized (mSync) {
-//				muxer = mMuxer;
-//				mMuxer = null;
-//				mVideoEncoder = null;
-//				if (mUVCCamera != null) {
-//					mUVCCamera.stopCapture();
-//				}
-//			}
-//			try {
-//				mWeakCameraView.get().setVideoEncoder(null);
-//			} catch (final Exception e) {
-//				// ignore
-//			}
-//			if (muxer != null) {
-//				muxer.stopRecording();
-//				mUVCCamera.setFrameCallback(null, 0);
-//				// you should not wait here
-//				callOnStopRecording();
-//			}
-//		}
+		private boolean isCaptureStill;
 
 		private final IFrameCallback mIFrameCallback = new IFrameCallback() {
 			@Override
@@ -813,6 +789,11 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				int len = frame.capacity();
 				byte[] yuv = new byte[len];
 				frame.get(yuv);
+				// 捕获图片
+				if(isCaptureStill) {
+
+				}
+				// 视频
 				if(mH264Consumer != null){
 					// 修改分辨率参数
 					mH264Consumer.setRawYuv(yuv,mWidth,mHeight);

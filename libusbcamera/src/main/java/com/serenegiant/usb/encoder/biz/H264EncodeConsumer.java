@@ -14,12 +14,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
-import com.jiangdg.usbcamera.FileUtils;
-
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedPlanar;
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar;
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar;
-
 /** 对YUV视频流进行编码
  * Created by jiangdongguo on 2017/5/6.
  */

@@ -2,19 +2,14 @@ package com.jiangdg.usbcamera.view;
 
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.jiangdg.usbcamera.FileUtils;
+import com.jiangdg.usbcamera.utils.FileUtils;
 import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.USBCameraManager;
 import com.serenegiant.usb.CameraDialog;
@@ -24,12 +19,6 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
