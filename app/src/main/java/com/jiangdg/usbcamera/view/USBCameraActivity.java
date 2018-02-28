@@ -1,17 +1,29 @@
 package com.jiangdg.usbcamera.view;
 
+import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
-import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.SeekBar;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import com.jiangdg.usbcamera.utils.FileUtils;
 import com.jiangdg.usbcamera.R;
-import com.jiangdg.usbcamera.USBCameraManager;
+import com.jiangdg.usbcamera.UVCCameraHelper;
+import com.jiangdg.usbcamera.utils.FileUtils;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
@@ -19,87 +31,92 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 /**
- * AndroidUSBCamera引擎使用Demo
- *
+ * UVCCamera use demo
+ * <p>
  * Created by jiangdongguo on 2017/9/30.
  */
 
-public class USBCameraActivity extends AppCompatActivity implements CameraDialog.CameraDialogParent{
+public class USBCameraActivity extends AppCompatActivity implements CameraDialog.CameraDialogParent, CameraViewInterface.Callback {
     @BindView(R.id.camera_view)
     public View mTextureView;
-    @BindView(R.id.btn_capture_pic)
-    public Button mBtnCapture;
-    @BindView(R.id.btn_rec_video)
-    public Button mBtnRecord;
-    @BindView(R.id.btn_update_resolution)
-    public Button mBtnUpdateResultion;
-    @BindView(R.id.btn_restart_camera)
-    Button mBtnRestartCamera;
-    @BindView(R.id.btn_contrast)
-    Button mBtnContrast;
-    @BindView(R.id.btn_brightness)
-    Button mBtnBrightness;
+    @BindView(R.id.toolbar)
+    public Toolbar mToolbar;
+    @BindView(R.id.seekbar_brightness)
+    public SeekBar mSeekBrightness;
+    @BindView(R.id.seekbar_contrast)
+    public SeekBar mSeekContrast;
 
-    private USBCameraManager mUSBManager;
-
+    private UVCCameraHelper mCameraHelper;
     private CameraViewInterface mUVCCameraView;
+    private AlertDialog mDialog;
 
     private boolean isRequest;
     private boolean isPreview;
 
-    /**
-     * USB设备事件监听器
-     * */
-    private USBCameraManager.OnMyDevConnectListener listener = new USBCameraManager.OnMyDevConnectListener() {
-        // 插入USB设备
+    private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.OnMyDevConnectListener() {
+
         @Override
         public void onAttachDev(UsbDevice device) {
-            if(mUSBManager == null || mUSBManager.getUsbDeviceCount() == 0){
-                showShortMsg("未检测到USB摄像头设备");
+            if (mCameraHelper == null || mCameraHelper.getUsbDeviceCount() == 0) {
+                showShortMsg("check no usb camera");
                 return;
             }
-            // 请求打开摄像头
-            if(! isRequest){
+            // request open permission
+            if (!isRequest) {
                 isRequest = true;
-                if(mUSBManager != null){
-                    mUSBManager.requestPermission(0);
+                if (mCameraHelper != null) {
+                    mCameraHelper.requestPermission(0);
                 }
             }
         }
 
-        // 拔出USB设备
         @Override
         public void onDettachDev(UsbDevice device) {
-            if(isRequest){
-                // 关闭摄像头
+            // close camera
+            if (isRequest) {
                 isRequest = false;
-                mUSBManager.closeCamera();
-                showShortMsg(device.getDeviceName()+"已拨出");
+                mCameraHelper.closeCamera();
+                showShortMsg(device.getDeviceName() + " is out");
             }
         }
 
-        // 连接USB设备成功
         @Override
-        public void onConnectDev(UsbDevice device,boolean isConnected) {
-            if(! isConnected) {
-                showShortMsg("连接失败，请检查分辨率参数是否正确");
+        public void onConnectDev(UsbDevice device, boolean isConnected) {
+            if (!isConnected) {
+                showShortMsg("fail to connect,please check resolution params");
                 isPreview = false;
-            }else{
+            } else {
                 isPreview = true;
+                showShortMsg("connecting");
+                // initialize seekbar
+                // need to wait UVCCamera initialize over
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(1500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Looper.prepare();
+                        mSeekBrightness.setProgress(mCameraHelper.getModelValue(UVCCameraHelper.MODE_BRIGHTNESS));
+                        mSeekContrast.setProgress(mCameraHelper.getModelValue(UVCCameraHelper.MODE_CONTRAST));
+                        Looper.loop();
+                    }
+                }).start();
             }
         }
 
-        // 与USB设备断开连接
         @Override
         public void onDisConnectDev(UsbDevice device) {
-            showShortMsg("连接失败");
+            showShortMsg("disconnecting");
         }
     };
 
@@ -108,150 +125,121 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);
         ButterKnife.bind(this);
+        initView();
+        // step.1 initialize UVCCameraHelper
         mUVCCameraView = (CameraViewInterface) mTextureView;
-        mUVCCameraView.setCallback(new CameraViewInterface.Callback() {
-            @Override
-            public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
-                if(!isPreview && mUSBManager.isCameraOpened()) {
-                    mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
-                        @Override
-                        public void onPreviewResult(boolean result) {
+        mUVCCameraView.setCallback(this);
+        mCameraHelper = UVCCameraHelper.getInstance();
+        mCameraHelper.initUSBMonitor(this, mUVCCameraView, listener);
+    }
 
-                        }
-                    });
-                    isPreview = true;
+    private void initView() {
+        setSupportActionBar(mToolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+        mSeekBrightness.setMax(100);
+        mSeekBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(mCameraHelper != null && mCameraHelper.isCameraOpened()) {
+                    mCameraHelper.setModelValue(UVCCameraHelper.MODE_BRIGHTNESS,progress);
                 }
             }
 
             @Override
-            public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+            public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
 
             @Override
-            public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
-                if(isPreview && mUSBManager.isCameraOpened()) {
-                    mUSBManager.stopPreview();
-                    isPreview = false;
-                }
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
-        // 初始化引擎
-        mUSBManager = USBCameraManager.getInstance();
-        mUSBManager.initUSBMonitor(this,listener);
-        mUSBManager.createUVCCamera(mUVCCameraView);
+        mSeekContrast.setMax(100);
+        mSeekContrast.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(mCameraHelper != null && mCameraHelper.isCameraOpened()) {
+                    mCameraHelper.setModelValue(UVCCameraHelper.MODE_CONTRAST,progress);
+                }
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if(mUSBManager == null)
-            return;
-        // 注册USB事件广播监听器
-        mUSBManager.registerUSB();
-        mUVCCameraView.onResume();
+        // step.2 register USB event broadcast
+        if (mCameraHelper != null) {
+            mCameraHelper.registerUSB();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        // 注销USB事件广播监听器
-        if(mUSBManager != null){
-            mUSBManager.unregisterUSB();
+        // step.3 unregister USB event broadcast
+        if (mCameraHelper != null) {
+            mCameraHelper.unregisterUSB();
         }
-        mUVCCameraView.onPause();
     }
 
-    @OnClick({ R.id.btn_contrast,R.id.btn_brightness,R.id.btn_capture_pic, R.id.btn_rec_video,R.id.btn_update_resolution,R.id.btn_restart_camera})
-    public void onViewClick(View view) {
-        int vId = view.getId();
-        switch (vId) {
-            // 对比度
-            case R.id.btn_contrast:
-                if(mUSBManager == null || !mUSBManager.isCameraOpened())
-                    return;
-                int contrast = mUSBManager.getModelValue(USBCameraManager.MODE_CONTRAST);
-                mUSBManager.setModelValue(USBCameraManager.MODE_CONTRAST,contrast++);
-                break;
-            // 亮度
-            case R.id.btn_brightness:
-                if(mUSBManager == null || !mUSBManager.isCameraOpened())
-                    return;
-                int brightness = mUSBManager.getModelValue(USBCameraManager.MODE_BRIGHTNESS);
-                mUSBManager.setModelValue(USBCameraManager.MODE_BRIGHTNESS,brightness++);
-                break;
-            // 重启Camera
-            case R.id.btn_restart_camera:
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_toobar, menu);
+        return true;
+    }
 
-                break;
-            // 切换分辨率
-            case R.id.btn_update_resolution:
-                if(mUSBManager == null || !mUSBManager.isCameraOpened())
-                    return;
-                mUSBManager.updateResolution(320, 240, new USBCameraManager.OnPreviewListener() {
-                    @Override
-                    public void onPreviewResult(boolean isSuccess) {
-                        if(! isSuccess) {
-                            showShortMsg("预览失败，不支持该分辨率");
-                        }else {
-                            showShortMsg("以切换到分辨率为320x240");
-                        }
-                    }
-                });
-                break;
-            // 点击后自动对焦
-            case R.id.camera_view:
-                if(mUSBManager == null)
-                    return;
-//                mUSBManager.startCameraFoucs();
-//                showShortMsg("对焦相机");
-                List<Size> list = mUSBManager.getSupportedPreviewSizes();
-                if(list == null) {
-                    return;
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_takepic:
+                if (mCameraHelper == null || !mCameraHelper.isCameraOpened()) {
+                    showShortMsg("sorry,camera open failed");
+                    return super.onOptionsItemSelected(item);
                 }
-
-                StringBuilder sb = new StringBuilder();
-                for(Size size:list){
-                    sb.append(size.width+"x"+size.height);
-                    sb.append("\n");
-                }
-                showShortMsg(sb.toString());
-                break;
-            case R.id.btn_capture_pic:
-                if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
-                    showShortMsg("抓拍异常，摄像头未开启");
-                    return;
-                }
-                String picPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
-                        +USBCameraManager.SUFFIX_PNG;
-                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                String picPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis()
+                        + UVCCameraHelper.SUFFIX_PNG;
+                mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
-                        showShortMsg("保存路径："+path);
+                        showShortMsg("save path：" + path);
                     }
                 });
                 break;
-            case R.id.btn_rec_video:
-                if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
-                    showShortMsg("录制异常，摄像头未开启");
-                    return;
+            case R.id.menu_recording:
+                if (mCameraHelper == null || !mCameraHelper.isCameraOpened()) {
+                    showShortMsg("sorry,camera open failed");
+                    return super.onOptionsItemSelected(item);
                 }
 
-                if(! mUSBManager.isRecording()){
-                    String videoPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis();
-                    FileUtils.createfile(FileUtils.ROOT_PATH+"test666.h264");
+                if (!mCameraHelper.isRecording()) {
+                    String videoPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis();
+                    FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     RecordParams params = new RecordParams();
                     params.setRecordPath(videoPath);
                     params.setRecordDuration(0);    // 设置为0，不分割保存
                     params.setVoiceClose(false);    // 不屏蔽声音
-                    mUSBManager.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+                    mCameraHelper.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-                            // type = 0,aac格式音频流
-                            // type = 1,h264格式视频流
-                            if(type == 1){
-                                FileUtils.putFileStream(data,offset,length);
+                            // type = 0,aac stream
+                            // type = 1,h264 stream
+                            if (type == 1) {
+                                FileUtils.putFileStream(data, offset, length);
                             }
                         }
 
@@ -260,22 +248,171 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                             showShortMsg(videoPath);
                         }
                     });
-
-                    mBtnRecord.setText("正在录制");
+                    showShortMsg("start record...");
                 } else {
                     FileUtils.releaseFile();
-                    mUSBManager.stopRecording();
-                    mBtnRecord.setText("开始录制");
+                    mCameraHelper.stopRecording();
+                    showShortMsg("stop record...");
+                }
+                break;
+            case R.id.menu_resolution:
+                showResolutionListDialog();
+                break;
+            case R.id.menu_focus:
+                if (mCameraHelper != null) {
+                    mCameraHelper.startCameraFoucs();
                 }
                 break;
         }
+        return super.onOptionsItemSelected(item);
     }
+
+    private void showResolutionListDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(USBCameraActivity.this);
+        View rootView = LayoutInflater.from(USBCameraActivity.this).inflate(R.layout.layout_dialog_list, null);
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_dialog);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(USBCameraActivity.this, android.R.layout.simple_list_item_1, getResolutionList());
+        if (adapter != null) {
+            listView.setAdapter(adapter);
+        }
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                if (mCameraHelper == null || !mCameraHelper.isCameraOpened())
+                    return;
+                final String resolution = (String) adapterView.getItemAtPosition(position);
+                String[] tmp = resolution.split("x");
+                if (tmp != null && tmp.length >= 2) {
+                    int widht = Integer.valueOf(tmp[0]);
+                    int height = Integer.valueOf(tmp[1]);
+                    mCameraHelper.updateResolution(widht, height, new UVCCameraHelper.OnPreviewListener() {
+                        @Override
+                        public void onPreviewResult(boolean isSuccess) {
+                            if (isSuccess) {
+                                showShortMsg("update resolution to " + resolution + " success");
+                            }
+                        }
+                    });
+                }
+                mDialog.dismiss();
+            }
+        });
+
+        builder.setView(rootView);
+        mDialog = builder.create();
+        mDialog.show();
+    }
+
+    // example: {640x480,320x240,etc}
+    private List<String> getResolutionList() {
+        List<Size> list = mCameraHelper.getSupportedPreviewSizes();
+        List<String> resolutions = null;
+        if (list != null && list.size() != 0) {
+            resolutions = new ArrayList<>();
+            for (Size size : list) {
+                if (size != null) {
+                    resolutions.add(size.width + "x" + size.height);
+                }
+            }
+        }
+        return resolutions;
+    }
+
+    //    @OnClick({R.id.btn_contrast, R.id.btn_brightness, R.id.btn_capture_pic, R.id.btn_rec_video, R.id.btn_update_resolution, R.id.btn_restart_camera})
+//    public void onViewClick(View view) {
+//        int vId = view.getId();
+//        switch (vId) {
+//            case R.id.btn_contrast:
+//                if (mUSBManager == null || !mUSBManager.isCameraOpened())
+//                    return;
+//                int contrast = mUSBManager.getModelValue(UVCCameraHelper.MODE_CONTRAST);
+//                mUSBManager.setModelValue(UVCCameraHelper.MODE_CONTRAST, contrast++);
+//                break;
+//            case R.id.btn_brightness:
+//                if (mUSBManager == null || !mUSBManager.isCameraOpened())
+//                    return;
+//                int brightness = mUSBManager.getModelValue(UVCCameraHelper.MODE_BRIGHTNESS);
+//                mUSBManager.setModelValue(UVCCameraHelper.MODE_BRIGHTNESS, brightness++);
+//                break;
+//            case R.id.btn_update_resolution:
+
+//                break;
+//            case R.id.camera_view:
+//                if (mUSBManager == null)
+//                    return;
+////                mUSBManager.startCameraFoucs();
+////                showShortMsg("对焦相机");
+//                List<Size> list = mUSBManager.getSupportedPreviewSizes();
+//                if (list == null) {
+//                    return;
+//                }
+//
+//                StringBuilder sb = new StringBuilder();
+//                for (Size size : list) {
+//                    sb.append(size.width + "x" + size.height);
+//                    sb.append("\n");
+//                }
+//                showShortMsg(sb.toString());
+//                break;
+//            case R.id.btn_capture_pic:
+//                if (mUSBManager == null || !mUSBManager.isCameraOpened()) {
+//                    showShortMsg("抓拍异常，摄像头未开启");
+//                    return;
+//                }
+//                String picPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis()
+//                        + UVCCameraHelper.SUFFIX_PNG;
+//                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+//                    @Override
+//                    public void onCaptureResult(String path) {
+//                        showShortMsg("保存路径：" + path);
+//                    }
+//                });
+//                break;
+//            case R.id.btn_rec_video:
+//                if (mUSBManager == null || !mUSBManager.isCameraOpened()) {
+//                    showShortMsg("录制异常，摄像头未开启");
+//                    return;
+//                }
+//
+//                if (!mUSBManager.isRecording()) {
+//                    String videoPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis();
+//                    FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
+//                    RecordParams params = new RecordParams();
+//                    params.setRecordPath(videoPath);
+//                    params.setRecordDuration(0);    // 设置为0，不分割保存
+//                    params.setVoiceClose(false);    // 不屏蔽声音
+//                    mUSBManager.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+//                        @Override
+//                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+//                            // type = 0,aac格式音频流
+//                            // type = 1,h264格式视频流
+//                            if (type == 1) {
+//                                FileUtils.putFileStream(data, offset, length);
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onRecordResult(String videoPath) {
+//                            showShortMsg(videoPath);
+//                        }
+//                    });
+//
+//                    mBtnRecord.setText("正在录制");
+//                } else {
+//                    FileUtils.releaseFile();
+//                    mUSBManager.stopRecording();
+//                    mBtnRecord.setText("开始录制");
+//                }
+//                break;
+//        }
+//    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(mUSBManager != null){
-            mUSBManager.release();
+        // step.4 release uvc camera resources
+        if (mCameraHelper != null) {
+            mCameraHelper.release();
         }
     }
 
@@ -285,17 +422,43 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
 
     @Override
     public USBMonitor getUSBMonitor() {
-        return mUSBManager.getUSBMonitor();
+        return mCameraHelper.getUSBMonitor();
     }
 
     @Override
     public void onDialogResult(boolean canceled) {
-        if(canceled){
+        if (canceled) {
             showShortMsg("取消操作");
         }
     }
 
     public boolean isCameraOpened() {
-        return mUSBManager.isCameraOpened();
+        return mCameraHelper.isCameraOpened();
+    }
+
+    @Override
+    public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+        if (!isPreview && mCameraHelper.isCameraOpened()) {
+            mCameraHelper.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
+                @Override
+                public void onPreviewResult(boolean result) {
+
+                }
+            });
+            isPreview = true;
+        }
+    }
+
+    @Override
+    public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+
+    }
+
+    @Override
+    public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+        if (isPreview && mCameraHelper.isCameraOpened()) {
+            mCameraHelper.stopPreview();
+            isPreview = false;
+        }
     }
 }
