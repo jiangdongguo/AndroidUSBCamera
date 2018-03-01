@@ -77,4 +77,18 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
+    <Switch
+        android:id="@+id/switch_rec_voice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/llayout_brightness"
+        android:layout_alignStart="@+id/llayout_brightness"
+        android:layout_below="@+id/toolbar"
+        android:layout_marginLeft="13dp"
+        android:layout_marginStart="13dp"
+        android:layout_marginTop="27dp"
+        android:checked="true"
+        android:textColor="@color/colorWhite"
+        android:text="closeVoice" />
+
 </RelativeLayout>

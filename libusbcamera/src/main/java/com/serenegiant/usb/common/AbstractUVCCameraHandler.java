@@ -16,6 +16,8 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.jiangdg.usbcamera.task.SaveYuvImageTask;
+import com.jiangdg.usbcamera.utils.YUVBean;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
@@ -74,7 +76,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	public interface OnPreViewResultListener{
-		void onPreviewResult(boolean result);
+		void onPreviewResult(byte[] data);
 	}
 
 	public interface OnCaptureListener {
@@ -97,6 +99,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 
 	private final WeakReference<CameraThread> mWeakThread;
 	private volatile boolean mReleased;
+	protected boolean isCaptureStill;
 
 	protected AbstractUVCCameraHandler(final CameraThread thread) {
 		mWeakThread = new WeakReference<CameraThread>(thread);
@@ -174,21 +177,26 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	// 开启Camera预览
-	protected void startPreview(final Object surface,OnPreViewResultListener listener) {
+	public void startPreview(final Object surface) {
 		checkReleased();
 		if (!((surface instanceof SurfaceHolder) || (surface instanceof Surface) || (surface instanceof SurfaceTexture))) {
 			throw new IllegalArgumentException("surface should be one of SurfaceHolder, Surface or SurfaceTexture: "+surface);
 		}
 
-		this.mPreviewListener = listener;
 		sendMessage(obtainMessage(MSG_PREVIEW_START, surface));
+	}
+
+	public void setOnPreViewResultListener(OnPreViewResultListener listener) {
+		AbstractUVCCameraHandler.mPreviewListener = listener;
 	}
 
 	// 关闭Camera预览
 	public void stopPreview() {
 		if (DEBUG) Log.v(TAG, "stopPreview:");
 		removeMessages(MSG_PREVIEW_START);
-		stopRecording();
+		if(isRecording()) {
+			stopRecording();
+		}
 		if (isPreviewing()) {
 			final CameraThread thread = mWeakThread.get();
 			if (thread == null) return;
@@ -208,16 +216,11 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		if (DEBUG) Log.v(TAG, "stopPreview:finished");
 	}
 
-	// 捕获图像
-	protected void captureStill() {
-		checkReleased();
-		sendEmptyMessage(MSG_CAPTURE_STILL);
-	}
-
 	public void captureStill(final String path,AbstractUVCCameraHandler.OnCaptureListener listener) {
-		AbstractUVCCameraHandler.mCaptureListener = listener;
-		checkReleased();
-		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
+		// old method, to get screen size picture
+//		AbstractUVCCameraHandler.mCaptureListener = listener;
+//		checkReleased();
+//		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
 	}
 
 	// 开始录制
@@ -350,7 +353,8 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				thread.handleStopPreview();
 				break;
 			case MSG_CAPTURE_STILL:
-				thread.handleCaptureStill((String)msg.obj);
+//				thread.handleCaptureStill((String)msg.obj);
+				thread.handleStillPicture((String)msg.obj);
 				break;
 			case MSG_CAPTURE_START:
 //			thread.handleStartRecording((String)msg.obj);
@@ -369,13 +373,6 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			case MSG_CAMERA_FOUCS:
 				thread.handleCameraFoucs();
 				break;
-			// 音频线程
-//			case MSG_AUDIO_START:
-//				thread.startAudioRecord();
-//				break;
-//			case MSG_AUDIO_STOP:
-//				thread.stopAudioRecord();
-//				break;
 			default:
 				throw new RuntimeException("unsupported message:what=" + msg.what);
 		}
@@ -529,17 +526,10 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			try {
 				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
-				if(mPreviewListener != null){
-					mPreviewListener.onPreviewResult(true);
-				}
 				// 获取USB Camera预览数据
 				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
 
 			} catch (final IllegalArgumentException e) {
-				// 添加分辨率参数合法性检测
-				if(mPreviewListener != null){
-					mPreviewListener.onPreviewResult(false);
-				}
 //				try {
 //					// fallback to YUV mode
 //					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
@@ -568,6 +558,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if (mIsPreviewing) {
 				if (mUVCCamera != null) {
 					mUVCCamera.stopPreview();
+					mUVCCamera.setFrameCallback(null, 0);
 				}
 				synchronized (mSync) {
 					mIsPreviewing = false;
@@ -688,11 +679,10 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			// 停止音视频编码线程
 			stopAudioRecord();
 			stopVideoRecord();
-			// 停止捕获视频数据
-			if (mUVCCamera != null) {
-				mUVCCamera.stopCapture();
-				mUVCCamera.setFrameCallback(null, 0);
-			}
+//			// 停止捕获视频数据
+//			if (mUVCCamera != null) {
+//				mUVCCamera.stopCapture();
+//			}
 			mWeakCameraView.get().setVideoEncoder(null);
 			// you should not wait here
 			callOnStopRecording();
@@ -751,7 +741,6 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if(mAacConsumer != null){
 				mAacConsumer.setTmpuMuxer(mMuxer);
 			}
-//			isAudioThreadStart = true;
 		}
 
 		private void stopAudioRecord(){
@@ -773,7 +762,11 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //			isAudioThreadStart = false;
 		}
 
-		private boolean isCaptureStill;
+		private String picPath;
+
+		public void handleStillPicture(String picPath) {
+			this.picPath = picPath;
+		}
 
 		private final IFrameCallback mIFrameCallback = new IFrameCallback() {
 			@Override
@@ -789,9 +782,26 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				int len = frame.capacity();
 				byte[] yuv = new byte[len];
 				frame.get(yuv);
+				// nv21 yuv data callback
+				if(mPreviewListener != null) {
+					mPreviewListener.onPreviewResult(yuv);
+				}
 				// 捕获图片
-				if(isCaptureStill) {
-
+				if(! TextUtils.isEmpty(picPath)) {
+					YUVBean bean = new YUVBean();
+					bean.setYuvData(yuv);
+					bean.setPicPath(picPath);
+					bean.setWidth(mWidth);
+					bean.setHeight(mHeight);
+					new SaveYuvImageTask(bean, new SaveYuvImageTask.OnSaveYuvResultListener() {
+						@Override
+						public void onSaveResult(String savePath) {
+							if(mCaptureListener != null) {
+								mCaptureListener.onCaptureResult(savePath);
+							}
+							picPath = null;
+						}
+					}).execute();
 				}
 				// 视频
 				if(mH264Consumer != null){

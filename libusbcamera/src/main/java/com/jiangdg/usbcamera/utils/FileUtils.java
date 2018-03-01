@@ -31,8 +31,10 @@ public class FileUtils {
 
     public static void releaseFile(){
         try {
-            outputStream.flush();
-            outputStream.close();
+            if(outputStream != null) {
+                outputStream.flush();
+                outputStream.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

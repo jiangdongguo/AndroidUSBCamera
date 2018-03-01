@@ -136,10 +136,10 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 		}
 	}
 
-	public synchronized void startPreview(OnPreViewResultListener listener) {
+	public synchronized void startPreview() {
 		checkReleased();
 		if (mRendererHolder != null) {
-			super.startPreview(mRendererHolder.getSurface(),listener);
+			super.startPreview(mRendererHolder.getSurface());
 		} else {
 			throw new IllegalStateException();
 		}

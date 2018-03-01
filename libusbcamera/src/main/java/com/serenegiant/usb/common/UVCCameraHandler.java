@@ -119,8 +119,8 @@ public class UVCCameraHandler extends AbstractUVCCameraHandler {
 	}
 
 	@Override
-	public void startPreview(final Object surface,final AbstractUVCCameraHandler.OnPreViewResultListener listener) {
-		super.startPreview(surface, listener);
+	public void startPreview(final Object surface) {
+		super.startPreview(surface);
 	}
 
 	@Override

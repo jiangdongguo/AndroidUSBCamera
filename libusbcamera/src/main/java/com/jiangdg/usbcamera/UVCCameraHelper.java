@@ -73,10 +73,6 @@ public class UVCCameraHelper {
         void onDisConnectDev(UsbDevice device);
     }
 
-    public interface OnPreviewListener {
-        void onPreviewResult(boolean isSuccess);
-    }
-
     public void initUSBMonitor(Activity activity, CameraViewInterface cameraView, final OnMyDevConnectListener listener) {
         this.mActivityWrf = new WeakReference<>(activity);
         this.mCamViewWrf = new WeakReference<>(cameraView);
@@ -106,14 +102,10 @@ public class UVCCameraHelper {
             public void onConnect(final UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
                 mCtrlBlock = ctrlBlock;
                 openCamera(ctrlBlock);
-                startPreview(mCamViewWrf.get(), new AbstractUVCCameraHandler.OnPreViewResultListener() {
-                    @Override
-                    public void onPreviewResult(boolean isConnected) {
-                        if (listener != null) {
-                            listener.onConnectDev(device, isConnected);
-                        }
-                    }
-                });
+                startPreview(mCamViewWrf.get());
+                if(listener != null) {
+                    listener.onConnectDev(device,true);
+                }
             }
 
             // called by disconnect to usb camera
@@ -148,7 +140,7 @@ public class UVCCameraHelper {
                 previewWidth, previewHeight, PREVIEW_FORMAT);
     }
 
-    public void updateResolution(int width, int height, final OnPreviewListener mPreviewListener) {
+    public void updateResolution(int width, int height) {
         if (previewWidth == width && previewHeight == height) {
             return;
         }
@@ -162,14 +154,7 @@ public class UVCCameraHelper {
         mCameraHandler = UVCCameraHandler.createHandler(mActivityWrf.get(), mCamViewWrf.get(), 2,
                 previewWidth, previewHeight, PREVIEW_FORMAT);
         openCamera(mCtrlBlock);
-        startPreview(mCamViewWrf.get(), new AbstractUVCCameraHandler.OnPreViewResultListener() {
-            @Override
-            public void onPreviewResult(boolean result) {
-                if (mPreviewListener != null) {
-                    mPreviewListener.onPreviewResult(result);
-                }
-            }
-        });
+        startPreview(mCamViewWrf.get());
     }
 
     public void registerUSB() {
@@ -229,9 +214,9 @@ public class UVCCameraHelper {
         return mUSBMonitor.getDeviceList(deviceFilters.get(0));
     }
 
-    public void capturePicture(String savePath, AbstractUVCCameraHandler.OnCaptureListener listener) {
+    public void capturePicture(String savePath) {
         if (mCameraHandler != null && mCameraHandler.isOpened()) {
-            mCameraHandler.captureStill(savePath, listener);
+            mCameraHandler.captureStill(savePath);
         }
     }
 
@@ -278,16 +263,22 @@ public class UVCCameraHelper {
         return mUSBMonitor;
     }
 
+    public void setOnPreviewFrameListener(AbstractUVCCameraHandler.OnPreViewResultListener listener) {
+        if(mCameraHandler != null) {
+            mCameraHandler.setOnPreViewResultListener(listener);
+        }
+    }
+
     private void openCamera(USBMonitor.UsbControlBlock ctrlBlock) {
         if (mCameraHandler != null) {
             mCameraHandler.open(ctrlBlock);
         }
     }
 
-    public void startPreview(CameraViewInterface cameraView, AbstractUVCCameraHandler.OnPreViewResultListener mPreviewListener) {
+    public void startPreview(CameraViewInterface cameraView) {
         SurfaceTexture st = cameraView.getSurfaceTexture();
         if (mCameraHandler != null) {
-            mCameraHandler.startPreview(st, mPreviewListener);
+            mCameraHandler.startPreview(st);
         }
     }
 
