@@ -1,9 +1,8 @@
-AndroidUSBCamera 2.0
-============   
-  AndroidUSBCamera is developed based on the saki4510t/UVCCamera, the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions and setting  camera's contrast or brightness,etc.Here is some gifs of this demo:  
-![效果图](http://img.blog.csdn.net/20171025213631816)  
+OkCamera
+============   
+AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions and setting  camera's contrast or brightness,etc.
 
-[中文文档： OkCamera，Android 相机应用开发通用库](http://blog.csdn.net/andrexpert/article/details/79302141)  
+[中文文档： AndroidUSBCamera，UVCCamera开发通用库](http://blog.csdn.net/andrexpert/article/details/78324181)  
 
 Usage
 -------
@@ -93,7 +92,57 @@ private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.On
         }
     };
 ```
+(2) Capturing JPG Images  
+```java
+ mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                    @Override
+                    public void onCaptureResult(String path) {
+                        Log.i(TAG,"save path：" + path);
+                    }
+                }); 
+```
+(3) Recording Mp4,supporting close voice and save file automatic.
+```java
+RecordParams params = new RecordParams();
+                    params.setRecordPath(videoPath);
+                    params.setRecordDuration(0);                        // 0,do not cut save
+                    params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
+                    mCameraHelper.startRecording(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+                        @Override
+                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+                            // type = 1,h264 video stream
+                            if (type == 1) {
+//                                FileUtils.putFileStream(data, offset, length);
+                            }
+                            // type = 0,aac audio stream
+                            if(type == 0) {
 
+                            }
+                        }
+
+                        @Override
+                        public void onRecordResult(String videoPath) {
+                            Log.i(TAG,"videoPath = "+videoPath);
+                        }
+                    });  
+```
+(4) setting camera's brightness and contrast.  
+```java
+mCameraHelper.setModelValue(UVCCameraHelper.MODE_BRIGHTNESS,progress);
+mCameraHelper.setModelValue(UVCCameraHelper.MODE_CONTRAST,progress);
+mCameraHelper.getModelValue(UVCCameraHelper.MODE_BRIGHTNESS);
+mCameraHelper.getModelValue(UVCCameraHelper.MODE_CONTRAST);
+...
+```
+(5) switch resolutions and camera.  
+```java
+mCameraHelper.updateResolution(widht, height);
+```
+At last,remember adding permissions:  
+```
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+``` 
 License
 -------
 
@@ -110,22 +159,3 @@ License
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-
-### 9. 添加权限
-  add permissions  
-    
-```
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.RECORD_AUDIO" />
-``` 
-### USBCameraManager  API (Other)
-```
-(1) void requestPermission(int index)：请求授予开启USB摄像头权限；
-(2) int getUsbDeviceCount()：返回查询到的可用USB Camera数目；
-(3) boolean isRecording()：判断是否正在录制视频；
-(4) boolean isCameraOpened()：判断USB摄像头是否正常打开；
-(5) void release()：释放资源
-(6) USBMonitor getUSBMonitor()：返回USBMonitor实例；
-(7) mUSBManager.setModelValue(USBCameraManager.MODE_CONTRAST,contrast++); 调整对比度
-(8) mUSBManager.setModelValue(USBCameraManager.MODE_BRIGHTNESS,brightness++);调整亮度
-```
