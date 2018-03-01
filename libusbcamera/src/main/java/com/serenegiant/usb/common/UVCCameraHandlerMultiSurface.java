@@ -156,11 +156,11 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 		}
 	}
 
-	@Override
-	public void captureStill() {
-		checkReleased();
-		super.captureStill();
-	}
+//	@Override
+//	public void captureStill() {
+//		checkReleased();
+//		super.captureStill();
+//	}
 
 	@Override
 	public void captureStill(final String path,OnCaptureListener listener) {

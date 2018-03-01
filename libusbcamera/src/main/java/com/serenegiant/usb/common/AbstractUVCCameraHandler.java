@@ -217,10 +217,9 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	public void captureStill(final String path,AbstractUVCCameraHandler.OnCaptureListener listener) {
-		// old method, to get screen size picture
-//		AbstractUVCCameraHandler.mCaptureListener = listener;
-//		checkReleased();
-//		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
+		AbstractUVCCameraHandler.mCaptureListener = listener;
+		checkReleased();
+		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
 	}
 
 	// 开始录制
@@ -788,6 +787,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				}
 				// 捕获图片
 				if(! TextUtils.isEmpty(picPath)) {
+					picPath = null;
 					YUVBean bean = new YUVBean();
 					bean.setYuvData(yuv);
 					bean.setPicPath(picPath);
@@ -799,7 +799,6 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 							if(mCaptureListener != null) {
 								mCaptureListener.onCaptureResult(savePath);
 							}
-							picPath = null;
 						}
 					}).execute();
 				}

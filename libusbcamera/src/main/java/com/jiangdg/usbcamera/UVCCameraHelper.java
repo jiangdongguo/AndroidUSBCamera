@@ -214,9 +214,9 @@ public class UVCCameraHelper {
         return mUSBMonitor.getDeviceList(deviceFilters.get(0));
     }
 
-    public void capturePicture(String savePath) {
+    public void capturePicture(String savePath,AbstractUVCCameraHandler.OnCaptureListener listener) {
         if (mCameraHandler != null && mCameraHandler.isOpened()) {
-            mCameraHandler.captureStill(savePath);
+            mCameraHandler.captureStill(savePath,listener);
         }
     }
 
