@@ -92,6 +92,7 @@ private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.On
         }
     };
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/detecting.gif)  
 (2) Capturing JPG Images  
 ```java
  mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
@@ -134,15 +135,24 @@ mCameraHelper.getModelValue(UVCCameraHelper.MODE_BRIGHTNESS);
 mCameraHelper.getModelValue(UVCCameraHelper.MODE_CONTRAST);
 ...
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/brightness.gif)
 (5) switch resolutions and camera.  
 ```java
 mCameraHelper.updateResolution(widht, height);
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/resolution.gif)  
 At last,remember adding permissions:  
 ```
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 ``` 
+Other Library about Android Camera
+-------
+[OkCamera](https://github.com/jiangdongguo/OkCamera) Android Camera univsersally operation.  
+[AndroidRecordMp4](https://github.com/jiangdongguo/AndroidRecordMp4) Using MediaCodec realize record mp4.  
+[AndroidYuvOsd](https://github.com/jiangdongguo/AndroidYuvOsd) YUV data operation.  
+[Lame4Mp3](https://github.com/jiangdongguo/Lame4Mp3) pcm to mp3 and pcm to aac.  
+
 License
 -------
 
