@@ -3,7 +3,11 @@ package com.serenegiant.usb.common;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.YuvImage;
 import android.hardware.usb.UsbDevice;
 import android.media.MediaScannerConnection;
 import android.os.Build;
@@ -17,6 +21,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.jiangdg.usbcamera.task.SaveYuvImageTask;
+import com.jiangdg.usbcamera.utils.FileUtils;
 import com.jiangdg.usbcamera.utils.YUVBean;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
@@ -34,7 +39,9 @@ import com.serenegiant.usb.encoder.biz.Mp4MediaMuxer;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -99,7 +106,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 
 	private final WeakReference<CameraThread> mWeakThread;
 	private volatile boolean mReleased;
-	protected boolean isCaptureStill;
+	protected static boolean isCaptureStill;
 
 	protected AbstractUVCCameraHandler(final CameraThread thread) {
 		mWeakThread = new WeakReference<CameraThread>(thread);
@@ -220,6 +227,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 		AbstractUVCCameraHandler.mCaptureListener = listener;
 		checkReleased();
 		sendMessage(obtainMessage(MSG_CAPTURE_STILL, path));
+		isCaptureStill = true;
 	}
 
 	// 开始录制
@@ -761,7 +769,7 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //			isAudioThreadStart = false;
 		}
 
-		private String picPath;
+		private String picPath = null;
 
 		public void handleStillPicture(String picPath) {
 			this.picPath = picPath;
@@ -779,28 +787,23 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //					videoEncoder.encode(frame);
 //				}
 				int len = frame.capacity();
-				byte[] yuv = new byte[len];
+				final byte[] yuv = new byte[len];
 				frame.get(yuv);
 				// nv21 yuv data callback
 				if(mPreviewListener != null) {
 					mPreviewListener.onPreviewResult(yuv);
 				}
 				// 捕获图片
-				if(! TextUtils.isEmpty(picPath)) {
-					picPath = null;
-					YUVBean bean = new YUVBean();
-					bean.setYuvData(yuv);
-					bean.setPicPath(picPath);
-					bean.setWidth(mWidth);
-					bean.setHeight(mHeight);
-					new SaveYuvImageTask(bean, new SaveYuvImageTask.OnSaveYuvResultListener() {
+				if(isCaptureStill && ! TextUtils.isEmpty(picPath)) {
+					isCaptureStill = false;
+					new Thread(new Runnable() {
 						@Override
-						public void onSaveResult(String savePath) {
-							if(mCaptureListener != null) {
-								mCaptureListener.onCaptureResult(savePath);
-							}
+						public void run() {
+							saveYuv2Jpeg(picPath,yuv);
 						}
-					}).execute();
+					}).start();
+
+					isCaptureStill = false;
 				}
 				// 视频
 				if(mH264Consumer != null){
@@ -809,6 +812,40 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 				}
 			}
 		};
+
+		private void saveYuv2Jpeg(String path,byte[] data){
+			YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
+			ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length);
+			boolean result = yuvImage.compressToJpeg(new Rect(0, 0, mWidth, mHeight), 100, bos);
+			if(result){
+				byte[] buffer = bos.toByteArray();
+				Bitmap bmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length);
+
+				File file = new File(path);
+				FileOutputStream fos = null;
+				try {
+					fos = new FileOutputStream(file);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+				try {
+					fos.flush();
+					fos.close();
+					bmp.recycle();
+					if(mCaptureListener != null) {
+						mCaptureListener.onCaptureResult(path);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			try {
+				bos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 		public void handleUpdateMedia(final String path) {
