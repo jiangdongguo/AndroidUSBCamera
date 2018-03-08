@@ -20,9 +20,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.jiangdg.usbcamera.task.SaveYuvImageTask;
-import com.jiangdg.usbcamera.utils.FileUtils;
-import com.jiangdg.usbcamera.utils.YUVBean;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;

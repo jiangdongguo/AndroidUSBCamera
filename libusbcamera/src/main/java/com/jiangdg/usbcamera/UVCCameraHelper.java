@@ -34,7 +34,7 @@ public class UVCCameraHelper {
     private int previewHeight = 480;
     public static int MODE_BRIGHTNESS = UVCCamera.PU_BRIGHTNESS;
     public static int MODE_CONTRAST = UVCCamera.PU_CONTRAST;
-    //0-YUYV，1-MJPEG
+    //0-YUYV
     private static final int PREVIEW_FORMAT = 0;
 
     private static UVCCameraHelper mCameraHelper;
