@@ -530,9 +530,9 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			try {
 				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
-				// 获取USB Camera预览数据
-				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
-
+				// 获取USB Camera预览数据，使用NV21颜色会失真
+//				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
 			} catch (final IllegalArgumentException e) {
 //				try {
 //					// fallback to YUV mode

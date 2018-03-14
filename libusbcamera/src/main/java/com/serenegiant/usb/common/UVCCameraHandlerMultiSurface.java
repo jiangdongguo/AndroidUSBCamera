@@ -43,7 +43,7 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			final Activity parent, final CameraViewInterface cameraView,
 			final int width, final int height) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
+		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_YUYV, UVCCamera.DEFAULT_BANDWIDTH);
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			final Activity parent, final CameraViewInterface cameraView,
 			final int width, final int height, final float bandwidthFactor) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, bandwidthFactor);
+		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_YUYV, bandwidthFactor);
 	}
 
 	/**
@@ -75,7 +75,7 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			final Activity parent, final CameraViewInterface cameraView,
 			final int encoderType, final int width, final int height) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
+		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_YUYV, UVCCamera.DEFAULT_BANDWIDTH);
 	}
 
 	/**

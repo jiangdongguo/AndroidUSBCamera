@@ -139,7 +139,9 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         mUVCCameraView = (CameraViewInterface) mTextureView;
         mUVCCameraView.setCallback(this);
         mCameraHelper = UVCCameraHelper.getInstance();
+        mCameraHelper.setDefaultPreviewSize(320,240);
         mCameraHelper.initUSBMonitor(this, mUVCCameraView, listener);
+
 
         mCameraHelper.setOnPreviewFrameListener(new AbstractUVCCameraHandler.OnPreViewResultListener() {
             @Override
@@ -232,6 +234,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                         Log.i(TAG,"save path：" + path);
                     }
                 });
+
                 break;
             case R.id.menu_recording:
                 if (mCameraHelper == null || !mCameraHelper.isCameraOpened()) {

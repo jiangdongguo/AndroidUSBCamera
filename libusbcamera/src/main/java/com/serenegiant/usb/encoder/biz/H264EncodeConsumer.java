@@ -1,10 +1,6 @@
 package com.serenegiant.usb.encoder.biz;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-
+import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -14,7 +10,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
-/** 对YUV视频流进行编码
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+
+/**
+ * 对YUV视频流进行编码
  * Created by jiangdongguo on 2017/5/6.
  */
 
@@ -33,19 +35,19 @@ public class H264EncodeConsumer extends Thread {
     private boolean isExit = false;
     private boolean isEncoderStart = false;
 
-	private MediaFormat mFormat;
+    private MediaFormat mFormat;
     private static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test2.h264";
     private BufferedOutputStream outputStream;
     final int millisPerframe = 1000 / 20;
     long lastPush = 0;
     private OnH264EncodeResultListener listener;
-    private int mWidth ;
-    private int mHeight ;
+    private int mWidth;
+    private int mHeight;
     private MediaFormat newFormat;
     private WeakReference<Mp4MediaMuxer> mMuxerRef;
     private boolean isAddKeyFrame = false;
 
-    public interface OnH264EncodeResultListener{
+    public interface OnH264EncodeResultListener {
         void onEncodeResult(byte[] data, int offset,
                             int length, long timestamp);
     }
@@ -54,17 +56,13 @@ public class H264EncodeConsumer extends Thread {
         this.listener = listener;
     }
 
-    public H264EncodeConsumer(){
-
-    }
-
-    public H264EncodeConsumer(int width,int height){
+    public H264EncodeConsumer(int width, int height) {
         this.mWidth = width;
         this.mHeight = height;
     }
 
-    public synchronized void setTmpuMuxer(Mp4MediaMuxer mMuxer){
-        this.mMuxerRef =  new WeakReference<>(mMuxer);
+    public synchronized void setTmpuMuxer(Mp4MediaMuxer mMuxer) {
+        this.mMuxerRef = new WeakReference<>(mMuxer);
         Mp4MediaMuxer muxer = mMuxerRef.get();
         if (muxer != null && newFormat != null) {
             muxer.addTrack(newFormat, true);
@@ -74,13 +72,10 @@ public class H264EncodeConsumer extends Thread {
     private ByteBuffer[] inputBuffers;
     private ByteBuffer[] outputBuffers;
 
-    public void setRawYuv(byte[] yuvData,int width,int height){
-        if (! isEncoderStart)
+    public void setRawYuv(byte[] yuvData, int width, int height) {
+        if (!isEncoderStart)
             return;
-        // 根据编码器支持转换颜色空间格式
-        // 即 nv21 ---> YUV420sp(21)
-        //    nv21 ---> YUV420p (19)
-        if(mWidth != width || mHeight != height){
+        if (mWidth != width || mHeight != height) {
             mWidth = width;
             mHeight = height;
             return;
@@ -96,7 +91,8 @@ public class H264EncodeConsumer extends Thread {
                     Thread.sleep(time / 2);
             }
             // 将数据写入编码器
-            feedMediaCodecData(yuvData);
+
+            feedMediaCodecData(nv12ToNV21(yuvData, mWidth, mHeight));
 
             if (time > 0)
                 Thread.sleep(time / 2);
@@ -106,13 +102,13 @@ public class H264EncodeConsumer extends Thread {
         }
     }
 
-    private void feedMediaCodecData(byte[] data){
-        if (! isEncoderStart)
+    private void feedMediaCodecData(byte[] data) {
+        if (!isEncoderStart)
             return;
         int bufferIndex = -1;
-        try{
+        try {
             bufferIndex = mMediaCodec.dequeueInputBuffer(0);
-        }catch (IllegalStateException e){
+        } catch (IllegalStateException e) {
             e.printStackTrace();
         }
         if (bufferIndex >= 0) {
@@ -129,15 +125,16 @@ public class H264EncodeConsumer extends Thread {
         }
     }
 
-    public void exit(){
+    public void exit() {
         isExit = true;
     }
 
+    @SuppressLint("WrongConstant")
     @Override
     public void run() {
-    	if(!isEncoderStart){
+        if (!isEncoderStart) {
             startMediaCodec();
-    	}
+        }
         // 休眠200ms，等待音频线程开启
         // 否则视频第一秒会卡住
         try {
@@ -147,7 +144,7 @@ public class H264EncodeConsumer extends Thread {
         }
 
         // 如果编码器没有启动或者没有图像数据，线程阻塞等待
-        while(!isExit){
+        while (!isExit) {
             MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
             int outputBufferIndex = 0;
             byte[] mPpsSps = new byte[0];
@@ -162,7 +159,7 @@ public class H264EncodeConsumer extends Thread {
                 } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     synchronized (H264EncodeConsumer.this) {
                         newFormat = mMediaCodec.getOutputFormat();
-                        if(mMuxerRef != null){
+                        if (mMuxerRef != null) {
                             Mp4MediaMuxer muxer = mMuxerRef.get();
                             if (muxer != null) {
                                 muxer.addTrack(newFormat, true);
@@ -202,35 +199,35 @@ public class H264EncodeConsumer extends Thread {
                     if (sync) {
                         System.arraycopy(mPpsSps, 0, h264, 0, mPpsSps.length);
                         outputBuffer.get(h264, mPpsSps.length, bufferInfo.size);
-                        if(listener != null){
-                            listener.onEncodeResult(h264, 0,mPpsSps.length + bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
+                        if (listener != null) {
+                            listener.onEncodeResult(h264, 0, mPpsSps.length + bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
                         }
 
                         // 添加视频流到混合器
-                        if(mMuxerRef != null){
+                        if (mMuxerRef != null) {
                             Mp4MediaMuxer muxer = mMuxerRef.get();
                             if (muxer != null) {
                                 muxer.pumpStream(outputBuffer, bufferInfo, true);
                             }
                             isAddKeyFrame = true;
                         }
-                        if(DEBUG)
-                            Log.i(TAG,"关键帧 h264.length = "+h264.length+";mPpsSps.length="+mPpsSps.length
+                        if (DEBUG)
+                            Log.i(TAG, "关键帧 h264.length = " + h264.length + ";mPpsSps.length=" + mPpsSps.length
                                     + "  bufferInfo.size = " + bufferInfo.size);
                     } else {
                         outputBuffer.get(h264, 0, bufferInfo.size);
-                        if(listener != null){
-                            listener.onEncodeResult(h264, 0,bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
+                        if (listener != null) {
+                            listener.onEncodeResult(h264, 0, bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
                         }
                         // 添加视频流到混合器
-                        if(isAddKeyFrame && mMuxerRef != null){
+                        if (isAddKeyFrame && mMuxerRef != null) {
                             Mp4MediaMuxer muxer = mMuxerRef.get();
                             if (muxer != null) {
                                 muxer.pumpStream(outputBuffer, bufferInfo, true);
                             }
                         }
-                        if(DEBUG)
-                            Log.i(TAG,"普通帧 h264.length = "+h264.length+ "  bufferInfo.size = " + bufferInfo.size);
+                        if (DEBUG)
+                            Log.i(TAG, "普通帧 h264.length = " + h264.length + "  bufferInfo.size = " + bufferInfo.size);
                     }
                     mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                 }
@@ -261,7 +258,6 @@ public class H264EncodeConsumer extends Thread {
         mMediaCodec.start();
 
 
-
         isEncoderStart = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP + 1) {
             inputBuffers = outputBuffers = null;
@@ -277,25 +273,27 @@ public class H264EncodeConsumer extends Thread {
         }
     }
 
-    private void stopMediaCodec(){
+    private void stopMediaCodec() {
         isEncoderStart = false;
-        if(mMediaCodec != null){
+        if (mMediaCodec != null) {
             mMediaCodec.stop();
             mMediaCodec.release();
-            Log.d(TAG,"关闭视频编码器");
+            Log.d(TAG, "关闭视频编码器");
         }
     }
 
     private static final int FRAME_RATE = 15;
     private static final float BPP = 0.50f;
+
     private int calcBitRate() {
-        final int bitrate = (int)(BPP * FRAME_RATE * mWidth * mHeight);
+        final int bitrate = (int) (BPP * FRAME_RATE * mWidth * mHeight);
         Log.i(TAG, String.format("bitrate=%5.2f[Mbps]", bitrate / 1024f / 1024f));
         return bitrate;
     }
 
     /**
      * select the first codec that match a specific MIME type
+     *
      * @param mimeType
      * @return null if no codec matched
      */
@@ -307,7 +305,7 @@ public class H264EncodeConsumer extends Thread {
         for (int i = 0; i < numCodecs; i++) {
             final MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
 
-            if (!codecInfo.isEncoder()) {	// skipp decoder
+            if (!codecInfo.isEncoder()) {    // skipp decoder
                 continue;
             }
             // select first codec that match a specific MIME type and color format
@@ -327,6 +325,7 @@ public class H264EncodeConsumer extends Thread {
 
     /**
      * select color format available on specific codec and we can use.
+     *
      * @return 0 if no colorFormat is matched
      */
     protected static final int selectColorFormat(final MediaCodecInfo codecInfo, final String mimeType) {
@@ -356,12 +355,14 @@ public class H264EncodeConsumer extends Thread {
      * color formats that we can use in this class
      */
     protected static int[] recognizedFormats;
+
     static {
-        recognizedFormats = new int[] {
-//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar,
+        recognizedFormats = new int[]{
+//                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedPlanar,
+//                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar,
+//                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420PackedSemiPlanar,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
                 MediaCodecInfo.CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar,
-//        	MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface,
         };
     }
 
@@ -374,4 +375,87 @@ public class H264EncodeConsumer extends Thread {
         }
         return false;
     }
+
+
+    private byte[] nv21ToI420(byte[] data, int width, int height) {
+        byte[] ret = new byte[width * height * 3 / 2];
+        int total = width * height;
+
+        ByteBuffer bufferY = ByteBuffer.wrap(ret, 0, total);         // I420的Y分量
+        ByteBuffer bufferU = ByteBuffer.wrap(ret, total, total / 4); // I420的U分量
+        ByteBuffer bufferV = ByteBuffer.wrap(ret, total + total / 4, total / 4); // I420的V分量
+        // NV21 YYYYYYYY VUVU
+        bufferY.put(data, 0, total);
+        for (int i = total; i < data.length; i += 2) {
+            bufferV.put(data[i]);
+            bufferU.put(data[i + 1]);
+        }
+
+        return ret;
+    }
+
+    private byte[] nv12ToI420(byte[] data, int width, int height) {
+        byte[] ret = new byte[width * height * 3 / 2];
+        int total = width * height;
+
+        ByteBuffer bufferY = ByteBuffer.wrap(ret, 0, total);         // I420的Y分量
+        ByteBuffer bufferU = ByteBuffer.wrap(ret, total, total / 4); // I420的U分量
+        ByteBuffer bufferV = ByteBuffer.wrap(ret, total + total / 4, total / 4); // I420的V分量
+
+        // NV12 YYYYYYYY UVUV
+        bufferY.put(data, 0, total);
+        for (int i = total; i < data.length; i += 2) {
+            bufferU.put(data[i]);
+            bufferV.put(data[i + 1]);
+        }
+        return ret;
+    }
+
+    private byte[] nv12ToNv21(byte[] data, int width, int height) {
+        byte[] ret = new byte[width * height * 3 / 2];
+        int total = width * height;
+
+        ByteBuffer bufferY = ByteBuffer.wrap(ret, 0, total);         // I420的Y分量
+        ByteBuffer bufferU = ByteBuffer.wrap(ret, total, total / 4); // I420的U分量
+        ByteBuffer bufferV = ByteBuffer.wrap(ret, total + total / 4, total / 4); // I420的V分量
+
+        // NV12 YYYYYYYY UVUV
+        bufferY.put(data, 0, total);
+        for (int i = total; i < data.length; i += 2) {
+            bufferU.put(data[i]);
+            bufferV.put(data[i + 1]);
+        }
+        return ret;
+    }
+
+    // YYYYYYYY UVUV(nv21)--> YYYYYYYY VUVU(nv12)
+    private byte[] nv21ToNV12(byte[] nv21, int width, int height) {
+        byte[] ret = new byte[width * height * 3 /2];
+        int framesize = width * height;
+        int i = 0, j = 0;
+        // 拷贝Y分量
+        System.arraycopy(nv21, 0,ret , 0, framesize);
+        // 拷贝UV分量
+        for (j = framesize; j < nv21.length; j += 2) {
+            ret[j+1] = nv21[j+1];
+            ret[j] = nv21[j];
+        }
+        return ret;
+    }
+
+    // YYYYYYYY UVUV(nv12)--> YYYYYYYY VUVU(nv21)
+    private byte[] nv12ToNV21(byte[] nv12, int width, int height) {
+        byte[] ret = new byte[width * height * 3 /2];
+        int framesize = width * height;
+        int i = 0, j = 0;
+        // 拷贝Y分量
+        System.arraycopy(nv12, 0,ret , 0, framesize);
+        // 拷贝UV分量
+        for (j = framesize; j < nv12.length; j += 2) {
+            ret[j] = nv12[j+1];
+            ret[j+1] = nv12[j];
+        }
+        return ret;
+    }
+
 }

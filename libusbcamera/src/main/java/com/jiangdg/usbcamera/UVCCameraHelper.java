@@ -34,8 +34,6 @@ public class UVCCameraHelper {
     private int previewHeight = 480;
     public static int MODE_BRIGHTNESS = UVCCamera.PU_BRIGHTNESS;
     public static int MODE_CONTRAST = UVCCamera.PU_CONTRAST;
-    //0-YUYV
-    private static final int PREVIEW_FORMAT = 0;
 
     private static UVCCameraHelper mCameraHelper;
     // USB Manager
@@ -135,9 +133,9 @@ public class UVCCameraHelper {
             mCameraHandler = null;
         }
         // initialize camera handler
-//        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
+//        mCamViewWrf.get().setAspectRatio(previewWidth / (float)previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivityWrf.get(), mCamViewWrf.get(), 2,
-                previewWidth, previewHeight, PREVIEW_FORMAT);
+                previewWidth, previewHeight, UVCCamera.FRAME_FORMAT_YUYV);
     }
 
     public void updateResolution(int width, int height) {
@@ -150,9 +148,9 @@ public class UVCCameraHelper {
             mCameraHandler.release();
             mCameraHandler = null;
         }
-//        cameraView.setAspectRatio(previewWidth / (float)previewHeight);
+//        mCamViewWrf.get().setAspectRatio(previewWidth / (float)previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivityWrf.get(), mCamViewWrf.get(), 2,
-                previewWidth, previewHeight, PREVIEW_FORMAT);
+                previewWidth, previewHeight, UVCCamera.FRAME_FORMAT_YUYV);
         openCamera(mCtrlBlock);
         startPreview(mCamViewWrf.get());
     }
@@ -298,5 +296,21 @@ public class UVCCameraHelper {
         if (mCameraHandler == null)
             return null;
         return mCameraHandler.getSupportedPreviewSizes();
+    }
+
+    public void setDefaultPreviewSize(int defaultWidth,int defaultHeight) {
+        if(mUSBMonitor != null) {
+            throw new IllegalStateException("setDefaultPreviewSize should be call before initMonitor");
+        }
+        this.previewWidth = defaultWidth;
+        this.previewHeight = defaultHeight;
+    }
+
+    public int getPreviewWidth() {
+        return previewWidth;
+    }
+
+    public int getPreviewHeight() {
+        return previewHeight;
     }
 }
