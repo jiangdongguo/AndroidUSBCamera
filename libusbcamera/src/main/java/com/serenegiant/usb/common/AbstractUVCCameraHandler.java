@@ -534,13 +534,13 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 //				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
 				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
 			} catch (final IllegalArgumentException e) {
-//				try {
-//					// fallback to YUV mode
-//					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
-//				} catch (final IllegalArgumentException e1) {
-//					callOnError(e1);
-//					return;
-//				}
+				try {
+					// fallback to YUV mode
+					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
+				} catch (final IllegalArgumentException e1) {
+					callOnError(e1);
+					return;
+				}
 			}
 			if (surface instanceof SurfaceHolder) {
 				mUVCCamera.setPreviewDisplay((SurfaceHolder)surface);
