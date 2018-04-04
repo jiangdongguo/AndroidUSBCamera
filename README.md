@@ -21,7 +21,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies { 
-	    compile 'com.github.jiangdongguo:AndroidUSBCamera:2.0.3'
+	    compile 'com.github.jiangdongguo:AndroidUSBCamera:2.1.0'
 }  
 ```
 ### 2. APIs Introduction  
@@ -140,7 +140,7 @@ mCameraHelper.getModelValue(UVCCameraHelper.MODE_CONTRAST);
 ```java
 mCameraHelper.updateResolution(widht, height);
 ```
-![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/resolution.gif)  
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/2.1.0.gif)  
 At last,remember adding permissions:  
 ```
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
