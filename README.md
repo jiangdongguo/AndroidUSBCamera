@@ -20,9 +20,9 @@ allprojects {
 ```  
 Step 2. Add the dependency  
 ```java
-dependencies { 
-	    compile 'com.github.jiangdongguo:AndroidUSBCamera:2.1.1'
-}  
+dependencies {
+	        implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.1.1'
+}
 ```
 ### 2. APIs Introduction  
 (1) In order to using it correctly,the following four steps must be achieved：  
