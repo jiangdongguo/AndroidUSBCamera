@@ -21,7 +21,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	        implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.1.1'
+	        implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.1.0'
 }
 ```
 ### 2. APIs Introduction  
@@ -33,8 +33,8 @@ mCameraHelper = UVCCameraHelper.getInstance();
 // set default preview size
  mCameraHelper.setDefaultPreviewSize(1280,720);
 // set default frame format，defalut is UVCCameraHelper.Frame_FORMAT_MPEG
-// if using mpeg can not record mp4,please try yuv
-mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);	
+// if using mpeg can not record mp4,please try yuv(version 2.1.0 do not support)
+// mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);	
 mCameraHelper.initUSBMonitor(this, mUVCCameraView, mDevConnectListener); 
 ```
    To be attention,mCallback is a object of interface CameraViewInterface.Callback,and it's used to be listenering surfaceView
