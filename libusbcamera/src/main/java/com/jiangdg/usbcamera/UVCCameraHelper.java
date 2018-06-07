@@ -247,19 +247,25 @@ public class UVCCameraHelper {
         }
     }
 
-    public void startRecording(RecordParams params, AbstractUVCCameraHandler.OnEncodeResultListener listener) {
-        if (mCameraHandler != null && !isRecording()) {
+    public void startPusher(AbstractUVCCameraHandler.OnEncodeResultListener listener) {
+        if (mCameraHandler != null && !isPushing()) {
+            mCameraHandler.startRecording(null, listener);
+        }
+    }
+
+    public void startPusher(RecordParams params, AbstractUVCCameraHandler.OnEncodeResultListener listener) {
+        if (mCameraHandler != null && !isPushing()) {
             mCameraHandler.startRecording(params, listener);
         }
     }
 
-    public void stopRecording() {
-        if (mCameraHandler != null && isRecording()) {
+    public void stopPusher() {
+        if (mCameraHandler != null && isPushing()) {
             mCameraHandler.stopRecording();
         }
     }
 
-    public boolean isRecording() {
+    public boolean isPushing() {
         if (mCameraHandler != null) {
             return mCameraHandler.isRecording();
         }
