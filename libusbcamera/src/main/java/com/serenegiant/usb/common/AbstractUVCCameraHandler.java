@@ -20,9 +20,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.jiangdg.usbcamera.task.SaveYuvImageTask;
-import com.jiangdg.usbcamera.utils.FileUtils;
-import com.jiangdg.usbcamera.utils.YUVBean;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
@@ -533,17 +530,18 @@ public  abstract class AbstractUVCCameraHandler extends Handler {
 			if ((mUVCCamera == null) || mIsPreviewing) return;
 			try {
 				mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
-				// 获取USB Camera预览数据
-				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
-
+				// 获取USB Camera预览数据，使用NV21颜色会失真
+				// 无论使用YUV还是MPEG，setFrameCallback的设置效果一致
+//				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
 			} catch (final IllegalArgumentException e) {
-//				try {
-//					// fallback to YUV mode
-//					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
-//				} catch (final IllegalArgumentException e1) {
-//					callOnError(e1);
-//					return;
-//				}
+				try {
+					// fallback to YUV mode
+					mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, UVCCamera.DEFAULT_PREVIEW_MODE, mBandwidthFactor);
+				} catch (final IllegalArgumentException e1) {
+					callOnError(e1);
+					return;
+				}
 			}
 			if (surface instanceof SurfaceHolder) {
 				mUVCCamera.setPreviewDisplay((SurfaceHolder)surface);

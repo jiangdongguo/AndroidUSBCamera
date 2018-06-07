@@ -17,38 +17,42 @@
         app:navigationIcon="@null"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-    <com.serenegiant.usb.widget.UVCCameraTextureView
-        android:id="@+id/camera_view"
-        android:layout_below="@id/toolbar"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" />
+        android:layout_below="@id/toolbar">
+
+        <com.serenegiant.usb.widget.UVCCameraTextureView
+            android:id="@+id/camera_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"/>
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/llayout_contrast"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:layout_marginBottom="10dp"
         android:orientation="horizontal">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:paddingBottom="7dp"
             android:paddingTop="7dp"
-            android:layout_weight="1"
-            android:textColor="@color/colorWhite"
-            android:text="对比度(contrast)" />
+            android:text="对比度(contrast)"
+            android:textColor="@color/colorWhite" />
 
         <SeekBar
             android:id="@+id/seekbar_contrast"
             android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_weight="2" />
     </LinearLayout>
 
     <LinearLayout
@@ -64,17 +68,17 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:paddingBottom="7dp"
             android:paddingTop="7dp"
-            android:layout_weight="1"
             android:text="亮度(brightness)"
             android:textColor="@color/colorWhite" />
 
         <SeekBar
             android:id="@+id/seekbar_brightness"
             android:layout_width="0dp"
-            android:layout_weight="2"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:layout_weight="2" />
     </LinearLayout>
 
     <Switch
@@ -88,7 +92,7 @@
         android:layout_marginStart="13dp"
         android:layout_marginTop="27dp"
         android:checked="true"
-        android:textColor="@color/colorWhite"
-        android:text="closeVoice" />
+        android:text="closeVoice"
+        android:textColor="@color/colorWhite" />
 
 </RelativeLayout>

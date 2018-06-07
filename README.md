@@ -1,6 +1,6 @@
-OkCamera
+AndroidUSBCamera
 ============   
-AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions and setting  camera's contrast or brightness,etc.
+AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.
 
 [中文文档： AndroidUSBCamera，UVCCamera开发通用库](http://blog.csdn.net/andrexpert/article/details/78324181)  
 
@@ -20,9 +20,9 @@ allprojects {
 ```  
 Step 2. Add the dependency  
 ```java
-dependencies { 
-	    compile 'com.github.jiangdongguo:AndroidUSBCamera:2.0'
-}  
+dependencies {
+	        implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.1.0'
+}
 ```
 ### 2. APIs Introduction  
 (1) In order to using it correctly,the following four steps must be achieved：  
@@ -30,6 +30,11 @@ dependencies {
 mUVCCameraView = (CameraViewInterface) mTextureView;
 mUVCCameraView.setCallback(mCallback);
 mCameraHelper = UVCCameraHelper.getInstance();
+// set default preview size
+ mCameraHelper.setDefaultPreviewSize(1280,720);
+// set default frame format，defalut is UVCCameraHelper.Frame_FORMAT_MPEG
+// if using mpeg can not record mp4,please try yuv(version 2.1.0 do not support)
+// mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);	
 mCameraHelper.initUSBMonitor(this, mUVCCameraView, mDevConnectListener); 
 ```
    To be attention,mCallback is a object of interface CameraViewInterface.Callback,and it's used to be listenering surfaceView
@@ -92,6 +97,7 @@ private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.On
         }
     };
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/detecting.gif)  
 (2) Capturing JPG Images  
 ```java
  mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
@@ -134,15 +140,24 @@ mCameraHelper.getModelValue(UVCCameraHelper.MODE_BRIGHTNESS);
 mCameraHelper.getModelValue(UVCCameraHelper.MODE_CONTRAST);
 ...
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/brightness.gif)
 (5) switch resolutions and camera.  
 ```java
 mCameraHelper.updateResolution(widht, height);
 ```
+![Connecting gif](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/2.1.0.gif)  
 At last,remember adding permissions:  
 ```
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 ``` 
+Other Library about Android Camera
+-------
+[OkCamera](https://github.com/jiangdongguo/OkCamera) Android Camera univsersally operation.  
+[AndroidRecordMp4](https://github.com/jiangdongguo/AndroidRecordMp4) Using MediaCodec realize record mp4.  
+[AndroidYuvOsd](https://github.com/jiangdongguo/AndroidYuvOsd) YUV data operation.  
+[Lame4Mp3](https://github.com/jiangdongguo/Lame4Mp3) pcm to mp3 and pcm to aac.  
+
 License
 -------
 

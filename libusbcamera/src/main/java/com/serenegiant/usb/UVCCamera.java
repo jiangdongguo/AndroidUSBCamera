@@ -48,7 +48,7 @@ public class UVCCamera {
 	public static final int DEFAULT_PREVIEW_HEIGHT = 480;
 	public static final int DEFAULT_PREVIEW_MODE = 0;
 	public static final int DEFAULT_PREVIEW_MIN_FPS = 1;
-	public static final int DEFAULT_PREVIEW_MAX_FPS = 30;
+	public static final int DEFAULT_PREVIEW_MAX_FPS = 31;
 	public static final float DEFAULT_BANDWIDTH = 1.0f;
 
 	public static final int FRAME_FORMAT_YUYV = 0;
@@ -58,8 +58,8 @@ public class UVCCamera {
 	public static final int PIXEL_FORMAT_YUV = 1;
 	public static final int PIXEL_FORMAT_RGB565 = 2;
 	public static final int PIXEL_FORMAT_RGBX = 3;
-	public static final int PIXEL_FORMAT_YUV420SP = 4;
-	public static final int PIXEL_FORMAT_NV21 = 5;		// = YVU420SemiPlanar
+	public static final int PIXEL_FORMAT_YUV420SP = 4;	// NV12
+	public static final int PIXEL_FORMAT_NV21 = 5;		// = YVU420SemiPlanar,NV21，但是保存到jpg颜色失真
 
 	//--------------------------------------------------------------------------------
     public static final int	CTRL_SCANNING		= 0x00000001;	// D0:  Scanning Mode
