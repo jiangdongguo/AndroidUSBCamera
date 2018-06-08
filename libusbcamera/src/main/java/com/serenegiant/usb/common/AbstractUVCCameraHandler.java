@@ -676,7 +676,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             // 启动视频编码线程
             startVideoRecord();
             // 启动音频编码线程
-            if (!params.isVoiceClose()) {
+            if (params != null && !params.isVoiceClose()) {
                 startAudioRecord();
             }
             callOnStartRecording();
