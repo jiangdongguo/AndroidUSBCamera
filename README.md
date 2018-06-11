@@ -110,27 +110,26 @@ private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.On
 (3) Recording Mp4,supporting close voice and save file automatic.
 ```java
 RecordParams params = new RecordParams();
-                    params.setRecordPath(videoPath);
-                    params.setRecordDuration(0);                        // 0,do not cut save
-                    params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
-                    mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
-                        @Override
-                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-                            // type = 1,h264 video stream
-                            if (type == 1) {
-//                                FileUtils.putFileStream(data, offset, length);
-                            }
-                            // type = 0,aac audio stream
-                            if(type == 0) {
+params.setRecordPath(videoPath);
+params.setRecordDuration(0);                        // 0, do not split
+params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
+mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
+    @Override
+    public void onVideoEncodeResult(byte[] data, int offset, int length, long timestamp, boolean isKeyFrame) {
+        // H.264 video stream
+        FileUtils.putFileStream(data, offset, length);
+    }
 
-                            }
-                        }
+    @Override
+    public void onAudioEncodeResult(byte[] data, int offset, int length, long timestamp) {
+        // AAC audio stream
+    }
 
-                        @Override
-                        public void onRecordResult(String videoPath) {
-                            Log.i(TAG,"videoPath = "+videoPath);
-                        }
-                    });  
+    @Override
+    public void onRecordResult(String videoPath) {
+        Log.i(TAG,"videoPath = "+videoPath);
+    }
+});
 // of course,if you only want to getting h.264 and aac stream
 // you can do like this
 mCameraHelper.startPusher(listener);

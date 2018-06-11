@@ -48,8 +48,7 @@ public class H264EncodeConsumer extends Thread {
     private boolean isAddKeyFrame = false;
 
     public interface OnH264EncodeResultListener {
-        void onEncodeResult(byte[] data, int offset,
-                            int length, long timestamp);
+        void onEncodeResult(byte[] data, int offset, int length, long timestampMillis, boolean isKeyFrame);
     }
 
     public void setOnH264EncodeResultListener(OnH264EncodeResultListener listener) {
@@ -200,7 +199,8 @@ public class H264EncodeConsumer extends Thread {
                         System.arraycopy(mPpsSps, 0, h264, 0, mPpsSps.length);
                         outputBuffer.get(h264, mPpsSps.length, bufferInfo.size);
                         if (listener != null) {
-                            listener.onEncodeResult(h264, 0, mPpsSps.length + bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
+                            listener.onEncodeResult(h264, 0, mPpsSps.length + bufferInfo.size
+                                    , bufferInfo.presentationTimeUs / 1000, true);
                         }
 
                         // 添加视频流到混合器
@@ -217,7 +217,8 @@ public class H264EncodeConsumer extends Thread {
                     } else {
                         outputBuffer.get(h264, 0, bufferInfo.size);
                         if (listener != null) {
-                            listener.onEncodeResult(h264, 0, bufferInfo.size, bufferInfo.presentationTimeUs / 1000);
+                            listener.onEncodeResult(h264, 0, bufferInfo.size
+                                    , bufferInfo.presentationTimeUs / 1000, false);
                         }
                         // 添加视频流到混合器
                         if (isAddKeyFrame && mMuxerRef != null) {
@@ -340,7 +341,7 @@ public class H264EncodeConsumer extends Thread {
         int colorFormat;
         for (int i = 0; i < caps.colorFormats.length; i++) {
             colorFormat = caps.colorFormats[i];
-            if (isRecognizedViewoFormat(colorFormat)) {
+            if (isRecognizedFormat(colorFormat)) {
                 if (result == 0)
                     result = colorFormat;
                 break;
@@ -366,7 +367,7 @@ public class H264EncodeConsumer extends Thread {
         };
     }
 
-    private static final boolean isRecognizedViewoFormat(final int colorFormat) {
+    private static final boolean isRecognizedFormat(final int colorFormat) {
         final int n = recognizedFormats != null ? recognizedFormats.length : 0;
         for (int i = 0; i < n; i++) {
             if (recognizedFormats[i] == colorFormat) {

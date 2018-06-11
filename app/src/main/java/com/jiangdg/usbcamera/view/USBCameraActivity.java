@@ -251,15 +251,14 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
                     mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
-                        public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-                            // type = 1,h264 video stream
-                            if (type == 1) {
-                                FileUtils.putFileStream(data, offset, length);
-                            }
-                            // type = 0,aac audio stream
-                            if(type == 0) {
+                        public void onVideoEncodeResult(byte[] data, int offset, int length, long timestampMillis, boolean isKeyFrame) {
+                            // H.264 video stream
+                            FileUtils.putFileStream(data, offset, length);
+                        }
 
-                            }
+                        @Override
+                        public void onAudioEncodeResult(byte[] data, int offset, int length, long timestampMillis) {
+                            // AAC audio stream
                         }
 
                         @Override

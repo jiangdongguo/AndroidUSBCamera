@@ -80,8 +80,8 @@ public abstract class AbstractUVCCameraHandler extends Handler {
     public static OnCaptureListener mCaptureListener;
 
     public interface OnEncodeResultListener {
-        void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type);
-
+        void onVideoEncodeResult(byte[] data, int offset, int length, long timestampMillis, boolean isKeyFrame);
+        void onAudioEncodeResult(byte[] data, int offset, int length, long timestampMillis);
         void onRecordResult(String videoPath);
     }
 
@@ -710,9 +710,9 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             mH264Consumer = new H264EncodeConsumer(getWidth(), getHeight());
             mH264Consumer.setOnH264EncodeResultListener(new H264EncodeConsumer.OnH264EncodeResultListener() {
                 @Override
-                public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
+                public void onEncodeResult(byte[] data, int offset, int length, long timestamp, boolean isKeyFrame) {
                     if (mListener != null) {
-                        mListener.onEncodeResult(data, offset, length, timestamp, 1);
+                        mListener.onVideoEncodeResult(data, offset, length, timestamp, isKeyFrame);
                     }
                 }
             });
@@ -748,7 +748,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                 @Override
                 public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
                     if (mListener != null) {
-                        mListener.onEncodeResult(data, offset, length, timestamp, 0);
+                        mListener.onAudioEncodeResult(data, offset, length, timestamp);
                     }
                 }
             });
@@ -906,63 +906,63 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             return mUVCCamera.getSupportedSizeList();
         }
 
-        private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
-            @Override
-            public void onPrepared(final MediaEncoder encoder) {
-                if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
-                mIsRecording = true;
-                if (encoder instanceof MediaVideoEncoder)
-                    try {
-                        mWeakCameraView.get().setVideoEncoder((MediaVideoEncoder) encoder);
-                    } catch (final Exception e) {
-                        Log.e(TAG, "onPrepared:", e);
-                    }
-                if (encoder instanceof MediaSurfaceEncoder)
-                    try {
-                        mWeakCameraView.get().setVideoEncoder((MediaSurfaceEncoder) encoder);
-                        mUVCCamera.startCapture(((MediaSurfaceEncoder) encoder).getInputSurface());
-                    } catch (final Exception e) {
-                        Log.e(TAG, "onPrepared:", e);
-                    }
-            }
-
-            @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-            @Override
-            public void onStopped(final MediaEncoder encoder) {
-                if (DEBUG) Log.v(TAG_THREAD, "onStopped:encoder=" + encoder);
-                if ((encoder instanceof MediaVideoEncoder)
-                        || (encoder instanceof MediaSurfaceEncoder))
-                    try {
-                        mIsRecording = false;
-                        final Activity parent = mWeakParent.get();
-                        mWeakCameraView.get().setVideoEncoder(null);
-                        synchronized (mSync) {
-                            if (mUVCCamera != null) {
-                                mUVCCamera.stopCapture();
-                            }
-                        }
-                        final String path = encoder.getOutputPath();
-                        if (!TextUtils.isEmpty(path)) {
-                            mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_MEDIA_UPDATE, path), 1000);
-                        } else {
-                            final boolean released = (mHandler == null) || mHandler.mReleased;
-                            if (released || parent == null || parent.isDestroyed()) {
-                                handleRelease();
-                            }
-                        }
-                    } catch (final Exception e) {
-                        Log.e(TAG, "onPrepared:", e);
-                    }
-            }
-
-            @Override
-            public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
-                if (mListener != null) {
-                    mListener.onEncodeResult(data, offset, length, timestamp, type);
-                }
-            }
-
-        };
+        // private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
+        //     @Override
+        //     public void onPrepared(final MediaEncoder encoder) {
+        //         if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
+        //         mIsRecording = true;
+        //         if (encoder instanceof MediaVideoEncoder)
+        //             try {
+        //                 mWeakCameraView.get().setVideoEncoder((MediaVideoEncoder) encoder);
+        //             } catch (final Exception e) {
+        //                 Log.e(TAG, "onPrepared:", e);
+        //             }
+        //         if (encoder instanceof MediaSurfaceEncoder)
+        //             try {
+        //                 mWeakCameraView.get().setVideoEncoder((MediaSurfaceEncoder) encoder);
+        //                 mUVCCamera.startCapture(((MediaSurfaceEncoder) encoder).getInputSurface());
+        //             } catch (final Exception e) {
+        //                 Log.e(TAG, "onPrepared:", e);
+        //             }
+        //     }
+        //
+        //     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+        //     @Override
+        //     public void onStopped(final MediaEncoder encoder) {
+        //         if (DEBUG) Log.v(TAG_THREAD, "onStopped:encoder=" + encoder);
+        //         if ((encoder instanceof MediaVideoEncoder)
+        //                 || (encoder instanceof MediaSurfaceEncoder))
+        //             try {
+        //                 mIsRecording = false;
+        //                 final Activity parent = mWeakParent.get();
+        //                 mWeakCameraView.get().setVideoEncoder(null);
+        //                 synchronized (mSync) {
+        //                     if (mUVCCamera != null) {
+        //                         mUVCCamera.stopCapture();
+        //                     }
+        //                 }
+        //                 final String path = encoder.getOutputPath();
+        //                 if (!TextUtils.isEmpty(path)) {
+        //                     mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_MEDIA_UPDATE, path), 1000);
+        //                 } else {
+        //                     final boolean released = (mHandler == null) || mHandler.mReleased;
+        //                     if (released || parent == null || parent.isDestroyed()) {
+        //                         handleRelease();
+        //                     }
+        //                 }
+        //             } catch (final Exception e) {
+        //                 Log.e(TAG, "onPrepared:", e);
+        //             }
+        //     }
+        //
+        //     @Override
+        //     public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
+        //         if (mListener != null) {
+        //             mListener.onEncodeResult(data, offset, length, timestamp, type);
+        //         }
+        //     }
+        //
+        // };
 
 //		private void loadShutterSound(final Context context) {
 //			// get system stream type using reflection
