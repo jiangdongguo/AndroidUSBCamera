@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="410dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal|center_vertical"
+        android:text="Welcome to use!"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:textSize="14sp"
+        android:textStyle="italic"
+        android:text="Author: jiangdongguo"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_marginTop="5dp"
+        android:textStyle="italic"
+        android:textSize="14sp"
+        android:text="Email:765067602@qq.com"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:text="last modify 2019.6"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="bottom|center_horizontal"
+        android:paddingBottom="20dp"
+        android:layout_weight="1"/>
+</LinearLayout>

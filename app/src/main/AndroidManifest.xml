@@ -4,8 +4,7 @@
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <!--全局异常检测，需添加-->
-    <!--android:name=".application.MyApplication"-->
+
     <application
         android:name=".application.MyApplication"
         android:allowBackup="true"
@@ -13,11 +12,19 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.jiangdg.usbcamera.view.USBCameraActivity">
+        <activity android:name="com.jiangdg.usbcamera.view.SplashActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".view.USBCameraActivity"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
             </intent-filter>
         </activity>
     </application>

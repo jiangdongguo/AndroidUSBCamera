@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-/** 创建文件
+/**
  *
  * Created by jiangdongguo on 2017/10/18.
  */

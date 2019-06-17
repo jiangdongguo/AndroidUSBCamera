@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.UVCCameraHelper;
+import com.jiangdg.usbcamera.application.MyApplication;
 import com.jiangdg.usbcamera.utils.FileUtils;
 import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.Size;
@@ -226,7 +227,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("sorry,camera open failed");
                     return super.onOptionsItemSelected(item);
                 }
-                String picPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis()
+                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"images/"+ System.currentTimeMillis()
                         + UVCCameraHelper.SUFFIX_JPEG;
                 mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
@@ -242,7 +243,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     return super.onOptionsItemSelected(item);
                 }
                 if (!mCameraHelper.isPushing()) {
-                    String videoPath = UVCCameraHelper.ROOT_PATH + System.currentTimeMillis();
+                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"videos/"+ System.currentTimeMillis();
                     FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     // if you want to record,please create RecordParams like this
                     RecordParams params = new RecordParams();

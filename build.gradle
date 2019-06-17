@@ -5,7 +5,6 @@ buildscript {
         jcenter()
     }
     dependencies {
-        // gradle插件版本
         classpath 'com.android.tools.build:gradle:3.2.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
@@ -28,7 +27,7 @@ ext {
     commonLibVersion= '2.12.4'
     versionCompiler = 27
     versionTarget = 27
-    minSdkVersion = 21
+    minSdkVersion = 23
     versionNameString = '1.0.0'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8

@@ -9,6 +9,9 @@ import android.os.Environment;
 import android.os.Looper;
 import android.widget.Toast;
 
+import com.jiangdg.usbcamera.UVCCameraHelper;
+import com.jiangdg.usbcamera.application.MyApplication;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -98,8 +101,11 @@ public class CrashHandler implements UncaughtExceptionHandler {
 			public void run() {
 				Looper.prepare();
 				Toast.makeText(mContext.getApplicationContext(),
-						"程序异常退出，即将重启...", Toast.LENGTH_LONG).show();
+						"unknown exception！Please checking logs in sd card.", Toast.LENGTH_LONG).show();
 				Looper.loop();
+
+				android.os.Process.killProcess(android.os.Process.myPid());
+				System.exit(0);
 			}
 		}).start();
 		// 收集设备参数信息
@@ -160,8 +166,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
 			sb.append("\n");
 		}
 
-		File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-				+File.separator+System.currentTimeMillis()+".txt");
+		File file = new File(UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/log.txt");
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file);
