@@ -25,4 +25,11 @@
 
 <usb>
 	<usb-device class="239" subclass="2" />	<!-- all device of UVC -->
+	<!-- a few android 9.0 -->
+	<usb-device class="14" subclass="9" />
+	<usb-device class="2" subclass="0" />
+	<usb-device class="6" subclass="-1" />
+	<usb-device product-id="4836" vendor-id="9573" />
+	<usb-device product-id="2229" vendor-id="1133" />
+	<usb-device product-id="640" vendor-id="1409" />
 </usb>

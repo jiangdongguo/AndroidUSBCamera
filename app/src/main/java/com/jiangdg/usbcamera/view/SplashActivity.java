@@ -46,7 +46,7 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private boolean isVersionM() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
     private void checkAndRequestPermissions() {

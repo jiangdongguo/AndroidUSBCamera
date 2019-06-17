@@ -35,6 +35,7 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -147,7 +148,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         mCameraHelper.setOnPreviewFrameListener(new AbstractUVCCameraHandler.OnPreViewResultListener() {
             @Override
             public void onPreviewResult(byte[] nv21Yuv) {
-
+                Log.d(TAG, "onPreviewResult: "+nv21Yuv.length);
             }
         });
     }
@@ -227,7 +228,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("sorry,camera open failed");
                     return super.onOptionsItemSelected(item);
                 }
-                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"images/"+ System.currentTimeMillis()
+                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/images/"+ System.currentTimeMillis()
                         + UVCCameraHelper.SUFFIX_JPEG;
                 mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
@@ -243,7 +244,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     return super.onOptionsItemSelected(item);
                 }
                 if (!mCameraHelper.isPushing()) {
-                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"videos/"+ System.currentTimeMillis();
+                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/videos/"+ System.currentTimeMillis();
                     FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     // if you want to record,please create RecordParams like this
                     RecordParams params = new RecordParams();

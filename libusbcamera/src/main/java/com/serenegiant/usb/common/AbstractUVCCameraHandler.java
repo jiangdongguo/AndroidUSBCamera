@@ -813,8 +813,6 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                             saveYuv2Jpeg(picPath, yuv);
                         }
                     }).start();
-
-                    isCaptureStill = false;
                 }
                 // 视频
                 if (mH264Consumer != null) {
@@ -829,26 +827,22 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length);
             boolean result = yuvImage.compressToJpeg(new Rect(0, 0, mWidth, mHeight), 100, bos);
             if (result) {
-                byte[] buffer = bos.toByteArray();
-                Bitmap bmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length);
 
+                byte[] buffer = bos.toByteArray();
                 File file = new File(path);
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(file);
+                    // fixing bm is null bug instead of using BitmapFactory.decodeByteArray
+                    fos.write(buffer);
+                    fos.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                }
-                bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-                try {
-                    fos.flush();
-                    fos.close();
-                    bmp.recycle();
-                    if (mCaptureListener != null) {
-                        mCaptureListener.onCaptureResult(path);
-                    }
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                if (mCaptureListener != null) {
+                    mCaptureListener.onCaptureResult(path);
                 }
             }
             try {
