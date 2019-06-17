@@ -238,6 +238,7 @@ public class UVCCameraHelper {
         List<DeviceFilter> deviceFilters = DeviceFilter
                 .getDeviceFilters(mActivity.getApplicationContext(), R.xml.device_filter);
         if (mUSBMonitor == null || deviceFilters == null)
+//            throw new NullPointerException("mUSBMonitor ="+mUSBMonitor+"deviceFilters=;"+deviceFilters);
             return null;
         // matching all of filter devices
         return mUSBMonitor.getDeviceList(deviceFilters);
