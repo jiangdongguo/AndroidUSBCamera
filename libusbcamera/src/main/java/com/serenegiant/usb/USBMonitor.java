@@ -314,7 +314,10 @@ public final class USBMonitor {
 		String fileName = Environment.getExternalStorageDirectory()+ "/USBCamera/failed_devices.txt";
 
 		File logFile = new File(fileName);
-		if(! logFile.exists()) {
+		if(!logFile.getParentFile().exists()) {
+			logFile.getParentFile().mkdirs();
+		}
+		if(!logFile.exists()) {
 			try {
 				logFile.createNewFile();
 			} catch (IOException e) {

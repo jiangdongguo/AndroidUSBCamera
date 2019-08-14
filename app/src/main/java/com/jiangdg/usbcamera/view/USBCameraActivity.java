@@ -224,9 +224,13 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("sorry,camera open failed");
                     return super.onOptionsItemSelected(item);
                 }
-                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/images/"+ System.currentTimeMillis()
-                        + UVCCameraHelper.SUFFIX_JPEG;
-                mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/images";
+                String picFilename = System.currentTimeMillis() + UVCCameraHelper.SUFFIX_JPEG;
+
+                File picPathFolder = new File(picPath);
+                if (!picPathFolder.exists()) picPathFolder.mkdirs();
+
+                mCameraHelper.capturePicture(picPath+'/'+picFilename, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
                         Log.i(TAG,"save path：" + path);
@@ -240,11 +244,15 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     return super.onOptionsItemSelected(item);
                 }
                 if (!mCameraHelper.isPushing()) {
-                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/videos/"+ System.currentTimeMillis();
+                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/videos";
+                    String videoFilename = String.valueOf(System.currentTimeMillis());
+                    File videoPathFolder = new File(videoPath);
+                    if (!videoPathFolder.exists()) videoPathFolder.mkdirs();
+
                     FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     // if you want to record,please create RecordParams like this
                     RecordParams params = new RecordParams();
-                    params.setRecordPath(videoPath);
+                    params.setRecordPath(videoPath+"/"+videoFilename);
                     params.setRecordDuration(0);                        // 设置为0，不分割保存
                     params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
                     mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
