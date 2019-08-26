@@ -27,8 +27,10 @@ ext {
     commonLibVersion= '2.12.4'
     versionCompiler = 27
     versionTarget = 27
+    // if hope supporting 4.4
+    // please modify it to 16
     minSdkVersion = 21
-    versionNameString = '1.0.0'
+    versionNameString = '1.1.0.20190826'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
