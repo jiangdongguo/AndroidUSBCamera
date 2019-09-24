@@ -174,7 +174,7 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 Download APK
 -------  
   
-&emsp;In order to display the function, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and is you have any question please tell me ,I will follow it do my best.
+&emsp;In order to display the functions, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and if you have any questions please issues to me ,I will follow it do my best.
 ```
 ext {
     javaSourceCompatibility = JavaVersion.VERSION_1_8
