@@ -23,7 +23,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	       implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.0'
+	       implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.1'
 }
 ```
 ### 2. APIs Introduction  
@@ -170,6 +170,29 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 - get a file from your sd card named failed-device.txt in the path of root sd card/UsbCamera/failed-device.txt and tell me
 
+
+Download APK
+-------  
+  
+&emsp;In order to display the function, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and is you have any question please tell me ,I will follow it do my best.
+```
+ext {
+    javaSourceCompatibility = JavaVersion.VERSION_1_8
+    javaTargetCompatibility = JavaVersion.VERSION_1_8
+    compileSdkVersion = 28
+    buildToolsVersion = '28.0.3'
+    minSdkVersion = 21
+    targetSdkVersion = 28
+    commonLibVersion= '2.12.4'
+}
+```   
+download way:  
+
+![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/download.png)  
+
+displaying:  
+
+![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/USBCam.gif)  
 
 
 Other Library about Android Camera
