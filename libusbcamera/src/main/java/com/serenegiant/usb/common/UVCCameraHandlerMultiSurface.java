@@ -30,6 +30,8 @@ import com.serenegiant.glutils.RendererHolder;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.io.FileNotFoundException;
+
 public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 	/**
 	 * create UVCCameraHandlerMultiSurface, use MediaVideoEncoder, try MJPEG, default bandwidth
@@ -170,8 +172,12 @@ public class UVCCameraHandlerMultiSurface extends AbstractUVCCameraHandler {
 			public void run() {
 				synchronized (UVCCameraHandlerMultiSurface.this) {
 					if (mRendererHolder != null) {
-						mRendererHolder.captureStill(path);
-						updateMedia(path);
+						try {
+							mRendererHolder.captureStill(path);
+							updateMedia(path);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}

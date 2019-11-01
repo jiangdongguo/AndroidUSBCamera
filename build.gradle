@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.android.tools.build:gradle:3.5.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
 }
@@ -23,14 +23,14 @@ task clean(type: Delete) {
 }
 
 ext {
-    supportLibVersion = '27.1.1'  // variable that can be referenced to keep support libs consistent
-    commonLibVersion= '2.12.4'
-    versionCompiler = 27
-    versionTarget = 27
+    appCompatLibVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
+    commonLibVersion= '5.7.0'
+    versionCompiler = 29
+    versionTarget = 28
     // if hope supporting 4.4
     // please modify it to 16
     minSdkVersion = 21
-    versionNameString = '1.1.0.20190826'
+    versionNameString = '1.2.0.20191101'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
