@@ -311,7 +311,7 @@ public final class USBMonitor {
 		// get detected devices
 		final HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
 		// store those devices info before matching filter xml file
-		String fileName = Environment.getExternalStorageDirectory()+ "/USBCamera/failed_devices.txt";
+		String fileName = Environment.getExternalStorageDirectory().getAbsolutePath()+ "/USBCamera/failed_devices.txt";
 
 		File logFile = new File(fileName);
 		if(!logFile.getParentFile().exists()) {
@@ -326,29 +326,35 @@ public final class USBMonitor {
 		}
 		FileWriter fw = null;
 		PrintWriter pw = null;
-		final List<UsbDevice> result = new ArrayList<UsbDevice>();
 		try {
 			fw = new FileWriter(logFile, true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(fw != null) {
 			pw = new PrintWriter(fw);
-			if (deviceList != null) {
-				if ((filters == null) || filters.isEmpty()) {
-					result.addAll(deviceList.values());
-				} else {
-					for (final UsbDevice device: deviceList.values() ) {
-						// match devices
-						for (final DeviceFilter filter: filters) {
-							if ((filter != null) && filter.matches(device) || (filter != null && filter.mSubclass == device.getDeviceSubclass())) {
-								// when filter matches
-								if (!filter.isExclude) {
-									result.add(device);
-								}
-								break;
-							} else {
-								// collection failed dev's class and subclass
-								String devModel = android.os.Build.MODEL;
-								String devSystemVersion = android.os.Build.VERSION.RELEASE;
-								String devClass = String.valueOf(device.getDeviceClass());
-								String subClass = String.valueOf(device.getDeviceSubclass());
+		}
+		final List<UsbDevice> result = new ArrayList<UsbDevice>();
+		if (deviceList != null) {
+			if ((filters == null) || filters.isEmpty()) {
+				result.addAll(deviceList.values());
+			} else {
+				for (final UsbDevice device: deviceList.values() ) {
+					// match devices
+					for (final DeviceFilter filter: filters) {
+						if ((filter != null) && filter.matches(device) || (filter != null && filter.mSubclass == device.getDeviceSubclass())) {
+							// when filter matches
+							if (!filter.isExclude) {
+								result.add(device);
+							}
+							break;
+						} else {
+							// collection failed dev's class and subclass
+							String devModel = android.os.Build.MODEL;
+							String devSystemVersion = android.os.Build.VERSION.RELEASE;
+							String devClass = String.valueOf(device.getDeviceClass());
+							String subClass = String.valueOf(device.getDeviceSubclass());
+							try{
 								if(pw != null) {
 									StringBuilder sb = new StringBuilder();
 									sb.append(devModel);
@@ -360,23 +366,22 @@ public final class USBMonitor {
 									pw.flush();
 									fw.flush();
 								}
+							}catch (IOException e) {
+								e.printStackTrace();
 							}
 						}
 					}
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (pw != null) {
-				pw.close();
-			}
-			if (fw != null) {
-				try {
-					fw.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		}
+		if (pw != null) {
+			pw.close();
+		}
+		if (fw != null) {
+			try {
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		return result;
