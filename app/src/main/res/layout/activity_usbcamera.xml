@@ -91,7 +91,7 @@
         android:layout_marginLeft="13dp"
         android:layout_marginStart="13dp"
         android:layout_marginTop="27dp"
-        android:checked="true"
+        android:checked="false"
         android:text="closeVoice"
         android:textColor="@color/colorWhite" />
 

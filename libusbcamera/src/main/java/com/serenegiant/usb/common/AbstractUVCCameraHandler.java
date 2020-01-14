@@ -670,6 +670,10 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             // 初始化混合器
             if (params != null) {
                 videoPath = params.getRecordPath();
+                File file = new File(videoPath);
+                if(! file.getParentFile().exists()) {
+                    file.getParentFile().mkdirs();
+                }
                 mMuxer = new Mp4MediaMuxer(params.getRecordPath(),
                         params.getRecordDuration() * 60 * 1000, params.isVoiceClose());
             }

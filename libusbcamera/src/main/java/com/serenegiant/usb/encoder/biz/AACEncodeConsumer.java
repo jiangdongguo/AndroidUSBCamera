@@ -52,6 +52,11 @@ public class AACEncodeConsumer extends Thread{
     private WeakReference<Mp4MediaMuxer> mMuxerRef;
     private MediaFormat newFormat;
 
+    private static final int[] AUDIO_SOURCES = new int[] {
+            MediaRecorder.AudioSource.DEFAULT,
+            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.CAMCORDER,
+    };
     /**
      * There are 13 supported frequencies by ADTS.
      **/
@@ -247,8 +252,23 @@ public class AACEncodeConsumer extends Thread{
         Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
         int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+        for (final int src: AUDIO_SOURCES) {
+            try {
+                mAudioRecord = new AudioRecord(src,
+                        SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+                if (mAudioRecord != null) {
+                    if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
+                        mAudioRecord.release();
+                        mAudioRecord = null;
+                    }
+                }
+            } catch (final Exception e) {
+                mAudioRecord = null;
+            }
+            if (mAudioRecord != null) {
+                break;
+            }
+        }
         mAudioRecord.startRecording();
     }
 
