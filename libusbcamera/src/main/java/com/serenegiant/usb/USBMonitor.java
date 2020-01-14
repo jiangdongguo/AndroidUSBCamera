@@ -317,7 +317,8 @@ public final class USBMonitor {
 		if(!logFile.getParentFile().exists()) {
 			logFile.getParentFile().mkdirs();
 		}
-		if(!logFile.exists()) {
+
+		if(! logFile.exists()) {
 			try {
 				logFile.createNewFile();
 			} catch (IOException e) {

@@ -6,8 +6,8 @@ package com.serenegiant.usb.encoder;
  */
 
 public class RecordParams {
-    private String recordPath;
-    private int recordDuration;
+    private String recordPath;  // 保存路径
+    private int recordDuration; // 分钟
     private boolean voiceClose;
     private boolean isAutoSave;
 

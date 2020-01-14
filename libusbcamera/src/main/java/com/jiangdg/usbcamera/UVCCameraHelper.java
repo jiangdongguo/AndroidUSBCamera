@@ -246,6 +246,10 @@ public class UVCCameraHelper {
 
     public void capturePicture(String savePath,AbstractUVCCameraHandler.OnCaptureListener listener) {
         if (mCameraHandler != null && mCameraHandler.isOpened()) {
+            File file = new File(savePath);
+            if(! file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
             mCameraHandler.captureStill(savePath,listener);
         }
     }

@@ -2,7 +2,9 @@ package com.jiangdg.usbcamera.view;
 
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -229,7 +231,15 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                 mCameraHelper.capturePicture(picPath+'/'+picFilename, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
-                        Log.i(TAG,"save path：" + path);
+                        if(TextUtils.isEmpty(path)) {
+                            return;
+                        }
+                        new Handler(getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(USBCameraActivity.this, "save path:"+path, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 });
 
@@ -248,8 +258,8 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     // if you want to record,please create RecordParams like this
                     RecordParams params = new RecordParams();
-                    params.setRecordPath(videoPath+"/"+videoFilename);
-                    params.setRecordDuration(0);                        // 设置为0，不分割保存
+                    params.setRecordPath(videoPath);
+                    params.setRecordDuration(0);                        // 设置为0，不分割保存(单位为分钟)
                     params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
                     mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
@@ -266,7 +276,10 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
 
                         @Override
                         public void onRecordResult(String videoPath) {
-                            Log.i(TAG,"videoPath = "+videoPath);
+                            if(TextUtils.isEmpty(videoPath)) {
+                                return;
+                            }
+                            new Handler(getMainLooper()).post(() -> Toast.makeText(USBCameraActivity.this, "save videoPath:"+videoPath, Toast.LENGTH_SHORT).show());
                         }
                     });
                     // if you only want to push stream,please call like this
