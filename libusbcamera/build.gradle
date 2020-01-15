@@ -10,6 +10,11 @@ android {
         versionCode 2
         versionName rootProject.ext.versionNameString
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // "armeabi-v7a" can adapter most of the devices
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
     }
     buildTypes {
         release {
@@ -30,4 +35,5 @@ dependencies {
 
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
     api "com.serenegiant:common:${commonLibVersion}"
+    implementation project(path: ':libutils')
 }

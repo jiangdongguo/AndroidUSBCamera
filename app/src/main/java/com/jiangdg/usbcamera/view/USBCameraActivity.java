@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -17,13 +18,12 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.Toast;
-
+import com.jiangdg.usbcamera.R;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.jiangdg.usbcamera.R;
 import com.jiangdg.usbcamera.UVCCameraHelper;
 import com.jiangdg.usbcamera.application.MyApplication;
 import com.jiangdg.usbcamera.utils.FileUtils;
@@ -34,6 +34,7 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,7 +139,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
         mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_MJPEG);
         mCameraHelper.initUSBMonitor(this, mUVCCameraView, listener);
 
-
         mCameraHelper.setOnPreviewFrameListener(new AbstractUVCCameraHandler.OnPreViewResultListener() {
             @Override
             public void onPreviewResult(byte[] nv21Yuv) {
@@ -222,13 +222,10 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     showShortMsg("sorry,camera open failed");
                     return super.onOptionsItemSelected(item);
                 }
-                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/images";
-                String picFilename = System.currentTimeMillis() + UVCCameraHelper.SUFFIX_JPEG;
+                String picPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/images/"
+                        + System.currentTimeMillis() + UVCCameraHelper.SUFFIX_JPEG;
 
-                File picPathFolder = new File(picPath);
-                if (!picPathFolder.exists()) picPathFolder.mkdirs();
-
-                mCameraHelper.capturePicture(picPath+'/'+picFilename, new AbstractUVCCameraHandler.OnCaptureListener() {
+                mCameraHelper.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
                         if(TextUtils.isEmpty(path)) {
@@ -250,17 +247,16 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
                     return super.onOptionsItemSelected(item);
                 }
                 if (!mCameraHelper.isPushing()) {
-                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/videos";
-                    String videoFilename = String.valueOf(System.currentTimeMillis());
-                    File videoPathFolder = new File(videoPath);
-                    if (!videoPathFolder.exists()) videoPathFolder.mkdirs();
+                    String videoPath = UVCCameraHelper.ROOT_PATH + MyApplication.DIRECTORY_NAME +"/videos/" + System.currentTimeMillis()
+                            + UVCCameraHelper.SUFFIX_MP4;
 
-                    FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
+//                    FileUtils.createfile(FileUtils.ROOT_PATH + "test666.h264");
                     // if you want to record,please create RecordParams like this
                     RecordParams params = new RecordParams();
                     params.setRecordPath(videoPath);
-                    params.setRecordDuration(0);                        // 设置为0，不分割保存(单位为分钟)
+                    params.setRecordDuration(0);                        // auto divide saved,default 0 means not divided
                     params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
+                    params.setSupportOverlay(true); // overlay only support armeabi-v7a & arm64-v8a
                     mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {

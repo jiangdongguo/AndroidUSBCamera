@@ -6,10 +6,22 @@ package com.serenegiant.usb.encoder;
  */
 
 public class RecordParams {
-    private String recordPath;  // 保存路径
-    private int recordDuration; // 分钟
+    private String recordPath;
+    private int recordDuration;
     private boolean voiceClose;
     private boolean isAutoSave;
+    private boolean isSupportOverlay;
+
+    public RecordParams() {
+    }
+
+    public boolean isSupportOverlay() {
+        return isSupportOverlay;
+    }
+
+    public void setSupportOverlay(boolean supportOverlay) {
+        isSupportOverlay = supportOverlay;
+    }
 
     public boolean isVoiceClose() {
         return voiceClose;

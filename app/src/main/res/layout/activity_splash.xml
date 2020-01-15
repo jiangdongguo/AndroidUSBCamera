@@ -29,7 +29,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:text="last modify 2019.6"
+        android:text="last modify 2020.01"
         android:textSize="16sp"
         android:textStyle="bold"
         android:gravity="bottom|center_horizontal"

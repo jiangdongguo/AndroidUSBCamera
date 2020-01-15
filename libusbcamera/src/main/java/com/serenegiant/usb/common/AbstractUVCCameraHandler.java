@@ -35,6 +35,8 @@ import com.serenegiant.usb.encoder.biz.H264EncodeConsumer;
 import com.serenegiant.usb.encoder.biz.Mp4MediaMuxer;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import org.easydarwin.sw.TxtOverlay;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -45,7 +47,11 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -413,6 +419,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
         private Mp4MediaMuxer mMuxer;
         private boolean isPushing;
         private String videoPath;
+        private boolean isSupportOverlay;
 //		private boolean isAudioThreadStart;
 
         /**
@@ -667,11 +674,17 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                 return;
 //			// 获取USB Camera预览数据
 //			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+
             // 初始化混合器
             if (params != null) {
+                isSupportOverlay = params.isSupportOverlay();
+                if(isSupportOverlay) {
+                    // init overlay engine
+                    TxtOverlay.getInstance().init(mWidth, mHeight);
+                }
                 videoPath = params.getRecordPath();
                 File file = new File(videoPath);
-                if(! file.getParentFile().exists()) {
+                if(! Objects.requireNonNull(file.getParentFile()).exists()) {
                     file.getParentFile().mkdirs();
                 }
                 mMuxer = new Mp4MediaMuxer(params.getRecordPath(),
@@ -697,6 +710,8 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             // 停止音视频编码线程
             stopAudioRecord();
             stopVideoRecord();
+            if(isSupportOverlay)
+                TxtOverlay.getInstance().release();
 //			// 停止捕获视频数据
 //			if (mUVCCamera != null) {
 //				mUVCCamera.stopCapture();
@@ -808,7 +823,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                 if (mPreviewListener != null) {
                     mPreviewListener.onPreviewResult(yuv);
                 }
-                // 捕获图片
+                // picture
                 if (isCaptureStill && !TextUtils.isEmpty(picPath)) {
                     isCaptureStill = false;
                     new Thread(new Runnable() {
@@ -818,9 +833,13 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                         }
                     }).start();
                 }
-                // 视频
+                // video
                 if (mH264Consumer != null) {
-                    // 修改分辨率参数
+                    // overlay
+                    if(isSupportOverlay) {
+                        TxtOverlay.getInstance().overlay(yuv, new SimpleDateFormat("yyyy-MM-dd EEEE HH:mm:ss").format(new Date()));
+                    }
+
                     mH264Consumer.setRawYuv(yuv, mWidth, mHeight);
                 }
             }

@@ -15,9 +15,12 @@ import com.serenegiant.usb.common.UVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import org.easydarwin.sw.TxtOverlay;
+
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.Objects;
 
 /** UVCCamera Helper class
  *
@@ -80,6 +83,7 @@ public class UVCCameraHelper {
     public void initUSBMonitor(Activity activity, CameraViewInterface cameraView, final OnMyDevConnectListener listener) {
         this.mActivity = activity;
         this.mCamView = cameraView;
+
         mUSBMonitor = new USBMonitor(activity.getApplicationContext(), new USBMonitor.OnDeviceConnectListener() {
 
             // called by checking usb device
@@ -246,8 +250,9 @@ public class UVCCameraHelper {
 
     public void capturePicture(String savePath,AbstractUVCCameraHandler.OnCaptureListener listener) {
         if (mCameraHandler != null && mCameraHandler.isOpened()) {
+
             File file = new File(savePath);
-            if(! file.getParentFile().exists()) {
+            if(! Objects.requireNonNull(file.getParentFile()).exists()) {
                 file.getParentFile().mkdirs();
             }
             mCameraHandler.captureStill(savePath,listener);
@@ -262,6 +267,9 @@ public class UVCCameraHelper {
 
     public void startPusher(RecordParams params, AbstractUVCCameraHandler.OnEncodeResultListener listener) {
         if (mCameraHandler != null && !isPushing()) {
+            if(params.isSupportOverlay()) {
+                TxtOverlay.install(mActivity.getApplicationContext());
+            }
             mCameraHandler.startRecording(params, listener);
         }
     }
