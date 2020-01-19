@@ -1,6 +1,6 @@
 AndroidUSBCamera
 ============   
-AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.   
+AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.supporting overlay and record device's mic.   
 
 Supporting Android 5.0,6.0,7.0,8.0,9.0
 
@@ -23,7 +23,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	       implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.1'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.2'
 }
 ```
 ### 2. APIs Introduction  
@@ -115,6 +115,7 @@ RecordParams params = new RecordParams();
                     params.setRecordPath(videoPath);
                     params.setRecordDuration(0);                        // 0,do not cut save
                     params.setVoiceClose(mSwitchVoice.isChecked());    // is close voice
+		    params.setSupportOverlay(true); // overlay only support armeabi-v7a & arm64-v8a
                     mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                         @Override
                         public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
@@ -171,19 +172,32 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 - get a file from your sd card named failed-device.txt in the path of root sd card/UsbCamera/failed-device.txt and tell me
 
 
+### 4. Updating 
+
+#### 2020.01.15  version 2.3.2  
+
+1. support adding time overlay;
+2. support recording device mic;
+3. update to androidx and update commonLibVersion from 2.14.2 to 4.1.1;
+4. fix saving files failed.  
+
+
 Download APK
 -------  
   
 &emsp;In order to display the functions, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and if you have any questions please issues to me ,I will follow it do my best.
 ```
 ext {
+    androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
+    commonLibVersion= '4.1.1'
+    versionCompiler = 29
+    versionTarget = 28
+    // if hope supporting 4.4
+    // please modify it to 16
+    minSdkVersion = 21
+    versionNameString = '1.2.0.20191101'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
-    compileSdkVersion = 28
-    buildToolsVersion = '28.0.3'
-    minSdkVersion = 21
-    targetSdkVersion = 28
-    commonLibVersion= '2.12.4'
 }
 ```   
 download way:  
@@ -205,7 +219,7 @@ Other Library about Android Camera
 License
 -------
 
-    Copyright 2018 Jiangdongguo
+    Copyright 2020 Jiangdongguo
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
