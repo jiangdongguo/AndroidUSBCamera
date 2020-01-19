@@ -1,15 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "29.0.2"
-
-
+    compileSdkVersion rootProject.ext.versionCompiler
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.versionTarget
+        versionCode 2
+        versionName rootProject.ext.versionNameString
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -20,6 +17,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    compileOptions {
+        sourceCompatibility rootProject.ext.javaSourceCompatibility
+        targetCompatibility rootProject.ext.javaTargetCompatibility
     }
 
 }
