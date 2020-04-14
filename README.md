@@ -23,7 +23,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.2'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.4'
 }
 ```
 ### 2. APIs Introduction  
@@ -181,7 +181,7 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 3. update to androidx and update commonLibVersion from 2.14.2 to 4.1.1;
 4. fix saving files failed.  
 
-#### 2020.04.14  version 2.3.3
+#### 2020.04.14  version 2.3.4
 
 1. fix pull version 2.3.2 failed.
 2. fix android 9.0 sometimes can not preview.
