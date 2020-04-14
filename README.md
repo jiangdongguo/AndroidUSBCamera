@@ -196,12 +196,12 @@ Download APK
 ext {
     androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
     commonLibVersion= '4.1.1'
-    versionCompiler = 29
-    versionTarget = 28
+    versionCompiler = 28
+    versionTarget = 27   // versionTarget>27 android 9.0 may previewed failed.
     // if hope supporting 4.4
     // please modify it to 16
     minSdkVersion = 21
-    versionNameString = '1.2.0.20191101'
+    versionNameString = '1.2.1.20200414'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
