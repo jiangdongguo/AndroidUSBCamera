@@ -1,1 +1,1 @@
-include ':app', ':libusbcamera', ':libutils'
+include ':app', ':libusbcamera'

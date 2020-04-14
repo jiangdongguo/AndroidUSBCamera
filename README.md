@@ -176,11 +176,17 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 #### 2020.01.15  version 2.3.2  
 
-1. support adding time overlay;
+1. support adding time overlay(attention: overlay only support armeabi-v7a & arm64-v8a);
 2. support recording device mic;
 3. update to androidx and update commonLibVersion from 2.14.2 to 4.1.1;
 4. fix saving files failed.  
 
+#### 2020.04.14  version 2.3.3
+
+1. fix pull version 2.3.2 failed.
+2. fix android 9.0 sometimes can not preview.
+3. fix the exception when pull up the device.
+3. update to all so files to new.
 
 Download APK
 -------  

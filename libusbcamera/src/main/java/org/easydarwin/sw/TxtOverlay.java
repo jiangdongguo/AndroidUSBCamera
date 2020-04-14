@@ -2,7 +2,6 @@ package org.easydarwin.sw;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.text.TextUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
