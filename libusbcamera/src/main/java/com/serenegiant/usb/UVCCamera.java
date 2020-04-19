@@ -44,8 +44,6 @@ public class UVCCamera {
 	private static final String TAG = UVCCamera.class.getSimpleName();
 	private static final String DEFAULT_USBFS = "/dev/bus/usb";
 
-	public static final int DEFAULT_PREVIEW_WIDTH = 640;
-	public static final int DEFAULT_PREVIEW_HEIGHT = 480;
 	public static final int DEFAULT_PREVIEW_MODE = 0;
 	public static final int DEFAULT_PREVIEW_MIN_FPS = 1;
 	public static final int DEFAULT_PREVIEW_MAX_FPS = 31;
@@ -128,7 +126,7 @@ public class UVCCamera {
     protected long mControlSupports;			// カメラコントロールでサポートしている機能フラグ
     protected long mProcSupports;				// プロセッシングユニットでサポートしている機能フラグ
     protected int mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
-	protected int mCurrentWidth = DEFAULT_PREVIEW_WIDTH, mCurrentHeight = DEFAULT_PREVIEW_HEIGHT;
+	protected int mCurrentWidth = 640, mCurrentHeight = 480;
 	protected float mCurrentBandwidthFactor = DEFAULT_BANDWIDTH;
     protected String mSupportedSize;
     protected List<Size> mCurrentSizeList;
@@ -220,7 +218,12 @@ public class UVCCamera {
     	if (mNativePtr != 0 && TextUtils.isEmpty(mSupportedSize)) {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
     	}
-		nativeSetPreviewSize(mNativePtr, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT,
+    	List<Size> supportedSizes = getSupportedSizeList();
+		if (!supportedSizes.isEmpty()) {
+			mCurrentWidth = supportedSizes.get(0).width;
+			mCurrentHeight = supportedSizes.get(0).height;
+		}
+		nativeSetPreviewSize(mNativePtr, mCurrentWidth, mCurrentHeight,
 			DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, DEFAULT_PREVIEW_MODE, DEFAULT_BANDWIDTH);
     }
 
@@ -293,7 +296,7 @@ public class UVCCamera {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Set preview size and preview mode
 	 * @param width
@@ -312,7 +315,7 @@ public class UVCCamera {
 	public void setPreviewSize(final int width, final int height, final int frameFormat) {
 		setPreviewSize(width, height, DEFAULT_PREVIEW_MIN_FPS, DEFAULT_PREVIEW_MAX_FPS, frameFormat, mCurrentBandwidthFactor);
 	}
-	
+
 	/**
 	 * Set preview size and preview mode
 	 * @param width
