@@ -25,8 +25,8 @@ task clean(type: Delete) {
 ext {
     androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
     commonLibVersion= '4.1.1'
-    versionCompiler = 29
-    versionTarget = 29
+    versionCompiler = 28
+    versionTarget = 27
     // if hope supporting 4.4
     // please modify it to 16
     minSdkVersion = 21
