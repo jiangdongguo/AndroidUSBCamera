@@ -171,6 +171,8 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 - get a file from your sd card named failed-device.txt in the path of root sd card/UsbCamera/failed-device.txt and tell me
 
+- if your device is Android 10(Q),please change your versionTarget to 27 and below, because these is a bug in Android Q SDK.
+
 
 ### 4. Updating 
 
@@ -197,7 +199,7 @@ ext {
     androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
     commonLibVersion= '4.1.1'
     versionCompiler = 28
-    versionTarget = 27   // versionTarget>27 android 9.0 may previewed failed.
+    versionTarget = 27   // versionTarget>27 android 10 may previewed failed.
     // if hope supporting 4.4
     // please modify it to 16
     minSdkVersion = 21
