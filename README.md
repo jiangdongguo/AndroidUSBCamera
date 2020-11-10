@@ -210,7 +210,7 @@ ext {
 ```   
 download way:  
 
-![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/download.png)  
+![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/app_download.png)  
 
 displaying:  
 
