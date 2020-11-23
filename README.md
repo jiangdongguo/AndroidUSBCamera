@@ -8,7 +8,7 @@ Supporting Android 5.0,6.0,7.0,8.0,9.0,10.0
 
 - JNI Source Download: 
 
-[https://pan.baidu.com/s/11OBLCY4VjYYUZGEPcQ1ScA](JNI CODE--->password：vpoj)
+[JNI CODE--->password：vpoj](https://pan.baidu.com/s/11OBLCY4VjYYUZGEPcQ1ScA)
 
 Usage
 -------
