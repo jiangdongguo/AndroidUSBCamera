@@ -8,7 +8,7 @@ Supporting Android 5.0,6.0,7.0,8.0,9.0,10.0
 
 - JNI Source Download: 
 
-[JNI CODE--->password：vpoj](https://pan.baidu.com/s/11OBLCY4VjYYUZGEPcQ1ScA)
+[NDK Library:UVCCameraLib](https://github.com/jiangdongguo/UVCCameraLib)
 
 Usage
 -------
@@ -194,8 +194,8 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 3. fix the exception when pull up the device.
 4. update to all so files to new.
 
-Download APK
--------  
+Download APK(2.3.4)
+-----------------
   
 &emsp;In order to display the functions, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and if you have any questions please issues to me ,I will follow it do my best.
 ```
@@ -228,10 +228,14 @@ Other Library about Android Camera
 [AndroidYuvOsd](https://github.com/jiangdongguo/AndroidYuvOsd) YUV data operation.  
 [Lame4Mp3](https://github.com/jiangdongguo/Lame4Mp3) pcm to mp3 and pcm to aac.  
 
+Contacts Me
+----
+**If you have any question, please email it to me ： [765067602@qq.com](765067602@qq.com)**
+
 License
 -------
 
-    Copyright 2020 Jiangdongguo
+    Copyright 2017-2021 Jiangdongguo
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
