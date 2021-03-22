@@ -233,9 +233,6 @@ Other Library about Android Camera
 [AndroidYuvOsd](https://github.com/jiangdongguo/AndroidYuvOsd) YUV data operation.  
 [Lame4Mp3](https://github.com/jiangdongguo/Lame4Mp3) pcm to mp3 and pcm to aac.  
 
-Contacts Me
-----
-**If you have any question, please email it to me ： [765067602@qq.com](765067602@qq.com)**
 
 License
 -------
