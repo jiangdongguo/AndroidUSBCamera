@@ -1,4 +1,4 @@
-AndroidUSBCamera&emsp;[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)
+AndroidUSBCamera[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)
 ============   
 AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.supporting overlay and record device's mic.   
 
@@ -27,7 +27,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.5'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.6'
 }
 ```
 ### 2. APIs Introduction  
@@ -191,13 +191,17 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 1. fix pull version 2.3.2 failed.
 2. fix android 9.0 sometimes can not preview.
-3. fix the exception when pull up the device.
+3.fix pull out crash 1.
 4. update to all so files to new.
 
 #### 2021.03.16  version 2.3.5
 
 1. fix stop preview crash.
 2. open UVCCamera NDK Library project----[UVCCameraLib](https://github.com/jiangdongguo/UVCCameraLib)
+
+#### 2021.04.08  version 2.3.6
+
+1. fix pull out crash 2.
 
 Download APK(2.3.4)
 -----------------
