@@ -38,7 +38,7 @@ mUVCCameraView.setCallback(mCallback);
 mCameraHelper = UVCCameraHelper.getInstance();
 // set default preview size
  mCameraHelper.setDefaultPreviewSize(1280,720);
-// set default frame format，defalut is UVCCameraHelper.Frame_FORMAT_MPEG
+// set default frame format，defalut is UVCCameraHelper.FRAME_FORMAT_MJPEG
 // if using mpeg can not record mp4,please try yuv
 // mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);	
 mCameraHelper.initUSBMonitor(this, mUVCCameraView, mDevConnectListener); 
