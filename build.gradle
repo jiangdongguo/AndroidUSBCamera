@@ -5,7 +5,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.2'
+        classpath 'com.android.tools.build:gradle:4.2.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }
@@ -13,8 +13,11 @@ buildscript {
 allprojects {
     repositories {
         google()
-        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
         jcenter()
+
+        flatDir {
+            dirs 'libs', '../libusbcamera/libs'
+        }
     }
 }
 
@@ -23,16 +26,15 @@ task clean(type: Delete) {
 }
 
 ext {
-    androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
-    commonLibVersion= '4.1.1'
+    androidXVersion = '1.1.0'
     versionCompiler = 28
     // when target=27, 9.0 is ok
     versionTarget = 27
     // if hope supporting 4.4
     // please modify it to 16
-    minSdkVersion = 21
-    versionCode = 100
-    versionNameString = '2.3.5.20210316'
+    minSdkVersion = 16
+    versionCode = 101
+    versionNameString = '2.3.6.20211117'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 }

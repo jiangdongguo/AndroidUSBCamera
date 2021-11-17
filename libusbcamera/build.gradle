@@ -27,6 +27,12 @@ android {
         sourceCompatibility rootProject.ext.javaSourceCompatibility
         targetCompatibility rootProject.ext.javaTargetCompatibility
     }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
 }
 
 
@@ -34,5 +40,6 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
-    api "com.serenegiant:common:${commonLibVersion}"
+
+    implementation(name: 'libusbcommon_v4.1.1', ext: 'aar')
 }

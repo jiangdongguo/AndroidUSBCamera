@@ -19,15 +19,18 @@ Step 1. Add the JitPack repository to your build file.Add it in your root build.
 allprojects {
 		repositories {
 			...
-			maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
 			maven { url 'https://jitpack.io' }
+
+            flatDir {
+                            dirs 'libs', '../libusbcamera/libs'
+                        }
 		}
 	}
 ```  
 Step 2. Add the dependency  
 ```java
 dependencies {
-	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.6'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.7'
 }
 ```
 ### 2. APIs Introduction  
@@ -203,6 +206,10 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 1. fix pull out crash 2.
 
+#### 2021.11.17  version 2.3.7
+
+1. fix download common library failed, and use aar instead.
+
 Download APK(2.3.4)
 -----------------
   
@@ -210,7 +217,6 @@ Download APK(2.3.4)
 ```
 ext {
     androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
-    commonLibVersion= '4.1.1'
     versionCompiler = 28
     versionTarget = 27   // versionTarget>27 android 10 may previewed failed.
     // if hope supporting 4.4
