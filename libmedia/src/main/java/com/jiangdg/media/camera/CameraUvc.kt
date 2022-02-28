@@ -94,17 +94,14 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     override fun startPreviewInternal() {
         createCamera()
         realStartPreview()
-        Logger.i(TAG, "realStartPreview111")
         mDevSettableFuture.get().apply {
-            Logger.i(TAG, "realStartPreview2222")
             mDevConnectCallBack?.onConnectDev(this)
         }?.also {
-            Logger.i(TAG, "realStartPreview333")
             mCameraInfoMap[it.deviceId]?.let {cameraInfo ->
                 cameraInfo.cameraPreviewSizes?.clear()
-                cameraInfo.cameraPreviewSizes?.addAll(getAllPreviewSizes())
-
-                Logger.i(TAG, "realStartPreview4444->${getAllPreviewSizes()}")
+                getAllPreviewSizes()?.apply {
+                    cameraInfo.cameraPreviewSizes?.addAll(this)
+                }
             }
             if (Utils.debugCamera) {
                 Logger.i(TAG, "createCamera, id = ${it.deviceId}, name = ${it.deviceName}")
@@ -123,7 +120,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             }
             mUVCCamera = camera
             // 配置参数
-            getRequest().let { request ->
+            getRequest()?.let { request ->
                 request.cameraId = device?.deviceId.toString()
                 mUVCCamera?.setPreviewSize(
                     request.previewWidth,
@@ -204,8 +201,8 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             val title = savePath ?: "IMG_JJCamera_$date"
             val displayName = savePath ?: "$title.jpg"
             val path = savePath ?: "$mCameraDir/$displayName"
-            val width = getRequest().previewWidth
-            val height = getRequest().previewHeight
+            val width = getRequest()?.previewWidth
+            val height = getRequest()?.previewHeight
             val orientation = 0
             val location = Utils.getGpsLocation(getContext())
             // 写入文件
@@ -233,7 +230,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     }
 
     override fun switchCameraInternal(cameraId: String?) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             if (cameraId.isNullOrEmpty()) {
                 Logger.e(TAG, "camera id invalid.")
                 return@let
@@ -258,7 +255,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     }
 
     override fun updateResolutionInternal(width: Int, height: Int) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             request.previewWidth = width
             request.previewHeight = height
             stopPreviewInternal()
@@ -266,8 +263,8 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         }
     }
 
-    override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
-        getRequest().let { request ->
+    override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize>? {
+        getRequest()?.let { request ->
             val list = mutableListOf<PreviewSize>()
             val cameraInfo = mCameraInfoMap.values.find {
                 request.cameraId == it.cameraId
@@ -291,6 +288,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             Logger.i(TAG, "getAllPreviewSizes aspect ratio = $aspectRatio, list= $list")
             return list
         }
+        return null
     }
 
     override fun release() {

@@ -31,7 +31,6 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.bean.CameraInfo
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
-import com.jiangdg.media.utils.MediaUtils
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -156,14 +155,14 @@ abstract class AbstractCamera(context: Context) : Handler.Callback {
         this.mSurfaceHolder = holder
     }
 
-    abstract fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize>
+    abstract fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize>?
 
-    fun getSurfaceTexture() = mSurfaceTexture
-    fun getSurfaceHolder() = mSurfaceHolder
-    protected fun getContext() = mContext
-    protected fun getRequest() = mCameraRequest!!
-    protected fun getCameraHandler() = mCameraHandler!!
-    protected fun getDeviceOrientation() = mDeviceOrientation.orientation
+    fun getSurfaceTexture(): SurfaceTexture? = mSurfaceTexture
+    fun getSurfaceHolder(): SurfaceHolder? = mSurfaceHolder
+    protected fun getContext(): Context? = mContext
+    protected fun getRequest(): CameraRequest? = mCameraRequest
+    protected fun getCameraHandler(): Handler? = mCameraHandler
+    protected fun getDeviceOrientation(): Int = mDeviceOrientation.orientation
 
     protected open fun release() {}
     protected open fun register() {}
@@ -195,9 +194,11 @@ abstract class AbstractCamera(context: Context) : Handler.Callback {
                 when (event) {
                     Lifecycle.Event.ON_START -> {
                         register()
+                        startPreviewInternal()
                     }
                     Lifecycle.Event.ON_STOP -> {
                         unRegister()
+                        stopPreviewInternal()
                     }
                     Lifecycle.Event.ON_DESTROY -> {
                         stopPreview()

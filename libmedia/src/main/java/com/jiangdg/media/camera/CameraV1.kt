@@ -86,8 +86,8 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
                 val title = savePath ?: "IMG_JJCamera_$date"
                 val displayName = savePath ?: "$title.jpg"
                 val path = savePath ?: "$mCameraDir/$displayName"
-                val width = getRequest().previewWidth
-                val height = getRequest().previewHeight
+                val width = getRequest()?.previewWidth
+                val height = getRequest()?.previewHeight
                 val orientation = 0
                 val location = Utils.getGpsLocation(getContext())
                 // 写入文件
@@ -131,7 +131,7 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
     }
 
     override fun switchCameraInternal(cameraId: String?) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             request.isFrontCamera = !request.isFrontCamera
             stopPreviewInternal()
             startPreviewInternal()
@@ -143,7 +143,7 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
     }
 
     override fun updateResolutionInternal(width: Int, height: Int) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             request.previewWidth = width
             request.previewHeight = height
             stopPreviewInternal()
@@ -151,8 +151,8 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
         }
     }
 
-    override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
-        getRequest().let { request ->
+    override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize>? {
+        getRequest()?.let { request ->
             val list = mutableListOf<PreviewSize>()
             val cameraInfo = mCameraInfoMap.values.find {
                 request.cameraId == it.cameraId
@@ -175,13 +175,17 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
             Logger.i(TAG, "getAllPreviewSizes aspect ratio = $aspectRatio, list= $list")
             return list
         }
+        return null
     }
 
     private fun createCamera() {
-        getRequest().let { request->
+        getRequest()?.let { request->
             if (! hasCameraPermission()) {
                 Logger.i(TAG, "openCamera failed, has no camera permission.")
                 return
+            }
+            if (mCamera != null) {
+                stopPreviewInternal()
             }
             mCamera = try {
                 if (request.isFrontCamera) {
@@ -202,7 +206,7 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
     }
 
     private fun setParameters() {
-        getRequest().let { request->
+        getRequest()?.let { request->
             mCamera?.parameters?.apply {
                 val suitablePreviewSize = getSuitableSize(
                     supportedPreviewSizes,
@@ -236,10 +240,10 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
             Logger.e(TAG, "realStartPreview failed, SurfaceTexture or SurfaceHolder cannot be null.")
             return
         }
-        getRequest().let { request->
+        getRequest()?.let { request->
             val width = request.previewWidth
             val height = request.previewHeight
-            mCamera?.setDisplayOrientation(getPreviewDegree(getContext(), getRequest().isFrontCamera))
+            mCamera?.setDisplayOrientation(getPreviewDegree(getContext(), getRequest()?.isFrontCamera ?: false))
             mCamera?.setPreviewCallbackWithBuffer(this)
             mCamera?.addCallbackBuffer(ByteArray(width * height * 3 / 2))
             if (st != null) {

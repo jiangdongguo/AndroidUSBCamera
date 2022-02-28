@@ -67,7 +67,11 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
     private var mCameraManager: CameraManager? = null
 
     private val mYUVData by lazy {
-        ByteArray(getRequest().previewWidth * getRequest().previewHeight * 3 /2)
+        if (getRequest() == null) {
+            ByteArray(0)
+        } else {
+            ByteArray(getRequest()!!.previewWidth * getRequest()!!.previewHeight * 3 / 2)
+        }
     }
 
     override fun loadCameraInfo() {
@@ -166,7 +170,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
     }
 
     override fun switchCameraInternal(cameraId: String?) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             request.isFrontCamera = !request.isFrontCamera
             stopPreviewInternal()
             startPreviewInternal()
@@ -174,7 +178,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
     }
 
     override fun updateResolutionInternal(width: Int, height: Int) {
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             request.previewWidth = width
             request.previewHeight = height
             stopPreviewInternal()
@@ -184,7 +188,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
         val list = mutableListOf<PreviewSize>()
-        getRequest().let { request ->
+        getRequest()?.let { request ->
             val cameraInfo = mCameraInfoMap.values.find {
                 request.cameraId == it.cameraId
             }
@@ -203,7 +207,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
 
     @SuppressLint("MissingPermission")
     private fun openCamera() {
-        getRequest().let { request->
+        getRequest()?.let { request->
             mCameraDeviceFuture = SettableFuture()
             mCameraCharacteristicsFuture = SettableFuture()
             try {
@@ -224,6 +228,9 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
                     }
                 }
                 request.cameraId = cameraId
+                if (mCameraDeviceFuture?.get() != null) {
+                    stopPreviewInternal()
+                }
                 mCameraManager!!.openCamera(cameraId, mCameraStateCallBack, mMainHandler)
                 Logger.i(TAG, "openCamera success, id = $cameraId.")
             }catch (e: CameraAccessException) {
@@ -240,7 +247,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
                 Logger.e(TAG, "createCaptureRequestBuilders failed, camera device is null.")
                 return
             }
-            getRequest().let { request ->
+            getRequest()?.let { request ->
                 mPreviewCaptureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
                 if (request.isContinuousAFModel) {
                     mPreviewCaptureBuilder?.set(
@@ -276,7 +283,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
         }
         // 创建预览Preview Surface
         // 缓存匹配的预览尺寸
-        getRequest().let { request->
+        getRequest()?.let { request->
             val maxWidth = request.previewWidth
             val maxHeight = request.previewHeight
             val previewSize = getSuitableSize(characteristics, SurfaceTexture::class.java, maxWidth, maxHeight)
@@ -303,7 +310,7 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
             Logger.e(TAG, "setImageSize failed. Camera characteristics is null.")
             return
         }
-        getRequest().let { request->
+        getRequest()?.let { request->
             // 创建Jpeg Surface
             // 缓存匹配得到的尺寸
             val maxWidth = request.previewWidth
@@ -530,6 +537,9 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
         val image = imageReader?.acquireNextImage()
         image?.use {
             val request = getRequest()
+            if (request == null || mYUVData.isEmpty()) {
+                return@OnImageAvailableListener
+            }
             val planes = it.planes
             // Y通道
             val yBuffer = planes[0].buffer
