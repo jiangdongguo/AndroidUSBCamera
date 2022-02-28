@@ -1,6 +1,6 @@
 AndroidUSBCamera[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)
 ============   
-AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.supporting overlay and record device's mic.   
+AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/src.yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.supporting overlay and record device's mic.   
 
 Supporting Android 5.0,6.0,7.0,8.0,9.0,10.0
 
@@ -42,7 +42,7 @@ mCameraHelper = UVCCameraHelper.getInstance();
 // set default preview size
  mCameraHelper.setDefaultPreviewSize(1280,720);
 // set default frame format，defalut is UVCCameraHelper.Frame_FORMAT_MPEG
-// if using mpeg can not record mp4,please try yuv
+// if using mpeg can not record mp4,please try src.yuv
 // mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);	
 mCameraHelper.initUSBMonitor(this, mUVCCameraView, mDevConnectListener); 
 ```
