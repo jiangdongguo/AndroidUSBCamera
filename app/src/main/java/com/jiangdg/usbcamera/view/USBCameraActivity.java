@@ -20,6 +20,9 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.Toast;
+
+import com.jiangdg.usbcamera.AlertCustomDialog;
+import com.jiangdg.usbcamera.DeviceInfo;
 import com.jiangdg.usbcamera.R;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -69,6 +72,38 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     private boolean isRequest;
     private boolean isPreview;
 
+    private List<DeviceInfo> getUSBDevInfo() {
+        if(mCameraHelper == null)
+            return null;
+        List<DeviceInfo> devInfos = new ArrayList<>();
+        List<UsbDevice> list = mCameraHelper.getUsbDeviceList();
+        for(UsbDevice dev : list) {
+            DeviceInfo info = new DeviceInfo();
+            info.setPID(dev.getVendorId());
+            info.setVID(dev.getProductId());
+            devInfos.add(info);
+        }
+        return devInfos;
+    }
+
+    private void popCheckDevDialog() {
+        List<DeviceInfo> infoList = getUSBDevInfo();
+        if (infoList==null || infoList.isEmpty()) {
+            Toast.makeText(USBCameraActivity.this, "Find devices failed.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final List<String> dataList = new ArrayList<>();
+        for(DeviceInfo deviceInfo : infoList){
+            dataList.add("Device：PID_"+deviceInfo.getPID()+" & "+"VID_"+deviceInfo.getVID());
+        }
+        AlertCustomDialog.createSimpleListDialog(this, "Please select USB devcie", dataList, new AlertCustomDialog.OnMySelectedListener() {
+            @Override
+            public void onItemSelected(int postion) {
+                mCameraHelper.requestPermission(postion);
+            }
+        });
+    }
+
     private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.OnMyDevConnectListener() {
 
         @Override
@@ -76,9 +111,7 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
             // request open permission
             if (!isRequest) {
                 isRequest = true;
-                if (mCameraHelper != null) {
-                    mCameraHelper.requestPermission(0);
-                }
+                popCheckDevDialog();
             }
         }
 

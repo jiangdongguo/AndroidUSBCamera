@@ -1,10 +1,14 @@
-AndroidUSBCamera
+AndroidUSBCamera[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)
 ============   
 AndroidUSBCamera is developed based on the [saki4510t/UVCCamera](https://github.com/saki4510t/UVCCamera), the project of USB Camera (UVC equipment) and the use of video data acquisition are highly packaged, and it can help developers using USB Camera devices easily by a few simple APIs. By using AndroidUSBCamera,you can detect and connect to a USB Camera simply.And you also can use it to realize taking picture,recording mp4,switching resolutions ,getting h.264/aac/yuv(nv21) stream and setting  camera's contrast or brightness,supporting 480P、720P、1080P and higher,etc.supporting overlay and record device's mic.   
 
-Supporting Android 5.0,6.0,7.0,8.0,9.0
+Supporting Android 5.0,6.0,7.0,8.0,9.0,10.0
 
 [中文文档： AndroidUSBCamera，UVCCamera开发通用库](http://blog.csdn.net/andrexpert/article/details/78324181)  
+
+- JNI Source Download: 
+
+[NDK Library:UVCCameraLib](https://github.com/jiangdongguo/UVCCameraLib)
 
 Usage
 -------
@@ -15,15 +19,18 @@ Step 1. Add the JitPack repository to your build file.Add it in your root build.
 allprojects {
 		repositories {
 			...
-			maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
 			maven { url 'https://jitpack.io' }
+
+            flatDir {
+                            dirs 'libs', '../libusbcamera/libs'
+                        }
 		}
 	}
 ```  
 Step 2. Add the dependency  
 ```java
 dependencies {
-	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.4'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.7'
 }
 ```
 ### 2. APIs Introduction  
@@ -171,6 +178,8 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 - get a file from your sd card named failed-device.txt in the path of root sd card/UsbCamera/failed-device.txt and tell me
 
+- if your device is Android 10(Q),please change your versionTarget to 27 and below, because these is a bug in Android Q SDK.
+
 
 ### 4. Updating 
 
@@ -185,19 +194,31 @@ Please checking your preview format and change YUV to MJPEG or MJPEG to YUV,beca
 
 1. fix pull version 2.3.2 failed.
 2. fix android 9.0 sometimes can not preview.
-3. fix the exception when pull up the device.
-3. update to all so files to new.
+3.fix pull out crash 1.
+4. update to all so files to new.
 
-Download APK
--------  
+#### 2021.03.16  version 2.3.5
+
+1. fix stop preview crash.
+2. open UVCCamera NDK Library project----[UVCCameraLib](https://github.com/jiangdongguo/UVCCameraLib)
+
+#### 2021.04.08  version 2.3.6
+
+1. fix pull out crash 2.
+
+#### 2021.11.17  version 2.3.7
+
+1. fix download common library failed, and use aar instead.
+
+Download APK(2.3.4)
+-----------------
   
 &emsp;In order to display the functions, I develop a simple released apk,which is based on version 2.3.1,and the build version is 28.0.3.Here is my configs and if you have any questions please issues to me ,I will follow it do my best.
 ```
 ext {
     androidXVersion = '1.1.0'  // variable that can be referenced to keep support libs consistent
-    commonLibVersion= '4.1.1'
     versionCompiler = 28
-    versionTarget = 27   // versionTarget>27 android 9.0 may previewed failed.
+    versionTarget = 27   // versionTarget>27 android 10 may previewed failed.
     // if hope supporting 4.4
     // please modify it to 16
     minSdkVersion = 21
@@ -208,7 +229,7 @@ ext {
 ```   
 download way:  
 
-![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/download.png)  
+![download](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/gifs/app_download.png)  
 
 displaying:  
 
@@ -222,10 +243,11 @@ Other Library about Android Camera
 [AndroidYuvOsd](https://github.com/jiangdongguo/AndroidYuvOsd) YUV data operation.  
 [Lame4Mp3](https://github.com/jiangdongguo/Lame4Mp3) pcm to mp3 and pcm to aac.  
 
+
 License
 -------
 
-    Copyright 2020 Jiangdongguo
+    Copyright 2017-2021 Jiangdongguo
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

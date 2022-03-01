@@ -5,4 +5,17 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorBlack">#000000</color>
     <color name="colorWhite">#FFFFFF</color>
+    <color name="colorFunctionBg">#1D283B</color>
+    <color name="colorSplashBg">#FBFBFB</color>
+    <color name="colorTransparent">#00000000</color>
+    <color name="colorSelectTab">#19BB9C</color>
+    <color name="colorLightGray">#F0F8FF</color>
+    <color name="gray_color">#A1A1A1</color>
+    <color name="semi_transparent_gray_color">#40A1A1A1</color>
+    <color name="transparent_item_bg_color">#00A1A1A1</color>
+    <color name="color_gren">#A9A9A9</color>
+    <color name="setting_bg_color">#F4F4F4</color>
+    <color name="setting_text_value_color">#AAAAAA</color>
+    <color name="dialog_txt_color">#33B5E5</color>
+    <color name="orange_color">#FFA500</color>
 </resources>

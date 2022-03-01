@@ -28,9 +28,8 @@ import android.graphics.SurfaceTexture;
 import android.view.Surface;
 
 import com.serenegiant.usb.encoder.IVideoEncoder;
-import com.serenegiant.widget.IAspectRatioView;
 
-public interface CameraViewInterface extends IAspectRatioView {
+public interface CameraViewInterface extends IAspectRatioView2 {
 	public interface Callback {
 		public void onSurfaceCreated(CameraViewInterface view, Surface surface);
 		public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height);
