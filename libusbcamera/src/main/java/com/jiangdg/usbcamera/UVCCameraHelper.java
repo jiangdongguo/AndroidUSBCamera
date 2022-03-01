@@ -32,8 +32,8 @@ public class UVCCameraHelper {
     public static final String SUFFIX_JPEG = ".jpg";
     public static final String SUFFIX_MP4 = ".mp4";
     private static final String TAG = "UVCCameraHelper";
-    private int previewWidth = 640;
-    private int previewHeight = 480;
+    private int previewWidth = 0;
+    private int previewHeight = 0;
     public static final int FRAME_FORMAT_YUYV = UVCCamera.FRAME_FORMAT_YUYV;
     // Default using MJPEG
     // if your device is connected,but have no images
@@ -53,12 +53,14 @@ public class UVCCameraHelper {
     private Activity mActivity;
     private CameraViewInterface mCamView;
 
-    private UVCCameraHelper() {
+    private UVCCameraHelper(int cameraWidth, int cameraHeight) {
+        this.previewWidth = cameraWidth;
+        this.previewHeight = cameraHeight;
     }
 
-    public static UVCCameraHelper getInstance() {
+    public static UVCCameraHelper getInstance(int cameraWidth, int cameraHeight) {
         if (mCameraHelper == null) {
-            mCameraHelper = new UVCCameraHelper();
+            mCameraHelper = new UVCCameraHelper(cameraWidth, cameraHeight);
         }
         return mCameraHelper;
     }
@@ -153,6 +155,7 @@ public class UVCCameraHelper {
             mCameraHandler.release();
             mCameraHandler = null;
         }
+
         // initialize camera handler
         mCamView.setAspectRatio(previewWidth / (float)previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,

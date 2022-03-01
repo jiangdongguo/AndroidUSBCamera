@@ -28,10 +28,12 @@ task clean(type: Delete) {
 ext {
     androidXVersion = '1.1.0'
     versionCompiler = 28
-    // when target=27, 9.0 is ok
     versionTarget = 27
     // if hope supporting 4.4
     // please modify it to 16
+    minSdkVersion = 21
+    versionCode = 99
+    versionNameString = '1.2.2.20200419'
     minSdkVersion = 16
     versionCode = 101
     versionNameString = '2.3.6.20211117'

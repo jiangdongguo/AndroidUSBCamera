@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -18,12 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.jiangdg.usbcamera.R;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-
 
 /**
  * permission checking
@@ -88,7 +82,7 @@ public class SplashActivity extends AppCompatActivity {
         if (mMissPermissions.isEmpty()) {
             startMainActivity();
         } else {
-            Toast.makeText(SplashActivity.this, "get permissions failed,exiting...",Toast.LENGTH_SHORT).show();
+            Toast.makeText(SplashActivity.this, "get permissions failed,exiting...", Toast.LENGTH_SHORT).show();
             SplashActivity.this.finish();
         }
     }
