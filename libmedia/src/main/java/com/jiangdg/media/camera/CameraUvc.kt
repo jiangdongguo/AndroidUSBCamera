@@ -61,6 +61,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
 
     init {
         mUsbMonitor = USBMonitor(getContext(), this)
+        register()
     }
 
     override fun loadCameraInfo() {
