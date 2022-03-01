@@ -244,7 +244,7 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
-            .setCameraType(CameraClient.CameraType.V1)
+            .setCameraType(CameraClient.CameraType.UVC)
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()

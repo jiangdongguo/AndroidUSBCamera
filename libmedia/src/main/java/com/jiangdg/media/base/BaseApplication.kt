@@ -16,6 +16,7 @@
 package com.jiangdg.media.base
 
 import android.app.Application
+import com.jiangdg.media.utils.CrashUtils
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.ToastUtils
 
@@ -27,6 +28,7 @@ open class BaseApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashUtils.init(this)
         Logger.init(this)
         ToastUtils.init(this)
     }

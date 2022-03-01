@@ -27,6 +27,7 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.bean.CameraUvcInfo
 import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.utils.Logger
+import com.jiangdg.media.utils.MediaUtils
 import com.jiangdg.media.utils.Utils
 import com.serenegiant.usb.DeviceFilter
 import com.serenegiant.usb.IFrameCallback
@@ -34,6 +35,7 @@ import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import java.io.File
 import java.lang.Exception
+import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
@@ -43,9 +45,15 @@ import java.util.concurrent.TimeUnit
  */
 class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectListener,
     IFrameCallback {
-    private var mDevSettableFuture: SettableFuture<UsbDevice?> = SettableFuture()
-    private var mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?> = SettableFuture()
-    private var mFrameSettableFuture: SettableFuture<ByteArray> = SettableFuture()
+    private val mDevSettableFuture: SettableFuture<UsbDevice?> by lazy {
+        SettableFuture()
+    }
+    private val mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?> by lazy {
+        SettableFuture()
+    }
+    private val mFrameSettableFuture: SettableFuture<ByteArray> by lazy {
+        SettableFuture()
+    }
     private var mUsbMonitor: USBMonitor? = null
     private var mUVCCamera: UVCCamera? = null
     private var mDevConnectCallBack: IDeviceConnectCallBack? = null
@@ -112,15 +120,13 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     private fun createCamera() {
         val ctrlBlock = mCtrlBlockSettableFuture.get()
         val device = mDevSettableFuture.get()
-        try {
-            // 创建摄像头
-            stopPreviewInternal()
-            val camera = UVCCamera().apply {
-                open(ctrlBlock)
-            }
-            mUVCCamera = camera
-            // 配置参数
-            getRequest()?.let { request ->
+        getRequest()?.let { request ->
+            try {
+                stopPreviewInternal()
+                val camera = UVCCamera().apply {
+                    open(ctrlBlock)
+                }
+                mUVCCamera = camera
                 request.cameraId = device?.deviceId.toString()
                 mUVCCamera?.setPreviewSize(
                     request.previewWidth,
@@ -130,13 +136,23 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                     UVCCamera.FRAME_FORMAT_YUYV,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
-                mUVCCamera?.setFrameCallback(this, UVCCamera.PIXEL_FORMAT_NV21)
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "createCamera request = $request")
+                mUVCCamera?.setFrameCallback(this, UVCCamera.PIXEL_FORMAT_YUV420SP)
+                Logger.i(TAG, "createCamera request = $request")
+            } catch (e: Exception) {
+                try {
+                    // fallback to YUV mode
+                    mUVCCamera?.setPreviewSize(
+                        request.previewWidth,
+                        request.previewHeight,
+                        MIN_FS,
+                        MAX_FS,
+                        UVCCamera.DEFAULT_PREVIEW_MODE,
+                        UVCCamera.DEFAULT_BANDWIDTH
+                    )
+                } catch (e1: IllegalArgumentException) {
+                    Logger.e(TAG, "createCamera failed, err = ${e.localizedMessage}", e)
                 }
             }
-        } catch (e: Exception) {
-            Logger.e(TAG, "createCamera failed, err = ${e.localizedMessage}", e)
         }
     }
 
@@ -186,9 +202,9 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         }
         mSaveImageExecutor.submit {
             val data = mFrameSettableFuture.get(3, TimeUnit.SECONDS)
-            if (data == null) {
+            if (data == null || getRequest() == null) {
                 mMainHandler.post {
-                    mCaptureDataCb?.onError("Times out.")
+                    mCaptureDataCb?.onError("Times out or camera request is null")
                 }
                 Logger.i(TAG, "takePictureInternal failed, times out.")
                 return@submit
@@ -201,20 +217,25 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             val title = savePath ?: "IMG_JJCamera_$date"
             val displayName = savePath ?: "$title.jpg"
             val path = savePath ?: "$mCameraDir/$displayName"
-            val width = getRequest()?.previewWidth
-            val height = getRequest()?.previewHeight
             val orientation = 0
             val location = Utils.getGpsLocation(getContext())
-            // 写入文件
-            File(path).writeBytes(data)
-            // 更新
+            val ret = MediaUtils.saveYuv2Jpeg(path, data, getRequest()!!.previewHeight, getRequest()!!.previewWidth)
+            if (! ret) {
+                val file = File(path)
+                if (file.exists()) {
+                    file.delete()
+                }
+                mMainHandler.post {
+                    mCaptureDataCb?.onError("save yuv to jpeg failed.")
+                }
+                Logger.i(TAG, "save yuv to jpeg failed.")
+                return@submit
+            }
             val values = ContentValues()
             values.put(MediaStore.Images.ImageColumns.TITLE, title)
             values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
             values.put(MediaStore.Images.ImageColumns.DATA, path)
             values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-            values.put(MediaStore.Images.ImageColumns.WIDTH, width)
-            values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
             values.put(MediaStore.Images.ImageColumns.ORIENTATION, orientation)
             values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
             values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)

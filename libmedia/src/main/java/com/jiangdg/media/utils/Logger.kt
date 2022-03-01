@@ -29,7 +29,8 @@ import java.util.*
 
 /** Logger utils
  *
- *  Default log files dir:  /data/data/packagename/files
+ *  Default log files dir:  /storage/emulated/0/Android/data/packagename/files
+ *  or /data/data/packagename/files
  *
  * @author Created by jiangdg on 2022/1/24
  */
@@ -43,10 +44,13 @@ object Logger {
             logLevel(LogLevel.ALL)
             tag(TAG)
             enableThreadInfo()
-            enableStackTrace(2)
+            enableStackTrace(3)
         }.build()
         val filePrinter = folderPath.let {
-            FilePrinter.Builder(folderPath ?: application.filesDir.path).apply {
+            FilePrinter.Builder(
+                folderPath ?: application.getExternalFilesDir(null)?.path
+                ?: application.filesDir.path
+            ).apply {
                 fileNameGenerator(MyFileNameGenerator())
                 flattener(MyFlattener())
             }.build()
@@ -66,7 +70,7 @@ object Logger {
         XLog.w("$flag###$msg")
     }
 
-    fun e(flag: String, msg: String, throwable: Throwable?=null) {
+    fun e(flag: String, msg: String, throwable: Throwable? = null) {
         XLog.e("$flag###$msg", throwable)
     }
 
@@ -81,7 +85,7 @@ object Logger {
         override fun isFileNameChangeable(): Boolean = true
 
         override fun generateFileName(logLevel: Int, timestamp: Long): String {
-            val dateStr = mLocalDateFormat.get()!!.let { sdf->
+            val dateStr = mLocalDateFormat.get()!!.let { sdf ->
                 sdf.timeZone = TimeZone.getDefault()
                 sdf.format(Date(timestamp))
             }

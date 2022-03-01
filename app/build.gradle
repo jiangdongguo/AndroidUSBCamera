@@ -6,7 +6,7 @@ plugins {
 android {
     compileSdkVersion rootProject.ext.versionCompiler
     defaultConfig {
-        applicationId "com.jiangdg.usbcamera"
+        applicationId "com.jiangdg.jjcamera"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.versionTarget
         versionCode rootProject.ext.versionCode

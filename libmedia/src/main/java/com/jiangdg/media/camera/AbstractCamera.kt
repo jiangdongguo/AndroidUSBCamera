@@ -88,6 +88,7 @@ abstract class AbstractCamera(context: Context) : Handler.Callback {
                 loadCameraInfo()
             }
             MSG_START_PREVIEW -> {
+                msg.obj ?: return true
                 (msg.obj as CameraRequest).apply {
                     mDeviceOrientation.enable()
                     mCameraRequest = this
@@ -194,11 +195,11 @@ abstract class AbstractCamera(context: Context) : Handler.Callback {
                 when (event) {
                     Lifecycle.Event.ON_START -> {
                         register()
-                        startPreviewInternal()
+//                        mCameraHandler?.obtainMessage(MSG_START_PREVIEW)?.sendToTarget()
                     }
                     Lifecycle.Event.ON_STOP -> {
                         unRegister()
-                        stopPreviewInternal()
+//                        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
                     }
                     Lifecycle.Event.ON_DESTROY -> {
                         stopPreview()

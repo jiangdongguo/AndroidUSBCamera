@@ -16,14 +16,14 @@
 package com.jiangdg.media.utils
 
 import android.content.Context
+import android.graphics.ImageFormat
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.ChecksSdkIntAtLeast
-import java.io.BufferedReader
-import java.io.File
-import java.io.IOException
-import java.io.InputStreamReader
+import java.io.*
 
 /** Media utils
  *
@@ -118,6 +118,37 @@ object MediaUtils {
             it?.close()
         }
         return null
+    }
+
+    fun saveYuv2Jpeg(path: String, data: ByteArray, width: Int, height: Int): Boolean {
+        val yuvImage = YuvImage(data, ImageFormat.NV21, width, height, null)
+        val bos = ByteArrayOutputStream(data.size)
+        var result = yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, bos)
+        if (! result) {
+            return false
+        }
+        val buffer = bos.toByteArray()
+        val file = File(path)
+        val fos: FileOutputStream?
+        try {
+            fos = FileOutputStream(file)
+            fos.write(buffer)
+            fos.close()
+        } catch (e: FileNotFoundException) {
+            result = false
+            e.printStackTrace()
+        } catch (e: IOException) {
+            result = false
+            e.printStackTrace()
+        } finally {
+            try {
+                bos.close()
+            } catch (e: IOException) {
+                result = false
+                e.printStackTrace()
+            }
+        }
+        return result
     }
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)

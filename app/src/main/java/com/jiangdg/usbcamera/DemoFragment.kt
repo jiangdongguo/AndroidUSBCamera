@@ -274,6 +274,10 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                         override fun onLoadFailed(
                             e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean
                         ): Boolean {
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                ToastUtils.show("Capture image error.${e?.causes}")
+                                mViewBinding.albumPreviewIv.cancelAnimation()
+                            }
                             return true
                         }
 
