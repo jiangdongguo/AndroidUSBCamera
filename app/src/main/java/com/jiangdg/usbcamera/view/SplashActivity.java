@@ -34,6 +34,7 @@ public class SplashActivity extends AppCompatActivity {
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CAMERA, // only required when targetSdkVersion >= 28
     };
     private static final int REQUEST_CODE = 1;
     private List<String> mMissPermissions = new ArrayList<>();
