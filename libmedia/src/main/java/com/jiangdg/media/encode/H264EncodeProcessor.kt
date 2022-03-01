@@ -29,7 +29,7 @@ import java.lang.Exception
 class H264EncodeProcessor(
     val width: Int,
     val height: Int,
-    private val gLESRenderOrUvcCamera: Boolean = true
+    private val gLESRender: Boolean = true
 ) : AbstractProcessor() {
 
     private var mFrameRate: Int? = null
@@ -41,13 +41,13 @@ class H264EncodeProcessor(
     override fun handleStartEncode() {
         try {
             val mediaFormat = MediaFormat.createVideoFormat(MIME, width, height)
-            mediaFormat?.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate ?: FRAME_RATE)
-            mediaFormat?.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate ?: getEncodeBitrate(width, height))
-            mediaFormat?.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_INTERVAL)
-            mediaFormat?.setInteger(MediaFormat.KEY_COLOR_FORMAT, getSupportColorFormat())
+            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate ?: FRAME_RATE)
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate ?: getEncodeBitrate(width, height))
+            mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_INTERVAL)
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, getSupportColorFormat())
             mMediaCodec = MediaCodec.createEncoderByType(MIME)
             mMediaCodec?.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            if (gLESRenderOrUvcCamera) {
+            if (gLESRender) {
                 mReadyListener?.onReady(mMediaCodec?.createInputSurface())
             }
             mMediaCodec?.start()
@@ -77,14 +77,14 @@ class H264EncodeProcessor(
         }
     }
 
-    override fun getPTSUs(byteSize: Int): Long = System.nanoTime() / 1000L
+    override fun getPTSUs(bufferSize: Int): Long = System.nanoTime() / 1000L
 
     fun setOnEncodeReadyListener(listener: OnEncodeReadyListener) {
         this.mReadyListener = listener
     }
 
     private fun getSupportColorFormat(): Int {
-        if (gLESRenderOrUvcCamera) {
+        if (gLESRender) {
             return MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
         }
         if (isLowerLollipop()) {

@@ -8,6 +8,7 @@ JavaVM *globalJvm;
 const char * yuvClsPath = "com/jiangdg/natives/YUVUtils";
 
 static JNINativeMethod g_yuv_methods[] = {
+        {"yuv420spToNv21", "([BII)V", (void *)yuv420spToNv21},
         {"nv21ToYuv420sp", "([BII)V", (void *)nv21ToYuv420sp},
         {"nv21ToYuv420spWithMirror", "([BII)V", (void *)nv21ToYuv420spWithMirror},
         {"nv21ToYuv420p", "([BII)V", (void *)nv21ToYuv420p},

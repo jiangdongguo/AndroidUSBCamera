@@ -339,19 +339,14 @@ class CameraClient internal constructor(builder: Builder) {
             setMp4Muxer(mMediaMuxer!!, true)
             setOnEncodeReadyListener(object : H264EncodeProcessor.OnEncodeReadyListener {
                 override fun onReady(surface: Surface?) {
-                    val isUseInputSurface = (mCamera is CameraUvc) || isEnableGLEs
-                    if (! isUseInputSurface) {
+                    if (! isEnableGLEs) {
                         return
                     }
                     if (surface == null) {
                         Logger.e(TAG, "Input surface can't be null.")
                         return
                     }
-                    if (isEnableGLEs) {
-                        mRenderManager?.startRenderCodec(surface, width, height)
-                        return
-                    }
-                    (mCamera as? CameraUvc)?.startCapture(surface)
+                    mRenderManager?.startRenderCodec(surface, width, height)
                 }
             })
         }
@@ -370,9 +365,6 @@ class CameraClient internal constructor(builder: Builder) {
         mVideoProcess?.stopEncode()
         mAudioProcess?.stopEncode()
         mMediaMuxer = null
-        if (mCamera is CameraUvc) {
-            (mCamera as? CameraUvc)?.stopCapture()
-        }
     }
 
     /**
@@ -420,9 +412,8 @@ class CameraClient internal constructor(builder: Builder) {
         } else {
             mRequest!!.previewHeight
         }
-        val isUseInputSurface = (mCamera is CameraUvc) || isEnableGLEs
         mAudioProcess = AACEncodeProcessor()
-        mVideoProcess = H264EncodeProcessor(encodeWidth, encodeHeight, isUseInputSurface)
+        mVideoProcess = H264EncodeProcessor(encodeWidth, encodeHeight, isEnableGLEs)
     }
 
     private fun releaseEncodeProcessor() {

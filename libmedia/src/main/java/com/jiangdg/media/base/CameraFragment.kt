@@ -121,56 +121,123 @@ abstract class CameraFragment : BaseFragment() {
         })
     }
 
+    /**
+     * Capture image
+     *
+     * @param callBack capture status, see [ICaptureCallBack]
+     * @param savePath custom image path
+     */
     protected fun captureImage(callBack: ICaptureCallBack, savePath: String? = null) {
         mCameraClient?.captureImage(callBack, savePath)
     }
 
+    /**
+     * Switch camera
+     *
+     * @param cameraId camera id
+     */
     protected fun switchCamera(cameraId: String? = null) {
         mCameraClient?.switchCamera(cameraId)
     }
 
+    /**
+     * Update resolution
+     *
+     * @param width camera preview width, see [com.jiangdg.media.camera.bean.PreviewSize]
+     * @param height camera preview height, see [com.jiangdg.media.camera.bean.PreviewSize]
+     */
     protected fun updateResolution(width: Int, height: Int) {
         mCameraClient?.updateResolution(width, height)
     }
 
+    /**
+     * Get all preview sizes
+     *
+     * @param aspectRatio preview size aspect ratio,
+     *                      null means getting all preview sizes
+     */
     protected fun getAllPreviewSizes(aspectRatio: Double? = null) = mCameraClient?.getAllPreviewSizes()
 
+    /**
+     * Add render filter
+     *
+     * @param filter a filter will be added, only enable opengl render worked, see [AbstractFilter]
+     */
     protected fun addRenderFilter(filter: AbstractFilter) {
         mCameraClient?.addRenderFilter(filter)
     }
 
+    /**
+     * Remove render filter
+     *
+     * @param filter a filter will be removed, only enable opengl render worked, see [AbstractFilter]
+     */
     protected fun removeRenderFilter(filter: AbstractFilter) {
         mCameraClient?.removeRenderFilter(filter)
     }
 
+    /**
+     * Start push
+     */
     protected fun startPush() {
         mCameraClient?.startPush()
     }
 
+    /**
+     * Stop push
+     */
     protected fun stopPush() {
         mCameraClient?.stopPush()
     }
 
+    /**
+     * Add encode data call back
+     *
+     * @param callBack encode data call back, see [IEncodeDataCallBack]
+     */
     protected fun addEncodeDataCallBack(callBack: IEncodeDataCallBack) {
         mCameraClient?.addEncodeDataCallBack(callBack)
     }
 
+    /**
+     * Add preview data call back
+     *
+     * @param callBack preview data call back, see [IPreviewDataCallBack]
+     */
     protected fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
         mCameraClient?.addPreviewDataCallBack(callBack)
     }
 
+    /**
+     * Capture video start
+     *
+     * @param callBack capture status, see [ICaptureCallBack]
+     * @param path custom save path
+     * @param durationInSec divided record duration time in seconds
+     */
     protected fun captureVideoStart(callBack: ICaptureCallBack, path: String ?= null, durationInSec: Long = 0L) {
         mCameraClient?.captureVideoStart(callBack, path, durationInSec)
     }
 
+    /**
+     * Capture video stop
+     */
     protected fun captureVideoStop() {
         mCameraClient?.captureVideoStop()
     }
 
+    /**
+     * Start play mic
+     *
+     * @param callBack play mic in real-time, see [IPlayCallBack]
+     */
     protected fun startPlayMic(callBack: IPlayCallBack? = null) {
         mCameraClient?.startPlayMic(callBack)
     }
 
+    /**
+     * Stop play mic
+     */
     protected fun stopPlayMic() {
         mCameraClient?.stopPlayMic()
     }
@@ -232,10 +299,30 @@ abstract class CameraFragment : BaseFragment() {
         }
     }
 
+    /**
+     * Get camera view
+     *
+     * @return CameraView, such as AspectRatioTextureView etc.
+     */
     protected abstract fun getCameraView(): IAspectRatio?
+
+    /**
+     * Get camera view container
+     *
+     * @return camera view container, such as FrameLayout ect
+     */
     protected abstract fun getCameraViewContainer(): ViewGroup?
+
+    /**
+     * Get gravity
+     */
     protected open fun getGravity() = Gravity.CENTER
 
+    /**
+     * Get camera client
+     *
+     * @return camera client, you can custom it, see [CameraClient]
+     */
     protected open fun getCameraClient(): CameraClient? {
         return null
     }

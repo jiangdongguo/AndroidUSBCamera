@@ -14,6 +14,7 @@ extern "C" {
 #include "../module/yuv/yuv.h"
 #include "../utils/logger.h"
 
+void yuv420spToNv21(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
 void nv21ToYuv420sp(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
 void nv21ToYuv420spWithMirror(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
 void nv21ToYuv420p(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);

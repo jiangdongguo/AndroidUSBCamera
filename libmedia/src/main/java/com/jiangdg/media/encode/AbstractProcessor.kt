@@ -48,8 +48,8 @@ abstract class AbstractProcessor {
     fun startEncode() {
         mEncodeThread = HandlerThread(this.getThreadName())
         mEncodeThread?.start()
-        mEncodeHandler = Handler(mEncodeThread?.looper) { msg ->
-            when (msg?.what) {
+        mEncodeHandler = Handler(mEncodeThread!!.looper) { msg ->
+            when (msg.what) {
                 MSG_START -> {
                     handleStartEncode()
                 }
@@ -154,7 +154,7 @@ abstract class AbstractProcessor {
             if (mRawDataQueue.isEmpty()) {
                 return@let
             }
-            val rawData = mRawDataQueue.poll()
+            val rawData = mRawDataQueue.poll() ?: return@let
             val inputIndex = codec.dequeueInputBuffer(TIMES_OUT_US)
             if (inputIndex < 0) {
                 return@let

@@ -20,7 +20,6 @@ import android.content.Context
 import android.hardware.usb.UsbDevice
 import android.os.Build
 import android.provider.MediaStore
-import android.view.Surface
 import com.jiangdg.media.utils.SettableFuture
 import com.jiangdg.media.R
 import com.jiangdg.media.callback.IPreviewDataCallBack
@@ -29,6 +28,7 @@ import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.MediaUtils
 import com.jiangdg.media.utils.Utils
+import com.jiangdg.natives.YUVUtils
 import com.serenegiant.usb.DeviceFilter
 import com.serenegiant.usb.IFrameCallback
 import com.serenegiant.usb.USBMonitor
@@ -37,6 +37,7 @@ import java.io.File
 import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
 /** UVC Camera usage
@@ -51,8 +52,8 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     private val mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?> by lazy {
         SettableFuture()
     }
-    private val mFrameSettableFuture: SettableFuture<ByteArray> by lazy {
-        SettableFuture()
+    private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
+        LinkedBlockingDeque(MAX_NV21_DATA)
     }
     private var mUsbMonitor: USBMonitor? = null
     private var mUVCCamera: UVCCamera? = null
@@ -195,19 +196,19 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             mMainHandler.post {
                 mCaptureDataCb?.onError("Have no storage or camera permission.")
             }
-            Logger.i(TAG, "takePictureInternal failed, has no storage/camera permission.")
+            Logger.i(TAG, "captureImageInternal failed, has no storage/camera permission.")
             return
         }
         if (isCapturing) {
             return
         }
         mSaveImageExecutor.submit {
-            val data = mFrameSettableFuture.get(3, TimeUnit.SECONDS)
+            val data = mNV21DataQueue.pollFirst(CAPTURE_TIMES_OUT_SEC, TimeUnit.SECONDS)
             if (data == null || getRequest() == null) {
                 mMainHandler.post {
                     mCaptureDataCb?.onError("Times out or camera request is null")
                 }
-                Logger.i(TAG, "takePictureInternal failed, times out.")
+                Logger.i(TAG, "captureImageInternal failed, times out.")
                 return@submit
             }
             isCapturing = true
@@ -220,7 +221,10 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             val path = savePath ?: "$mCameraDir/$displayName"
             val orientation = 0
             val location = Utils.getGpsLocation(getContext())
-            val ret = MediaUtils.saveYuv2Jpeg(path, data, getRequest()!!.previewHeight, getRequest()!!.previewWidth)
+            val width = getRequest()!!.previewWidth
+            val height = getRequest()!!.previewHeight
+            YUVUtils.yuv420spToNv21(data, width, height)
+            val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
             if (! ret) {
                 val file = File(path)
                 if (file.exists()) {
@@ -229,7 +233,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                 mMainHandler.post {
                     mCaptureDataCb?.onError("save yuv to jpeg failed.")
                 }
-                Logger.i(TAG, "save yuv to jpeg failed.")
+                Logger.w(TAG, "save yuv to jpeg failed.")
                 return@submit
             }
             val values = ContentValues()
@@ -246,7 +250,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
             }
             isCapturing = false
             if (Utils.debugCamera) {
-                Logger.i(TAG, "takePictureInternal save path = $path")
+                Logger.i(TAG, "captureImageInternal save path = $path")
             }
         }
     }
@@ -319,13 +323,13 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
     }
 
     override fun onAttach(device: UsbDevice?) {
-        requestCameraPermission(device)
-        mDevConnectCallBack?.onAttachDev(device)
         if (! mCacheDeviceList.contains(device)) {
             device?.let {
                 mCacheDeviceList.add(it)
             }
         }
+        requestCameraPermission(device)
+        mDevConnectCallBack?.onAttachDev(device)
         if (Utils.debugCamera) {
             Logger.i(TAG, "attach device = ${device?.toString()}")
         }
@@ -399,18 +403,21 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         }
     }
 
-    fun startCapture(surface: Surface) {
-        mUVCCamera?.startCapture(surface)
-    }
-
-    fun stopCapture() {
-        mUVCCamera?.stopCapture()
-    }
-
+    /**
+     * Add device connect status call back
+     *
+     * @param cb see [IDeviceConnectCallBack]]
+     */
     fun addDeviceConnectCallBack(cb: IDeviceConnectCallBack) {
         this.mDevConnectCallBack = cb
     }
 
+    /**
+     * Get usb device list
+     *
+     * @param resId device filter regular, like [R.xml.default_device_filter]
+     * @return uvc device list
+     */
     fun getUsbDeviceList(resId: Int? = null): MutableList<UsbDevice> {
         val deviceList = getUsbDeviceListInternal() ?: arrayListOf()
         if (resId != null) {
@@ -430,7 +437,10 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                 val data = ByteArray(capacity())
                 get(data)
                 cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
-                mFrameSettableFuture.set(data)
+                if (mNV21DataQueue.size >= MAX_NV21_DATA) {
+                    mNV21DataQueue.removeLast()
+                }
+                mNV21DataQueue.offerFirst(data)
             }
         }
     }
@@ -463,10 +473,38 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         }
     }
 
+    /**
+     * I device connect call back
+     *
+     * @constructor Create empty I device connect call back
+     */
     interface IDeviceConnectCallBack {
+        /**
+         * On attach dev
+         *
+         * @param device uvc device
+         */
         fun onAttachDev(device: UsbDevice?)
+
+        /**
+         * On detach dev
+         *
+         * @param device uvc device
+         */
         fun onDetachDec(device: UsbDevice?)
+
+        /**
+         * On connect dev
+         *
+         * @param device uvc device
+         */
         fun onConnectDev(device: UsbDevice?)
+
+        /**
+         * On dis connect dev
+         *
+         * @param device uvc device
+         */
         fun onDisConnectDec(device: UsbDevice?)
     }
 
@@ -474,6 +512,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         private const val TAG = "CameraUvc"
         private const val MIN_FS = 10
         private const val MAX_FS = 60
+        private const val MAX_NV21_DATA = 5
+        private const val CAPTURE_TIMES_OUT_SEC = 1L
     }
-
 }

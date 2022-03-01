@@ -31,6 +31,8 @@ import java.io.*
  */
 object MediaUtils {
 
+    private const val TAG = "MediaUtils"
+
     fun readRawTextFile(context: Context, rawId: Int): String {
         val inputStream = context.resources.openRawResource(rawId)
         val br = BufferedReader(InputStreamReader(inputStream))
@@ -43,13 +45,13 @@ object MediaUtils {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Logger.e("MediaUtils", "open raw file failed!", e)
+            Logger.e(TAG, "open raw file failed!", e)
         }
         try {
             br.close()
         } catch (e: IOException) {
             e.printStackTrace()
-            Logger.e("MediaUtils", "close raw file failed!", e)
+            Logger.e(TAG, "close raw file failed!", e)
         }
         return sb.toString()
     }
@@ -121,9 +123,19 @@ object MediaUtils {
     }
 
     fun saveYuv2Jpeg(path: String, data: ByteArray, width: Int, height: Int): Boolean {
-        val yuvImage = YuvImage(data, ImageFormat.NV21, width, height, null)
+        val yuvImage = try {
+            YuvImage(data, ImageFormat.NV21, width, height, null)
+        } catch (e: Exception) {
+            Logger.e(TAG, "create YuvImage failed.", e)
+            null
+        } ?: return false
         val bos = ByteArrayOutputStream(data.size)
-        var result = yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, bos)
+        var result = try {
+            yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, bos)
+        } catch (e: Exception) {
+            Logger.e(TAG, "compressToJpeg failed.", e)
+            false
+        }
         if (! result) {
             return false
         }
@@ -134,10 +146,8 @@ object MediaUtils {
             fos = FileOutputStream(file)
             fos.write(buffer)
             fos.close()
-        } catch (e: FileNotFoundException) {
-            result = false
-            e.printStackTrace()
         } catch (e: IOException) {
+            Logger.e(TAG, "saveYuv2Jpeg failed.", e)
             result = false
             e.printStackTrace()
         } finally {
@@ -145,6 +155,7 @@ object MediaUtils {
                 bos.close()
             } catch (e: IOException) {
                 result = false
+                Logger.e(TAG, "saveYuv2Jpeg failed.", e)
                 e.printStackTrace()
             }
         }

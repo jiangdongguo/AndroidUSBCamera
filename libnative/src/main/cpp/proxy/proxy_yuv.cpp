@@ -6,6 +6,20 @@
 
 #include "proxy_yuv.h"
 
+void yuv420spToNv21(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height) {
+    if(! data || width == 0 || height == 0) {
+        LOGE("Parameters error in nv21ToYuv420sp");
+        return;
+    }
+    jbyte *srcData = env->GetByteArrayElements(data, JNI_FALSE);
+    jsize srcLen = env->GetArrayLength(data);
+    char *dest = (char *)malloc(srcLen);
+    yuv420spToNv21Internal((char *)srcData,dest, width, height);
+    env->SetByteArrayRegion(data,0,srcLen,(jbyte *)dest);
+    env->ReleaseByteArrayElements(data, srcData, 0);
+    free(dest);
+}
+
 void nv21ToYuv420sp(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height) {
     if(! data || width == 0 || height == 0) {
         LOGE("Parameters error in nv21ToYuv420sp");
