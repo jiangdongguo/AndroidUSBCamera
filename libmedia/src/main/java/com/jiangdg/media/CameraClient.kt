@@ -49,6 +49,7 @@ import java.lang.NullPointerException
  * @author Created by jiangdg on 2022/2/20
  */
 class CameraClient internal constructor(builder: Builder) {
+
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
     private val mCameraType: CameraType? = builder.cameraType
@@ -95,7 +96,7 @@ class CameraClient internal constructor(builder: Builder) {
      *
      * @param surfaceW surface width
      * @param surfaceH surface height
-     * @param holder surface holder, can be null
+     * @param holder surface holder, null means offscreen render
      */
     fun openCamera(surfaceW: Int, surfaceH: Int, holder: SurfaceHolder?) {
         if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
@@ -143,14 +144,14 @@ class CameraClient internal constructor(builder: Builder) {
      *
      * @param surfaceW surface width
      * @param surfaceH surface height
-     * @param surfaceTexture surface texture, can be null
+     * @param surfaceTexture surface texture, null means offscreen render
      */
     fun openCamera(surfaceW: Int, surfaceH: Int, surfaceTexture: SurfaceTexture?) {
         if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
         if (! isEnableGLEs) {
             if (surfaceTexture == null) {
-                throw NullPointerException("SurfaceTexture can't be null when gles is not enabled")
+                throw NullPointerException("SurfaceTexture can't be null when OpenGL is not enabled")
             }
             mCamera?.startPreview(mRequest!!, surfaceTexture)
             mCamera?.addPreviewDataCallBack(object : IPreviewDataCallBack {

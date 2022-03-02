@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Proxy of yuv.
+ * Proxy of mp3.
  *
  * @author Created by jiangdg on 2022/2/18
  */
-#ifndef ANDROIDUSBCAMERA_PROXY_YUV_H
-#define ANDROIDUSBCAMERA_PROXY_YUV_H
+#ifndef ANDROIDUSBCAMERA_PROXY_MP3_H
+#define ANDROIDUSBCAMERA_PROXY_MP3_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <jni.h>
-#include <cstdlib>
-#include "../module/yuv/yuv.h"
-#include "../utils/logger.h"
 
-void yuv420spToNv21(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
-void nv21ToYuv420sp(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
-void nv21ToYuv420spWithMirror(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
-void nv21ToYuv420p(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
-void nv21ToYuv420pWithMirror(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
+void lameInit(JNIEnv *env, jobject instance, jint inSampleRate, jint outChannel, jint outSampleRate, jint outBitRate, jint quality);
+void lameEncode(JNIEnv *env, jobject instance, jshortArray leftBuf_, jshortArray rightBuf, jint sampleRate, jbyteArray mp3Buf);
+void lameFlush(JNIEnv *env, jobject instance, jbyteArray mp3Buf);
+void lameClose(JNIEnv *env, jobject instance);
 
 #ifdef __cplusplus
 };
 #endif
-#endif //ANDROIDUSBCAMERA_PROXY_YUV_H
+
+#endif //ANDROIDUSBCAMERA_PROXY_MP3_H

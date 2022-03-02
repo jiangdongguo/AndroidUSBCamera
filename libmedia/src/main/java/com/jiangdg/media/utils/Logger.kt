@@ -52,26 +52,26 @@ object Logger {
                 ?: application.filesDir.path
             ).apply {
                 fileNameGenerator(MyFileNameGenerator())
-                flattener(MyFlattener())
+                flattener(MyFlatterer())
             }.build()
         }
         XLog.init(config, androidPrinter, consolePrinter, filePrinter)
     }
 
     fun i(flag: String, msg: String) {
-        XLog.i("$flag###$msg")
+        XLog.i("Info->$flag###$msg")
     }
 
     fun d(flag: String, msg: String) {
-        XLog.d("$flag###$msg")
+        XLog.d("Debug->$flag###$msg")
     }
 
     fun w(flag: String, msg: String) {
-        XLog.w("$flag###$msg")
+        XLog.w("Warning->$flag###$msg")
     }
 
     fun e(flag: String, msg: String, throwable: Throwable? = null) {
-        XLog.e("$flag###$msg", throwable)
+        XLog.e("Error->$flag###$msg", throwable)
     }
 
     class MyFileNameGenerator : FileNameGenerator {
@@ -93,9 +93,9 @@ object Logger {
         }
     }
 
-    class MyFlattener : PatternFlattener(FLATTENER) {
+    class MyFlatterer : PatternFlattener(FLATTERER) {
         companion object {
-            private const val FLATTENER = "{d yyyy-MM-dd HH:mm:ss.SSS} {l}/{t}: {m}"
+            private const val FLATTERER = "{d yyyy-MM-dd HH:mm:ss.SSS} {l}/{t}: {m}"
         }
     }
 }
