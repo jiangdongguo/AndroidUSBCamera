@@ -10,13 +10,13 @@ object LameMp3 {
         System.loadLibrary("nativelib")
     }
 
-    /** 初始化lame库，配置相关信息
+    /** Initialize the lame library and configure related information
      *
-     * @param inSampleRate pcm格式音频采样率
-     * @param outChannel pcm格式音频通道数量
-     * @param outSampleRate mp3格式音频采样率
-     * @param outBitRate mp3格式音频比特率
-     * @param quality mp3格式音频质量，0~9，最慢最差~最快最好
+     * @param inSampleRate pcm format audio sample rate
+     * @param outChannel number of audio channels in pcm format
+     * @param outSampleRate mp3 format audio sample rate
+     * @param outBitRate mp3 format audio bit rate
+     * @param quality mp3 format audio quality, 0~9, slowest and worst~fastest and best
      */
     external fun lameInit(
         inSampleRate: Int,
@@ -26,30 +26,30 @@ object LameMp3 {
         quality: Int
     )
 
-    /** 编码pcm成mp3格式
+    /** Encode pcm into mp3 format
      *
-     * @param leftBuf  左pcm数据
-     * @param rightBuf 右pcm数据，如果是单声道，则一致
-     * @param sampleRate 读入的pcm字节大小
-     * @param mp3Buf 存放mp3数据缓存
-     * @return 编码数据字节长度
+     * @param leftBuf left pcm data
+     * @param rightBuf right pcm data, if it is mono, it is the same
+     * @param sampleRate read in pcm byte size
+     * @param mp3Buf store mp3 data buffer
+     * @return encoded data byte length
      */
     external fun lameEncode(
         leftBuf: ShortArray?,
         rightBuf: ShortArray?,
         sampleRate: Int,
         mp3Buf: ByteArray?
-    )
+    ):Int
 
-    /** 保存mp3音频流到文件
+    /** save mp3 audio stream to file
      *
-     * @param mp3buf mp3数据流
-     * @return 数据流长度rty
+     * @param mp3buf mp3 data stream
+     * @return data stream length rty
      */
-    external fun lameFlush(mp3buf: ByteArray?)
+    external fun lameFlush(mp3buf: ByteArray?): Int
 
     /**
-     * 释放lame库资源
+     * Release lame library resources
      */
     external fun lameClose()
 }

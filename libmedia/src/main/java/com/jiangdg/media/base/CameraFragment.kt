@@ -227,6 +227,23 @@ abstract class CameraFragment : BaseFragment() {
     }
 
     /**
+     * Capture audio start
+     *
+     * @param callBack capture status, see [ICaptureCallBack]
+     * @param path custom save path
+     */
+    protected fun captureAudioStart(callBack: ICaptureCallBack, path: String ?= null) {
+        mCameraClient?.captureAudioStart(callBack, path)
+    }
+
+    /**
+     * Capture audio stop
+     */
+    protected fun captureAudioStop() {
+        mCameraClient?.captureAudioStop()
+    }
+
+    /**
      * Start play mic
      *
      * @param callBack play mic in real-time, see [IPlayCallBack]
@@ -314,14 +331,14 @@ abstract class CameraFragment : BaseFragment() {
     protected abstract fun getCameraViewContainer(): ViewGroup?
 
     /**
-     * Get gravity
+     * Camera render view show gravity
      */
     protected open fun getGravity() = Gravity.CENTER
 
     /**
      * Get camera client
      *
-     * @return camera client, you can custom it, see [CameraClient]
+     * @return camera client, you can custom it, see [getDefault]
      */
     protected open fun getCameraClient(): CameraClient? {
         return null
@@ -331,7 +348,7 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
-            .setCameraType(CameraClient.CameraType.UVC)
+            .setCameraType(CameraClient.CameraType.V1)
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()

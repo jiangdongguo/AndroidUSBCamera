@@ -24,6 +24,9 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.ChecksSdkIntAtLeast
 import java.io.*
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.ShortBuffer
 
 /** Media utils
  *
@@ -160,6 +163,18 @@ object MediaUtils {
             }
         }
         return result
+    }
+
+    fun transferByte2Short(data: ByteArray, readBytes: Int): ShortArray {
+        // byte[] to short[], the length of the array is reduced by half
+        val shortLen = readBytes / 2
+        // Assemble byte[] numbers as ByteBuffer buffers
+        val byteBuffer: ByteBuffer = ByteBuffer.wrap(data, 0, readBytes)
+        // Convert ByteBuffer to little endian and get shortBuffer
+        val shortBuffer: ShortBuffer = byteBuffer.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+        val shortData = ShortArray(shortLen)
+        shortBuffer.get(shortData, 0, shortLen)
+        return shortData
     }
 
     @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)

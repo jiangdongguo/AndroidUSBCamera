@@ -19,6 +19,7 @@ import android.media.MediaCodec
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.encode.bean.RawData
 import com.jiangdg.media.encode.muxer.Mp4Muxer
@@ -40,6 +41,7 @@ abstract class AbstractProcessor {
     private var isVideo: Boolean = false
     private var mEncodeDataCb: IEncodeDataCallBack? = null
     protected val mRawDataQueue: ConcurrentLinkedQueue<RawData> = ConcurrentLinkedQueue()
+    protected var mMainHandler: Handler = Handler(Looper.getMainLooper())
 
     protected val mEncodeState: AtomicBoolean by lazy {
         AtomicBoolean(false)

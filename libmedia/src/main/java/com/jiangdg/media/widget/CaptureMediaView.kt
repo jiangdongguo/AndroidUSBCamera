@@ -40,7 +40,7 @@ class CaptureMediaView : View {
     }
 
     enum class CaptureMode {
-        MODE_CAPTURE_PIC, MODE_CAPTURE_VIDEO
+        MODE_CAPTURE_PIC, MODE_CAPTURE_VIDEO, MODE_CAPTURE_AUDIO
     }
 
     enum class CaptureViewTheme {
@@ -215,7 +215,7 @@ class CaptureMediaView : View {
     
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (mCaptureModel == CaptureMode.MODE_CAPTURE_VIDEO) {
+        if (mCaptureModel == CaptureMode.MODE_CAPTURE_VIDEO || mCaptureModel == CaptureMode.MODE_CAPTURE_AUDIO) {
             drawCaptureVideo(canvas)
         } else {
             drawCapturePicture(canvas)

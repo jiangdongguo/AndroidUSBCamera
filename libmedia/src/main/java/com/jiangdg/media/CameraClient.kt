@@ -295,6 +295,28 @@ class CameraClient internal constructor(builder: Builder) {
     }
 
     /**
+     * Start rec mp3
+     *
+     * @param mp3Path  mp3 save path
+     * @param callBack record status, see [ICaptureCallBack]
+     */
+    fun captureAudioStart(callBack: ICaptureCallBack, mp3Path: String?=null) {
+        val path = if (mp3Path.isNullOrEmpty()) {
+            "${mCtx?.getExternalFilesDir(null)?.path}/${System.currentTimeMillis()}.mp3"
+        } else {
+            mp3Path
+        }
+        (mAudioProcess as? AACEncodeProcessor)?.recordMp3Start(path, callBack)
+    }
+
+    /**
+     * Stop rec mp3
+     */
+    fun captureAudioStop() {
+        (mAudioProcess as? AACEncodeProcessor)?.recordMp3Stop()
+    }
+
+    /**
      * Stop push
      */
     fun stopPush() {

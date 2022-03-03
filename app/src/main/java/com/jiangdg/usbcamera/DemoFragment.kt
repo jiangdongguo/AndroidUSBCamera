@@ -40,7 +40,7 @@ import java.util.*
  * @author Created by jiangdg on 2022/1/28
  */
 class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.OnViewClickListener {
-    private var isCapturingVideo: Boolean = false
+    private var isCapturingVideoOrAudio: Boolean = false
     private var isPlayingMic: Boolean = false
     private var mRecTimer: Timer? = null
     private var mRecSeconds = 0
@@ -49,7 +49,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
     private val mCameraModeTabMap = mapOf(
         CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC to R.id.takePictureModeTv,
-        CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO to R.id.recordVideoModeTv
+        CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO to R.id.recordVideoModeTv,
+        CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO to R.id.recordAudioModeTv
     )
 
     private val mTakePictureTipView: TipView by lazy {
@@ -86,8 +87,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
     override fun initView() {
         super.initView()
-        updateCameraModeSwitchUI()
-
         mViewBinding.lensFacingBtn1.setOnClickListener(this)
         mViewBinding.filtersBtn.setOnClickListener(this)
         mViewBinding.cameraTypeBtn.setOnClickListener(this)
@@ -97,8 +96,10 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mViewBinding.albumPreviewIv.setOnClickListener(this)
         mViewBinding.captureBtn.setOnViewClickListener(this)
         mViewBinding.albumPreviewIv.setTheme(PreviewImageView.Theme.DARK)
-        showRecentMedia()
+        switchLayoutClick()
+    }
 
+    private fun switchLayoutClick() {
         mViewBinding.takePictureModeTv.setOnClickListener {
             if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
                 return@setOnClickListener
@@ -113,6 +114,15 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             mCameraMode = CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO
             updateCameraModeSwitchUI()
         }
+        mViewBinding.recordAudioModeTv.setOnClickListener {
+            if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO) {
+                return@setOnClickListener
+            }
+            mCameraMode = CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO
+            updateCameraModeSwitchUI()
+        }
+        updateCameraModeSwitchUI()
+        showRecentMedia()
     }
 
     override fun getCameraView(): IAspectRatio {
@@ -135,20 +145,23 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC -> {
                 captureImage()
             }
+            CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO -> {
+                captureAudio()
+            }
             else -> {
                 captureVideo()
             }
         }
     }
 
-    private fun captureVideo() {
-        if (isCapturingVideo) {
-            captureVideoStop()
+    private fun captureAudio() {
+        if (isCapturingVideoOrAudio) {
+            captureAudioStop()
             return
         }
-        captureVideoStart(object : ICaptureCallBack {
+        captureAudioStart(object : ICaptureCallBack {
             override fun onBegin() {
-                isCapturingVideo = true
+                isCapturingVideoOrAudio = true
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.DOING)
                 mViewBinding.modeSwitchLayout.visibility = View.GONE
                 mViewBinding.toolbarGroup.visibility = View.GONE
@@ -160,13 +173,52 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
             override fun onError(error: String?) {
                 ToastUtils.show(error ?: "未知异常")
-                isCapturingVideo = false
+                isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
                 stopMediaTimer()
             }
 
             override fun onComplete(path: String?) {
-                isCapturingVideo = false
+                isCapturingVideoOrAudio = false
+                mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
+                mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
+                mViewBinding.toolbarGroup.visibility = View.VISIBLE
+                mViewBinding.albumPreviewIv.visibility = View.VISIBLE
+                mViewBinding.lensFacingBtn1.visibility = View.VISIBLE
+                mViewBinding.recTimerLayout.visibility = View.GONE
+                stopMediaTimer()
+                ToastUtils.show(path ?: "error")
+            }
+
+        })
+    }
+
+    private fun captureVideo() {
+        if (isCapturingVideoOrAudio) {
+            captureVideoStop()
+            return
+        }
+        captureVideoStart(object : ICaptureCallBack {
+            override fun onBegin() {
+                isCapturingVideoOrAudio = true
+                mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.DOING)
+                mViewBinding.modeSwitchLayout.visibility = View.GONE
+                mViewBinding.toolbarGroup.visibility = View.GONE
+                mViewBinding.albumPreviewIv.visibility = View.GONE
+                mViewBinding.lensFacingBtn1.visibility = View.GONE
+                mViewBinding.recTimerLayout.visibility = View.VISIBLE
+                startMediaTimer()
+            }
+
+            override fun onError(error: String?) {
+                ToastUtils.show(error ?: "未知异常")
+                isCapturingVideoOrAudio = false
+                mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
+                stopMediaTimer()
+            }
+
+            override fun onComplete(path: String?) {
+                isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
                 mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
                 mViewBinding.toolbarGroup.visibility = View.VISIBLE
@@ -328,8 +380,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         }
         mViewBinding.captureBtn.setCaptureViewTheme(CaptureMediaView.CaptureViewTheme.THEME_WHITE)
         val height = mViewBinding.controlPanelLayout.height
+        mViewBinding.captureBtn.setCaptureMode(mCameraMode)
         if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
-            mViewBinding.captureBtn.setCaptureMode(CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC)
             val translationX = ObjectAnimator.ofFloat(
                 mViewBinding.controlPanelLayout,
                 "translationY",
@@ -345,7 +397,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             })
             translationX.start()
         } else {
-            mViewBinding.captureBtn.setCaptureMode(CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO)
             val translationX = ObjectAnimator.ofFloat(
                 mViewBinding.controlPanelLayout,
                 "translationY",
@@ -360,7 +411,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 }
             })
             translationX.start()
-
         }
     }
 

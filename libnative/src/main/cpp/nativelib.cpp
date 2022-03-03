@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Signature mapping table:
  * JNIType        Java/Kotlin            JniSign
  * jbyte            byte/Byte	            B
  * jshort           short/Short	            S
@@ -58,8 +59,8 @@ static JNINativeMethod g_yuv_methods[] = {
 
 static JNINativeMethod g_lame_methods[] = {
         {"lameInit", "(IIIII)V", (void *)lameInit},
-        {"lameEncode", "([S[SI[B)V", (void *)lameEncode},
-        {"lameFlush", "([B)V", (void *)lameFlush},
+        {"lameEncode", "([S[SI[B)I", (void *)lameEncode},
+        {"lameFlush", "([B)I", (void *)lameFlush},
         {"lameClose", "()V", (void *)lameClose},
 };
 

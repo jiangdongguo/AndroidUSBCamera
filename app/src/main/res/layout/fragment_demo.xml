@@ -149,7 +149,7 @@
             android:drawableBottom="@drawable/camera_bottom_dot_transparent"
             android:drawablePadding="1dp"
             android:gravity="center"
-            android:text="拍照"
+            android:text="photo"
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -164,11 +164,25 @@
             android:layout_marginStart="20dp"
             android:drawableBottom="@drawable/camera_bottom_dot_transparent"
             android:gravity="center"
-            android:text="录像"
+            android:text="video"
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/takePictureModeTv"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/recordAudioModeTv"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginStart="20dp"
+            android:drawableBottom="@drawable/camera_bottom_dot_transparent"
+            android:gravity="center"
+            android:text="audio"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/recordVideoModeTv"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

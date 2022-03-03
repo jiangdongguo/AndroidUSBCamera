@@ -38,20 +38,20 @@ void lameInitInternal(int inSampleRate, int outChannel, int outSampleRate, int o
     LOGI("config lame library success!");
 }
 
-void lameEncodeInternal(short* leftBuf, short* rightBuf, int sampleRate, unsigned char* mp3Buf, int len) {
+int lameEncodeInternal(short* leftBuf, short* rightBuf, int sampleRate, unsigned char* mp3Buf, int len) {
     int ret = lame_encode_buffer(gfp,leftBuf,rightBuf,sampleRate,mp3Buf,len);
-    if (ret <= 0) {
+    if (ret < 0) {
         LOG_E("encode pcm data failed, err = %d",ret);
     }
+    return ret;
 }
 
-void lameFlushInternal(unsigned char* mp3Buf, int len) {
+int lameFlushInternal(unsigned char* mp3Buf, int len) {
     int ret = lame_encode_flush(gfp,mp3Buf,len);
     if (ret <= 0) {
         LOG_E("flush lame failed, err = %d", ret);
-        return;
     }
-    LOG_E("flush lame success, ret = %d", ret);
+    return ret;
 }
 
 void lameCloseInternal() {
