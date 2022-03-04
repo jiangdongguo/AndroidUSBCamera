@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Typeface
@@ -14,10 +15,14 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.children
 import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -28,9 +33,11 @@ import com.jiangdg.media.utils.Utils
 import com.jiangdg.usbcamera.databinding.FragmentDemoBinding
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPlayCallBack
+import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.MediaUtils
 import com.jiangdg.media.utils.ToastUtils
 import com.jiangdg.media.widget.*
+import com.jiangdg.usbcamera.databinding.DialogMoreBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -40,6 +47,8 @@ import java.util.*
  * @author Created by jiangdg on 2022/1/28
  */
 class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.OnViewClickListener {
+    private lateinit var mMoreBindingView: DialogMoreBinding
+    private var mMoreMenu: PopupWindow? = null
     private var isCapturingVideoOrAudio: Boolean = false
     private var isPlayingMic: Boolean = false
     private var mRecTimer: Timer? = null
@@ -92,7 +101,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mViewBinding.cameraTypeBtn.setOnClickListener(this)
         mViewBinding.settingsBtn.setOnClickListener(this)
         mViewBinding.voiceBtn.setOnClickListener(this)
-        mViewBinding.contrastBtn.setOnClickListener(this)
+        mViewBinding.zoomBtn.setOnClickListener(this)
         mViewBinding.albumPreviewIv.setOnClickListener(this)
         mViewBinding.captureBtn.setOnViewClickListener(this)
         mViewBinding.albumPreviewIv.setTheme(PreviewImageView.Theme.DARK)
@@ -263,27 +272,106 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     mViewBinding.filtersBtn -> {
                     }
                     mViewBinding.cameraTypeBtn -> {
+                        showCameraTypeDialog()
                     }
                     mViewBinding.settingsBtn -> {
+                        showMoreMenu()
                     }
                     mViewBinding.voiceBtn -> {
                         playMic()
                     }
-                    mViewBinding.contrastBtn -> {
+                    mViewBinding.zoomBtn -> {
                     }
                     mViewBinding.albumPreviewIv -> {
-                        Intent(
-                            Intent.ACTION_VIEW,
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                        ).apply {
-                            startActivity(this)
-                        }
+                        goToGalley()
+                    }
+                    // more settings
+                    mMoreBindingView.multiplex, mMoreBindingView.multiplexText -> {
+                        goToMultiplexActivity()
+                    }
+                    mMoreBindingView.contract, mMoreBindingView.contractText -> {
+                        showContractDialog()
+                    }
+                    mMoreBindingView.resolution, mMoreBindingView.resolutionText -> {
+                        showResolutionDialog()
+                    }
+                    mMoreBindingView.contact, mMoreBindingView.contactText -> {
+                        showContactDialog()
                     }
                     else -> {
                     }
                 }
             }
         })
+    }
+
+    @SuppressLint("CheckResult")
+    private fun showCameraTypeDialog() {
+        val typeList = arrayListOf(
+            "Camera1",
+            "Camera2",
+            "Camera UVC",
+            "Offscreen"
+        )
+        MaterialDialog(requireContext()).show {
+            listItemsSingleChoice(
+                items = typeList,
+                initialSelection = 0
+            ) { dialog, index, text ->
+
+            }
+        }
+    }
+
+    @SuppressLint("CheckResult")
+    private fun showResolutionDialog() {
+        mMoreMenu?.dismiss()
+        getAllPreviewSizes().let { previewSizes ->
+            if (previewSizes.isNullOrEmpty()) {
+                ToastUtils.show("Get camera preview size failed")
+                return
+            }
+            val list = arrayListOf<String>()
+            var selectedIndex: Int = 3
+            previewSizes.forEach {
+                list.add("${it.width} x ${it.height}")
+            }
+            MaterialDialog(requireContext()).show {
+                listItemsSingleChoice(
+                    items = list,
+                    initialSelection = selectedIndex
+                ) { dialog, index, text ->
+                    updateResolution(previewSizes[index].width, previewSizes[index].height)
+                }
+            }
+        }
+    }
+
+    private fun showContractDialog() {
+        mMoreMenu?.dismiss()
+        ToastUtils.show("developing")
+    }
+
+    private fun goToMultiplexActivity() {
+        mMoreMenu?.dismiss()
+        ToastUtils.show("developing")
+    }
+
+    private fun showContactDialog() {
+        mMoreMenu?.dismiss()
+        MaterialDialog(requireContext()).show {
+            title(R.string.dialog_contact_title)
+            message(R.string.dialog_contact_message)
+        }
+    }
+
+    private fun goToGalley() {
+        Intent(
+            Intent.ACTION_VIEW,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        ).apply {
+            startActivity(this)
+        }
     }
 
     private fun playMic() {
@@ -423,6 +511,38 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         animatorSet.addListener(listener)
         animatorSet.playTogether(scaleXAnim, scaleYAnim, alphaAnim)
         animatorSet.start()
+    }
+
+    private fun showMoreMenu() {
+        if (mMoreMenu == null) {
+            layoutInflater.inflate(R.layout.dialog_more, null).apply {
+                mMoreBindingView = DialogMoreBinding.bind(this)
+                mMoreBindingView.multiplex.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.multiplexText.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.contact.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.contactText.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.resolution.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.resolutionText.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.contract.setOnClickListener(this@DemoFragment)
+                mMoreBindingView.contractText.setOnClickListener(this@DemoFragment)
+                mMoreMenu = PopupWindow(
+                    this,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    true
+                ).apply {
+                    isOutsideTouchable = true
+                    setBackgroundDrawable(
+                        ContextCompat.getDrawable(requireContext(), R.mipmap.camera_icon_one_inch_alpha)
+                    )
+                }
+            }
+        }
+        try {
+            mMoreMenu?.showAsDropDown(mViewBinding.settingsBtn, 0, 0, Gravity.START)
+        } catch (e: Exception) {
+            Logger.e(TAG, "showMoreMenu fail", e)
+        }
     }
 
     private fun startMediaTimer() {

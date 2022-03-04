@@ -38,7 +38,6 @@ import com.jiangdg.media.widget.IAspectRatio
  */
 abstract class CameraActivity : BaseActivity(){
     private var mCameraClient: CameraClient? = null
-    private var mCameraView: IAspectRatio? = null
 
     override fun initData() {
         val client = getCameraClient() ?: getDefault()
@@ -59,12 +58,8 @@ abstract class CameraActivity : BaseActivity(){
                 removeAllViews()
                 addView(view, getViewLayoutParams(this))
             }
-            client.getCameraRequest()?.apply {
-                view.setAspectRatio(previewWidth, previewHeight)
-            }
-            mCameraView = view
+            mCameraClient = getCameraClient() ?: getDefault()
         }
-        mCameraClient = client
     }
 
     private fun handleTextureView(textureView: AspectRatioTextureView) {
@@ -75,7 +70,7 @@ abstract class CameraActivity : BaseActivity(){
                 height: Int
             ) {
                 Logger.i(TAG, "handleTextureView onSurfaceTextureAvailable")
-                openCamera(width, height, surface!!)
+                openCamera(textureView)
             }
 
             override fun onSurfaceTextureSizeChanged(
@@ -102,9 +97,7 @@ abstract class CameraActivity : BaseActivity(){
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder?) {
                 Logger.i(TAG, "handleSurfaceView surfaceCreated")
-                val width = surfaceView.width
-                val height = surfaceView.height
-                openCamera(width, height, holder!!)
+                openCamera(surfaceView)
             }
 
             override fun surfaceChanged(
@@ -124,12 +117,8 @@ abstract class CameraActivity : BaseActivity(){
         })
     }
 
-    protected fun openCamera(surfaceWidth: Int, surfaceHeight: Int, st: SurfaceTexture) {
-        mCameraClient?.openCamera(surfaceWidth, surfaceHeight, st)
-    }
-
-    protected fun openCamera(surfaceWidth: Int, surfaceHeight: Int, holder: SurfaceHolder) {
-        mCameraClient?.openCamera(surfaceWidth, surfaceHeight, holder)
+    private fun openCamera(st: IAspectRatio? = null) {
+        mCameraClient?.openCamera(st)
     }
 
     protected fun closeCamera() {
@@ -169,8 +158,13 @@ abstract class CameraActivity : BaseActivity(){
             else -> null
         }
     }
-
+    /**
+     * Get camera view
+     *
+     * @return CameraView, such as AspectRatioTextureView etc.
+     */
     protected abstract fun getCameraView(): IAspectRatio?
+
     protected abstract fun getCameraViewContainer(): ViewGroup?
 
     protected open fun getCameraClient(): CameraClient? {

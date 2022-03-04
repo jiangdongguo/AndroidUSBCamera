@@ -30,10 +30,10 @@ ext {
     androidXVersion = '1.3.1'
     versionCompiler = 29
     // when target=27, 9.0 is ok
-    versionTarget = 27
+    versionTarget = 29
     minSdkVersion = 19
-    versionCode = 102
-    versionNameString = '3.0.20211215'
+    versionCode = 110
+    versionNameString = '3.0.20220315'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
 
@@ -45,4 +45,5 @@ ext {
     constraintlayoutVersion = '2.0.4'
     lifecycle_version = '2.2.0'
     glide_version= '4.10.0'
+    dialog_version= '3.2.1'
 }

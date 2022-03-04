@@ -260,17 +260,17 @@ class AACEncodeProcessor : AbstractProcessor() {
                 if (readBytes <= 0) {
                     continue
                 }
-                // 编码队列
+                // pcm encode queue
                 if (mRawDataQueue.size >= MAX_QUEUE_SIZE) {
                     mRawDataQueue.poll()
                 }
                 mRawDataQueue.offer(RawData(data, readBytes))
-                // 播放队列
+                // pcm play queue
                 if (mPlayQueue.size >= MAX_QUEUE_SIZE) {
                     mPlayQueue.poll()
                 }
                 mPlayQueue.offer(RawData(data, readBytes))
-                // mp3编码队列
+                // pcm to mp3 queue
                 if (mRecordMp3Queue.size >= MAX_QUEUE_SIZE) {
                     mRecordMp3Queue.poll()
                 }

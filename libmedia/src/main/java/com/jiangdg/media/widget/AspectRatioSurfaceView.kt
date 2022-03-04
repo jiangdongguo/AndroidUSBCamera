@@ -18,6 +18,7 @@ package com.jiangdg.media.widget
 import android.content.Context
 import android.content.res.Configuration
 import android.util.AttributeSet
+import android.view.Surface
 import android.view.SurfaceView
 import com.jiangdg.media.utils.Logger
 import kotlin.math.abs
@@ -48,6 +49,8 @@ class AspectRatioSurfaceView: SurfaceView, IAspectRatio {
     override fun getSurfaceWidth(): Int = width
 
     override fun getSurfaceHeight(): Int  = height
+
+    override fun getSurface(): Surface = holder.surface
 
     private fun setAspectRatio(aspectRatio: Double) {
         if (aspectRatio < 0 || mAspectRatio == aspectRatio) {

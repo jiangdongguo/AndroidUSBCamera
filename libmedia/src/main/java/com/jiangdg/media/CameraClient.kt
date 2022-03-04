@@ -29,7 +29,6 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.*
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
-import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.encode.AACEncodeProcessor
 import com.jiangdg.media.encode.AbstractProcessor
 import com.jiangdg.media.encode.H264EncodeProcessor
@@ -39,20 +38,23 @@ import com.jiangdg.media.render.RenderManager
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
+import com.jiangdg.media.widget.AspectRatioSurfaceView
+import com.jiangdg.media.widget.AspectRatioTextureView
+import com.jiangdg.media.widget.IAspectRatio
 import com.jiangdg.natives.YUVUtils
 import java.lang.IllegalArgumentException
-import java.lang.NullPointerException
 
 /**
  * Camera client
  *
  * @author Created by jiangdg on 2022/2/20
  */
-class CameraClient internal constructor(builder: Builder) {
+class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack {
 
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
     private val mCamera: ICameraStrategy? = builder.camera
+    private var mCameraView: IAspectRatio? = null
     private var mRequest: CameraRequest? = builder.cameraRequest
     private var mDefaultFilter: AbstractFilter? = builder.defaultFilter
     private val mEncodeBitRate: Int? = builder.videoEncodeBitRate
@@ -75,91 +77,55 @@ class CameraClient internal constructor(builder: Builder) {
         }
     }
 
-    /**
-     * Open camera
-     *
-     * @param surfaceW surface width
-     * @param surfaceH surface height
-     * @param holder surface holder, null means offscreen render
-     */
-    fun openCamera(surfaceW: Int, surfaceH: Int, holder: SurfaceHolder?) {
-        if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
-        initEncodeProcessor()
-        if (! isEnableGLEs) {
-            if (holder == null) {
-                throw NullPointerException("SurfaceHolder can't be null when gles is not enabled")
-            }
-            mCamera?.startPreview(mRequest!!, holder)
-            mCamera?.addPreviewDataCallBack(object : IPreviewDataCallBack {
-                override fun onPreviewData(
-                    data: ByteArray?,
-                    format: IPreviewDataCallBack.DataFormat) {
-                    data?.let {
-                        val width = mRequest!!.previewWidth
-                        val height = mRequest!!.previewHeight
-                        when(format) {
-                            IPreviewDataCallBack.DataFormat.NV21 -> {
-                                YUVUtils.nv21ToYuv420sp(data, width, height)
-                            }
-                            else -> {
-                                throw IllegalArgumentException("Unsupported format")
-                            }
-                        }
-                        mVideoProcess?.putRawData(RawData(it, it.size))
-                    }
+    override fun onPreviewData(data: ByteArray?, format: IPreviewDataCallBack.DataFormat) {
+        data?.let {
+            val width = mRequest!!.previewWidth
+            val height = mRequest!!.previewHeight
+            when(format) {
+                IPreviewDataCallBack.DataFormat.NV21 -> {
+                    YUVUtils.nv21ToYuv420sp(data, width, height)
                 }
-            })
-            return
-        }
-        // using opengl es
-        val listener = object : RenderManager.CameraSurfaceTextureListener {
-            override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
-                surfaceTexture?.let {
-                    mCamera?.startPreview(mRequest!!, it)
+                else -> {
+                    throw IllegalArgumentException("Unsupported format")
                 }
             }
+            mVideoProcess?.putRawData(RawData(it, it.size))
         }
-        mRenderManager?.startRenderScreen(surfaceW, surfaceH, holder?.surface, listener)
-        mRenderManager?.addRenderFilter(mDefaultFilter)
     }
 
     /**
      * Open camera
      *
-     * @param surfaceW surface width
-     * @param surfaceH surface height
-     * @param surfaceTexture surface texture, null means offscreen render
+     * @param cameraView camera render view, null means offscreen render
      */
-    fun openCamera(surfaceW: Int, surfaceH: Int, surfaceTexture: SurfaceTexture?) {
+    fun openCamera(cameraView: IAspectRatio?) {
         if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
-        if (! isEnableGLEs) {
-            if (surfaceTexture == null) {
-                throw NullPointerException("SurfaceTexture can't be null when OpenGL is not enabled")
-            }
-            mCamera?.startPreview(mRequest!!, surfaceTexture)
-            mCamera?.addPreviewDataCallBack(object : IPreviewDataCallBack {
-                override fun onPreviewData(
-                    data: ByteArray?,
-                    format: IPreviewDataCallBack.DataFormat) {
-                    data?.let {
-                        val width = mRequest!!.previewWidth
-                        val height = mRequest!!.previewHeight
-                        when(format) {
-                            IPreviewDataCallBack.DataFormat.NV21 -> {
-                                YUVUtils.nv21ToYuv420sp(data, width, height)
-                            }
-                            else -> {
-                                throw IllegalArgumentException("Unsupported format")
-                            }
-                        }
-                        mVideoProcess?.putRawData(RawData(it, it.size))
-                    }
+        when (val view = mCameraView ?: cameraView) {
+            is AspectRatioSurfaceView -> {
+                if (! isEnableGLEs) {
+                    mCamera?.startPreview(mRequest!!, view.holder)
+                    mCamera?.addPreviewDataCallBack(this)
+                    return
                 }
-            })
-            return
+                cameraView
+            }
+            is AspectRatioTextureView -> {
+                if (! isEnableGLEs) {
+                    mCamera?.startPreview(mRequest!!, view.surfaceTexture)
+                    mCamera?.addPreviewDataCallBack(this)
+                    return
+                }
+                cameraView
+            }
+            else -> {
+                cameraView
+            }
+        }.also { view->
+            mCameraView = view
         }
-        // use opengl es
+        // using opengl es
+        // mCameraView is null, means offscreen render
         val listener = object : RenderManager.CameraSurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                 surfaceTexture?.let {
@@ -167,12 +133,13 @@ class CameraClient internal constructor(builder: Builder) {
                 }
             }
         }
-        val surface = if (surfaceTexture == null) {
-            null
-        } else {
-            Surface(surfaceTexture)
-        }
-        mRenderManager?.startRenderScreen(surfaceW, surfaceH, surface, listener)
+        val previewWidth = mRequest!!.previewWidth
+        val previewHeight = mRequest!!.previewHeight
+//        mCameraView?.setAspectRatio(previewWidth, previewHeight)
+        val surfaceWidth = mCameraView?.getSurfaceWidth() ?: previewWidth
+        val surfaceHeight = mCameraView?.getSurfaceHeight() ?: previewHeight
+        val surface = mCameraView?.getSurface()
+        mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
         mRenderManager?.addRenderFilter(mDefaultFilter)
     }
 

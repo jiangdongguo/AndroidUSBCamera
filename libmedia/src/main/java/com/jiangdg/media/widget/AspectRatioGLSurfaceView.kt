@@ -25,6 +25,7 @@ import android.opengl.Matrix
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.view.Surface
 import com.jiangdg.media.R
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.MediaUtils
@@ -288,6 +289,8 @@ class AspectRatioGLSurfaceView : GLSurfaceView, GLSurfaceView.Renderer,
     override fun getSurfaceWidth(): Int = width
 
     override fun getSurfaceHeight(): Int = height
+
+    override fun getSurface(): Surface = holder.surface
 
     private fun setAspectRatio(aspectRatio: Double) {
         if (aspectRatio < 0 || mAspectRatio == aspectRatio) {

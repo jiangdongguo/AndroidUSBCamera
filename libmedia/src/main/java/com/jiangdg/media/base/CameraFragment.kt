@@ -40,10 +40,8 @@ import java.lang.IllegalArgumentException
  */
 abstract class CameraFragment : BaseFragment() {
     private var mCameraClient: CameraClient? = null
-    private var mCameraView: IAspectRatio? = null
 
     override fun initData() {
-        val client = getCameraClient() ?: getDefault()
         when (val cameraView = getCameraView()) {
             is AspectRatioTextureView -> {
                 handleTextureView(cameraView)
@@ -61,12 +59,8 @@ abstract class CameraFragment : BaseFragment() {
                 removeAllViews()
                 addView(view, getViewLayoutParams(this))
             }
-            client.getCameraRequest()?.apply {
-                view.setAspectRatio(previewWidth, previewHeight)
-            }
-            mCameraView = view
+            mCameraClient = getCameraClient() ?: getDefault()
         }
-        mCameraClient = client
     }
 
     private fun handleTextureView(textureView: AspectRatioTextureView) {
@@ -76,7 +70,7 @@ abstract class CameraFragment : BaseFragment() {
                 width: Int,
                 height: Int
             ) {
-                openCamera(width, height, surface!!)
+                openCamera(textureView)
             }
 
             override fun onSurfaceTextureSizeChanged(
@@ -100,9 +94,7 @@ abstract class CameraFragment : BaseFragment() {
     private fun handleSurfaceView(surfaceView: AspectRatioSurfaceView) {
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder?) {
-                val width = surfaceView.width
-                val height = surfaceView.height
-                openCamera(width, height, holder!!)
+                openCamera(surfaceView)
             }
 
             override fun surfaceChanged(
@@ -258,12 +250,8 @@ abstract class CameraFragment : BaseFragment() {
         mCameraClient?.stopPlayMic()
     }
 
-    private fun openCamera(surfaceWidth: Int, surfaceHeight: Int, st: SurfaceTexture? = null) {
-        mCameraClient?.openCamera(surfaceWidth, surfaceHeight, st)
-    }
-
-    private fun openCamera(surfaceWidth: Int, surfaceHeight: Int, holder: SurfaceHolder? = null) {
-        mCameraClient?.openCamera(surfaceWidth, surfaceHeight, holder)
+    private fun openCamera(st: IAspectRatio? = null) {
+        mCameraClient?.openCamera(st)
     }
 
     private fun closeCamera() {
