@@ -22,7 +22,7 @@ import com.jiangdg.media.camera.bean.PreviewSize
  *
  * @author Created by jiangdg on 2021/12/20
  */
-class CameraVx(ctx: Context): AbstractCamera(ctx) {
+class CameraxStrategy(ctx: Context): ICameraStrategy(ctx) {
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
         TODO("Not yet implemented")
     }

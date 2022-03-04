@@ -45,6 +45,10 @@ class AspectRatioTextureView: TextureView, IAspectRatio {
         setAspectRatio(width.toDouble() / height)
     }
 
+    override fun getSurfaceWidth(): Int  = height
+
+    override fun getSurfaceHeight(): Int  = width
+
     private fun setAspectRatio(aspectRatio: Double) {
         if (aspectRatio < 0 || mAspectRatio == aspectRatio) {
             return

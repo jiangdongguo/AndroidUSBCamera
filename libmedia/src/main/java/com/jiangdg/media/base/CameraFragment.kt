@@ -25,11 +25,10 @@ import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
+import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.render.filter.FilterBlackWhite
-import com.jiangdg.media.render.filter.FilterZoom
-import com.jiangdg.media.render.internal.CaptureRender
 import com.jiangdg.media.widget.AspectRatioSurfaceView
 import com.jiangdg.media.widget.AspectRatioTextureView
 import com.jiangdg.media.widget.IAspectRatio
@@ -348,7 +347,7 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
-            .setCameraType(CameraClient.CameraType.V1)
+            .setCameraStrategy(Camera1Strategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()

@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import com.jiangdg.media.base.BaseFragment
-import com.jiangdg.media.camera.AbstractCamera
-import com.jiangdg.media.camera.CameraV1
+import com.jiangdg.media.camera.ICameraStrategy
+import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.ToastUtils
@@ -25,8 +25,8 @@ import kotlinx.coroutines.withContext
 class GlSurfaceFragment: BaseFragment() {
 
     private lateinit var mViewBinding: FragmentGlsurfaceBinding
-    private val mCamera: AbstractCamera by lazy {
-        CameraV1(requireContext())
+    private val mCamera: ICameraStrategy by lazy {
+        Camera1Strategy(requireContext())
     }
 
     override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {

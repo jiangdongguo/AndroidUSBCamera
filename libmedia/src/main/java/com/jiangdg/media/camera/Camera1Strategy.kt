@@ -35,7 +35,7 @@ import java.lang.Exception
  * @author Created by jiangdg on 2021/12/20
  */
 @Suppress("DEPRECATION")
-class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
+class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallback {
     private var mCamera: Camera? = null
 
     override fun loadCameraInfo() {
@@ -213,8 +213,8 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
                     request.previewWidth,
                     request.previewHeight
                 )
-                val width = suitablePreviewSize.first
-                val height = suitablePreviewSize.second
+                val width = suitablePreviewSize.width
+                val height = suitablePreviewSize.height
                 previewFormat = ImageFormat.NV21
                 pictureFormat = ImageFormat.JPEG
                 if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
@@ -272,17 +272,21 @@ class CameraV1(ctx: Context) : AbstractCamera(ctx), Camera.PreviewCallback {
         sizeList: MutableList<Camera.Size>,
         maxWidth: Int,
         maxHeight: Int
-    ): Pair<Int, Int> {
+    ): PreviewSize {
         val aspectRatio = maxWidth.toFloat() / maxHeight
         sizeList.forEach { size ->
             val w = size.width
             val h = size.height
             val ratio = w.toFloat() / h
             if (ratio == aspectRatio && w <= maxWidth && h <= maxHeight) {
-                return Pair(w, h)
+                return PreviewSize(w, h)
             }
         }
-        return Pair(maxWidth, maxHeight)
+        return if (sizeList.isEmpty()) {
+            PreviewSize(maxWidth, maxHeight)
+        } else {
+            PreviewSize(sizeList[0].width, sizeList[0].height)
+        }
     }
 
     private fun getPreviewDegree(context: Context?, isFrontCamera: Boolean): Int {

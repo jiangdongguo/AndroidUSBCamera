@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author Created by jiangdg on 2021/12/20
  */
-class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectListener,
+class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDeviceConnectListener,
     IFrameCallback {
     private val mDevSettableFuture: SettableFuture<UsbDevice?> by lazy {
         SettableFuture()
@@ -123,6 +123,7 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
         val ctrlBlock = mCtrlBlockSettableFuture.get()
         val device = mDevSettableFuture.get()
         getRequest()?.let { request ->
+            val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
             try {
                 stopPreviewInternal()
                 val camera = UVCCamera().apply {
@@ -131,8 +132,8 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                 mUVCCamera = camera
                 request.cameraId = device?.deviceId.toString()
                 mUVCCamera?.setPreviewSize(
-                    request.previewWidth,
-                    request.previewHeight,
+                    previewSize.width,
+                    previewSize.height,
                     MIN_FS,
                     MAX_FS,
                     UVCCamera.FRAME_FORMAT_YUYV,
@@ -144,8 +145,8 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                 try {
                     // fallback to YUV mode
                     mUVCCamera?.setPreviewSize(
-                        request.previewWidth,
-                        request.previewHeight,
+                        previewSize.width,
+                        previewSize.height,
                         MIN_FS,
                         MAX_FS,
                         UVCCamera.DEFAULT_PREVIEW_MODE,
@@ -470,6 +471,27 @@ class CameraUvc(ctx: Context) : AbstractCamera(ctx), USBMonitor.OnDeviceConnectL
                 return@also
             }
             mUsbMonitor?.requestPermission(dev)
+        }
+    }
+
+    private fun getSuitableSize(
+        maxWidth: Int,
+        maxHeight: Int
+    ): PreviewSize{
+        val aspectRatio = maxWidth.toFloat() / maxHeight
+        val sizeList = getAllPreviewSizes(aspectRatio.toDouble())
+        sizeList?.forEach { size ->
+            val w = size.width
+            val h = size.height
+            val ratio = w.toFloat() / h
+            if (ratio == aspectRatio && w <= maxWidth && h <= maxHeight) {
+                return PreviewSize(w, h)
+            }
+        }
+        return if (sizeList.isNullOrEmpty()) {
+            PreviewSize(maxWidth, maxHeight)
+        } else {
+            PreviewSize(sizeList[0].width, sizeList[0].height)
         }
     }
 

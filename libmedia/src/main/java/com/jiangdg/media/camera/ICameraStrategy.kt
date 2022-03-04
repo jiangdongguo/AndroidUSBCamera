@@ -40,7 +40,7 @@ import java.util.concurrent.Executors
  *
  * @author Created by jiangdg on 2021/12/20
  */
-abstract class AbstractCamera(context: Context) : Handler.Callback {
+abstract class ICameraStrategy(context: Context) : Handler.Callback {
     private var mThread: HandlerThread? = null
     private var mCameraHandler: Handler? = null
     private var mSurfaceTexture: SurfaceTexture? = null

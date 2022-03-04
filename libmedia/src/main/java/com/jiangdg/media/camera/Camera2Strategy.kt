@@ -45,7 +45,7 @@ import kotlin.Exception
  * @author Created by jiangdg on 2021/12/20
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraV2(ctx: Context) : AbstractCamera(ctx) {
+class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
     private val mCaptureResults: BlockingQueue<CaptureResult> = LinkedBlockingDeque()
     private var mImageCaptureBuilder: CaptureRequest.Builder? = null
     private var mPreviewCaptureBuilder: CaptureRequest.Builder? = null
@@ -443,7 +443,11 @@ class CameraV2(ctx: Context) : AbstractCamera(ctx) {
                 return Size(w, h)
             }
         }
-        return Size(maxWidth, maxHeight)
+        return if (sizeList.isNullOrEmpty()) {
+            Size(maxWidth, maxHeight)
+        } else {
+            Size(sizeList[0].width, sizeList[0].height)
+        }
     }
 
     private fun getJpegOrientation(

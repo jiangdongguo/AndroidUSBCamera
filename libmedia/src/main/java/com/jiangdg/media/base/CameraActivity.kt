@@ -24,6 +24,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import com.jiangdg.media.CameraClient
+import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.render.filter.FilterBlackWhite
 import com.jiangdg.media.utils.Logger
@@ -180,7 +181,7 @@ abstract class CameraActivity : BaseActivity(){
         return CameraClient.newBuilder(this)
             .setEnableGLES(true)
             .setDefaultFilter(FilterBlackWhite(this))
-            .setCameraType(CameraClient.CameraType.UVC)
+            .setCameraStrategy(Camera1Strategy(this))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()

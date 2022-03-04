@@ -21,10 +21,10 @@ import java.lang.Exception
  *
  * @author Created by jiangdg on 2022/1/27
  */
-interface CameraCallBack {
+interface ICameraCallBack {
     fun onOpen()
     fun onClose()
-    fun onStartPreview()
+    fun onStartPreview(previewWidth:Int, previewHeight: Int)
     fun onStopPreview()
     fun onError(e: Exception)
 }

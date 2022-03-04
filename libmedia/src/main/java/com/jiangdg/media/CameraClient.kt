@@ -17,7 +17,6 @@ package com.jiangdg.media
 
 import android.content.Context
 import android.graphics.SurfaceTexture
-import android.os.Build
 import android.view.Surface
 import android.view.SurfaceHolder
 import androidx.lifecycle.Lifecycle
@@ -30,6 +29,7 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.*
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
+import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.encode.AACEncodeProcessor
 import com.jiangdg.media.encode.AbstractProcessor
 import com.jiangdg.media.encode.H264EncodeProcessor
@@ -52,13 +52,11 @@ class CameraClient internal constructor(builder: Builder) {
 
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
-    private val mCameraType: CameraType? = builder.cameraType
+    private val mCamera: ICameraStrategy? = builder.camera
     private var mRequest: CameraRequest? = builder.cameraRequest
     private var mDefaultFilter: AbstractFilter? = builder.defaultFilter
     private val mEncodeBitRate: Int? = builder.videoEncodeBitRate
     private val mEncodeFrameRate: Int? = builder.videoEncodeFrameRate
-
-    private var mCamera: AbstractCamera? = null
     private var mAudioProcess: AbstractProcessor? = null
     private var mVideoProcess: AbstractProcessor? = null
     private var mMediaMuxer: Mp4Muxer? = null
@@ -68,27 +66,13 @@ class CameraClient internal constructor(builder: Builder) {
     }
 
     init {
-       mCamera = when(mCameraType) {
-            CameraType.V1 -> CameraV1(mCtx!!)
-            CameraType.V2 -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    CameraV2(mCtx!!)
-                } else {
-                    CameraV1(mCtx!!)
-                }
-            }
-            CameraType.VX -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    CameraVx(mCtx!!)
-                } else {
-                    CameraV1(mCtx!!)
-                }
-            }
-            else -> CameraUvc(mCtx!!)
-        }
         mRequest = mRequest ?: CameraRequest.CameraRequestBuilder().create()
-        addLifecycleObserver(mCtx)
-        if (Utils.debugCamera) Logger.i(TAG, "init camera client, camera = ${mCameraType?.info}")
+        mCtx?.let { context ->
+            addLifecycleObserver(context)
+        }
+        if (Utils.debugCamera) {
+            Logger.i(TAG, "init camera client, camera = $mCamera")
+        }
     }
 
     /**
@@ -472,7 +456,7 @@ class CameraClient internal constructor(builder: Builder) {
         internal var context: Context? = null
         internal var cameraRequest: CameraRequest? = null
         internal var enableGLEs: Boolean = true
-        internal var cameraType: CameraType? = null
+        internal var camera: ICameraStrategy? = null
         internal var defaultFilter: AbstractFilter? = null
         internal var videoEncodeBitRate: Int? = null
         internal var videoEncodeFrameRate: Int? = null
@@ -482,13 +466,13 @@ class CameraClient internal constructor(builder: Builder) {
         }
 
         /**
-         * Set camera type
+         * Set camera strategy
          * <p>
-         * @param camera camera type, see [CameraType]
+         * @param camera camera strategy, see [ICameraStrategy]
          * @return [CameraClient.Builder]
          */
-        fun setCameraType(camera: CameraType?): Builder {
-            this.cameraType = camera
+        fun setCameraStrategy(camera: ICameraStrategy?): Builder {
+            this.camera = camera
             return this
         }
 
@@ -561,7 +545,7 @@ class CameraClient internal constructor(builder: Builder) {
         }
 
         override fun toString(): String {
-            return "Builder(context=$context, cameraType=$cameraType, " +
+            return "Builder(context=$context, cameraType=$camera, " +
                     "cameraRequest=$cameraRequest, glEsVersion=$enableGLEs)"
         }
 
@@ -571,33 +555,6 @@ class CameraClient internal constructor(builder: Builder) {
          * @return [CameraClient.Builder]
          */
         fun build() = CameraClient(this)
-    }
-
-    /**
-     * Camera type
-     *
-     * @property info description of camera
-     */
-    enum class CameraType(val info: String? = null) {
-        /**
-         * Using camera v1, see [CameraV1]
-         */
-        V1("camera1"),
-
-        /**
-         * Using camera v2, see [CameraV2]
-         */
-        V2("camera2"),
-
-        /**
-         * Using camera x, see [CameraVx]
-         */
-        VX("camerax"),
-
-        /**
-         * Using camera uvc, see [CameraUvc]
-         */
-        UVC("uvc camera")
     }
 }
 

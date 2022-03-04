@@ -21,4 +21,6 @@ package com.jiangdg.media.widget
  */
 interface IAspectRatio {
     fun setAspectRatio(width: Int, height: Int)
+    fun getSurfaceWidth(): Int
+    fun getSurfaceHeight(): Int
 }
