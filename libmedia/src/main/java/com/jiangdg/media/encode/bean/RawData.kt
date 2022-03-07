@@ -17,7 +17,12 @@ package com.jiangdg.media.encode.bean
 
 import androidx.annotation.Keep
 
-/** PCM or YUV raw data
+/**
+ * PCM or YUV raw data
+ *
+ * @property data media data, pcm or yuv
+ * @property size media data size
+ * @constructor Create empty Raw data
  *
  * @author Created by jiangdg on 2022/2/10
  */

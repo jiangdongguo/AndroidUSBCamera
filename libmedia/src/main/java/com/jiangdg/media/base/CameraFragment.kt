@@ -26,7 +26,9 @@ import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.Camera1Strategy
+import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest
+import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.render.filter.FilterBlackWhite
 import com.jiangdg.media.widget.AspectRatioSurfaceView
@@ -147,7 +149,7 @@ abstract class CameraFragment : BaseFragment() {
      * @param aspectRatio preview size aspect ratio,
      *                      null means getting all preview sizes
      */
-    protected fun getAllPreviewSizes(aspectRatio: Double? = null) = mCameraClient?.getAllPreviewSizes()
+    protected fun getAllPreviewSizes(aspectRatio: Double? = null) = mCameraClient?.getAllPreviewSizes(aspectRatio)
 
     /**
      * Add render filter
@@ -250,6 +252,24 @@ abstract class CameraFragment : BaseFragment() {
         mCameraClient?.stopPlayMic()
     }
 
+    /**
+     * Get current preview size
+     *
+     * @return camera preview size, see [PreviewSize]
+     */
+    protected fun getCurrentPreviewSize(): PreviewSize? {
+        return mCameraClient?.getCameraRequest()?.let {
+            PreviewSize(it.previewWidth, it.previewHeight)
+        }
+    }
+
+    /**
+     * Get current camera strategy
+     *
+     * @return camera strategy, see [ICameraStrategy]
+     */
+    protected fun getCurrentCameraStrategy() = mCameraClient?.getCameraStrategy()
+
     private fun openCamera(st: IAspectRatio? = null) {
         mCameraClient?.openCamera(st)
     }
@@ -333,7 +353,7 @@ abstract class CameraFragment : BaseFragment() {
 
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(requireContext())
-            .setEnableGLES(true)
+            .setEnableGLES(false)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
             .setCameraStrategy(Camera1Strategy(requireContext()))
             .setCameraRequest(getCameraRequest())

@@ -33,6 +33,9 @@ import com.jiangdg.media.utils.Utils
 import com.jiangdg.usbcamera.databinding.FragmentDemoBinding
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPlayCallBack
+import com.jiangdg.media.camera.Camera1Strategy
+import com.jiangdg.media.camera.Camera2Strategy
+import com.jiangdg.media.camera.CameraUvcStrategy
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.MediaUtils
 import com.jiangdg.media.utils.ToastUtils
@@ -313,10 +316,16 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             "Camera UVC",
             "Offscreen"
         )
+        val selectedIndex = when(getCurrentCameraStrategy()) {
+            is Camera1Strategy -> 0
+            is Camera2Strategy -> 1
+            is CameraUvcStrategy -> 2
+            else -> 3
+        }
         MaterialDialog(requireContext()).show {
             listItemsSingleChoice(
                 items = typeList,
-                initialSelection = 0
+                initialSelection = selectedIndex
             ) { dialog, index, text ->
 
             }
@@ -326,15 +335,22 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     @SuppressLint("CheckResult")
     private fun showResolutionDialog() {
         mMoreMenu?.dismiss()
-        getAllPreviewSizes().let { previewSizes ->
+        getAllPreviewSizes(0.75).let { previewSizes ->
             if (previewSizes.isNullOrEmpty()) {
                 ToastUtils.show("Get camera preview size failed")
                 return
             }
             val list = arrayListOf<String>()
-            var selectedIndex: Int = 3
-            previewSizes.forEach {
-                list.add("${it.width} x ${it.height}")
+            var selectedIndex: Int = -1
+            for (index in (0 until previewSizes.size)) {
+                val w = previewSizes[index].width
+                val h = previewSizes[index].height
+                getCurrentPreviewSize()?.apply {
+                    if (width == w && height == h) {
+                        selectedIndex = index
+                    }
+                }
+                list.add("$w x $h")
             }
             MaterialDialog(requireContext()).show {
                 listItemsSingleChoice(

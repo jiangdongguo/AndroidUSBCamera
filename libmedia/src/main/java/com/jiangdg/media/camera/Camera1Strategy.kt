@@ -110,7 +110,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 stopPreviewInternal()
                 startPreviewInternal()
                 realStartPreview()
-                isCapturing = false
+                mIsCapturing.set(false)
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "takePictureInternal save path = $path")
                 }
@@ -123,10 +123,10 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
             Logger.i(TAG, "takePictureInternal failed, has no storage/camera permission.")
             return
         }
-        if (isCapturing) {
+        if (mIsCapturing.get()) {
             return
         }
-        isCapturing = true
+        mIsCapturing.set(true)
         mCamera?.takePicture(null, null, null, jpegDataCb)
     }
 
@@ -200,7 +200,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
             }
             getAllPreviewSizes()
             if (Utils.debugCamera) {
-                Logger.i(TAG, "createCamera id = ${request.cameraId}")
+                Logger.i(TAG, "createCamera id = ${request.cameraId}, front camera = ${request.isFrontCamera}")
             }
         }
     }

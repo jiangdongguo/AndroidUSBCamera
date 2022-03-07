@@ -36,7 +36,6 @@ import com.serenegiant.usb.UVCCamera
 import java.io.File
 import java.lang.Exception
 import java.lang.IllegalArgumentException
-import java.nio.ByteBuffer
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 
@@ -44,8 +43,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author Created by jiangdg on 2021/12/20
  */
-class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDeviceConnectListener,
-    IFrameCallback {
+class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     private val mDevSettableFuture: SettableFuture<UsbDevice?> by lazy {
         SettableFuture()
     }
@@ -61,7 +59,68 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
     private var mCacheDeviceList: MutableList<UsbDevice> = arrayListOf()
 
     init {
-        mUsbMonitor = USBMonitor(getContext(), this)
+        mUsbMonitor = USBMonitor(getContext(), object : USBMonitor.OnDeviceConnectListener {
+            override fun onAttach(device: UsbDevice?) {
+                if (! mCacheDeviceList.contains(device)) {
+                    device?.let {
+                        mCacheDeviceList.add(it)
+                    }
+                }
+                requestCameraPermission(device)
+                mDevConnectCallBack?.onAttachDev(device)
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "attach device = ${device?.toString()}")
+                }
+            }
+
+            override fun onDetach(device: UsbDevice?) {
+                mDevConnectCallBack?.onDetachDec(device)
+                if (mCacheDeviceList.contains(device)) {
+                    mCacheDeviceList.remove(device)
+                }
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "onDetach device = ${device?.toString()}")
+                }
+            }
+
+            override fun onConnect(
+                device: UsbDevice?,
+                ctrlBlock: USBMonitor.UsbControlBlock?,
+                createNew: Boolean
+            ) {
+                mDevSettableFuture.set(device)
+                mCtrlBlockSettableFuture.set(ctrlBlock)
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "onConnect device = ${device?.toString()}")
+                }
+            }
+
+            override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+                val curDevice = mDevSettableFuture.get()
+                if (curDevice?.deviceId != device?.deviceId) {
+                    return
+                }
+                mDevSettableFuture.set(null)
+                mCtrlBlockSettableFuture.set(null)
+                mDevConnectCallBack?.onDisConnectDec(device)
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
+                }
+            }
+
+            override fun onCancel(device: UsbDevice?) {
+                val curDevice = mDevSettableFuture.get()
+                if (curDevice?.deviceId != device?.deviceId) {
+                    return
+                }
+                mDevSettableFuture.set(null)
+                mCtrlBlockSettableFuture.set(null)
+                mDevConnectCallBack?.onDisConnectDec(device)
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "onCancel device = ${device?.toString()}")
+                }
+            }
+        })
         register()
     }
 
@@ -139,7 +198,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
                     UVCCamera.FRAME_FORMAT_YUYV,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
-                mUVCCamera?.setFrameCallback(this, UVCCamera.PIXEL_FORMAT_YUV420SP)
+                mUVCCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
                 Logger.i(TAG, "createCamera request = $request")
             } catch (e: Exception) {
                 try {
@@ -200,7 +259,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
             Logger.i(TAG, "captureImageInternal failed, has no storage/camera permission.")
             return
         }
-        if (isCapturing) {
+        if (mIsCapturing.get()) {
             return
         }
         mSaveImageExecutor.submit {
@@ -212,7 +271,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
                 Logger.i(TAG, "captureImageInternal failed, times out.")
                 return@submit
             }
-            isCapturing = true
+            mIsCapturing.set(true)
             mMainHandler.post {
                 mCaptureDataCb?.onBegin()
             }
@@ -249,7 +308,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
             mMainHandler.post {
                 mCaptureDataCb?.onComplete(path)
             }
-            isCapturing = false
+            mIsCapturing.set(false)
             if (Utils.debugCamera) {
                 Logger.i(TAG, "captureImageInternal save path = $path")
             }
@@ -323,67 +382,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
         mUsbMonitor = null
     }
 
-    override fun onAttach(device: UsbDevice?) {
-        if (! mCacheDeviceList.contains(device)) {
-            device?.let {
-                mCacheDeviceList.add(it)
-            }
-        }
-        requestCameraPermission(device)
-        mDevConnectCallBack?.onAttachDev(device)
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "attach device = ${device?.toString()}")
-        }
-    }
-
-    override fun onDetach(device: UsbDevice?) {
-        mDevConnectCallBack?.onDetachDec(device)
-        if (mCacheDeviceList.contains(device)) {
-            mCacheDeviceList.remove(device)
-        }
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "onDetach device = ${device?.toString()}")
-        }
-    }
-
-    override fun onConnect(
-        device: UsbDevice?,
-        ctrlBlock: USBMonitor.UsbControlBlock?,
-        createNew: Boolean
-    ) {
-        mDevSettableFuture.set(device)
-        mCtrlBlockSettableFuture.set(ctrlBlock)
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "onConnect device = ${device?.toString()}")
-        }
-    }
-
-    override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
-        val curDevice = mDevSettableFuture.get()
-        if (curDevice?.deviceId != device?.deviceId) {
-            return
-        }
-        mDevSettableFuture.set(null)
-        mCtrlBlockSettableFuture.set(null)
-        mDevConnectCallBack?.onDisConnectDec(device)
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
-        }
-    }
-
-    override fun onCancel(device: UsbDevice?) {
-        val curDevice = mDevSettableFuture.get()
-        if (curDevice?.deviceId != device?.deviceId) {
-            return
-        }
-        mDevSettableFuture.set(null)
-        mCtrlBlockSettableFuture.set(null)
-        mDevConnectCallBack?.onDisConnectDec(device)
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "onCancel device = ${device?.toString()}")
-        }
-    }
-
     override fun register() {
         if (mUsbMonitor?.isRegistered == true) {
             return
@@ -432,20 +430,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
         return deviceList
     }
 
-    override fun onFrame(frame: ByteBuffer?) {
-        mPreviewDataCbList.forEach { cb ->
-            frame?.apply {
-                val data = ByteArray(capacity())
-                get(data)
-                cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
-                if (mNV21DataQueue.size >= MAX_NV21_DATA) {
-                    mNV21DataQueue.removeLast()
-                }
-                mNV21DataQueue.offerFirst(data)
-            }
-        }
-    }
-
     private fun getUsbDeviceListInternal(resId: Int = R.xml.default_device_filter): MutableList<UsbDevice>? {
         val deviceFilters = DeviceFilter.getDeviceFilters(getContext(), resId)
         if (mUsbMonitor == null || deviceFilters == null) {
@@ -492,6 +476,20 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx), USBMonitor.OnDevic
             PreviewSize(maxWidth, maxHeight)
         } else {
             PreviewSize(sizeList[0].width, sizeList[0].height)
+        }
+    }
+
+    private val frameCallBack = IFrameCallback { frame ->
+        mPreviewDataCbList.forEach { cb ->
+            frame?.apply {
+                val data = ByteArray(capacity())
+                get(data)
+                cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
+                if (mNV21DataQueue.size >= MAX_NV21_DATA) {
+                    mNV21DataQueue.removeLast()
+                }
+                mNV21DataQueue.offerFirst(data)
+            }
         }
     }
 

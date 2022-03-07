@@ -35,6 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Camera Manager abstract class
  *
@@ -52,7 +53,8 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     protected val mMainHandler: Handler = Handler(Looper.getMainLooper())
     protected val mSaveImageExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     protected val mCameraInfoMap = hashMapOf<Int, CameraInfo>()
-    protected var isCapturing: Boolean = false
+    protected var mIsCapturing: AtomicBoolean = AtomicBoolean(false)
+    private var mIsPreviewing: AtomicBoolean = AtomicBoolean(false)
 
     protected val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
@@ -90,30 +92,36 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
             MSG_START_PREVIEW -> {
                 msg.obj ?: return true
                 (msg.obj as CameraRequest).apply {
+                    if (mIsPreviewing.get()) {
+                        mDeviceOrientation.disable()
+                        stopPreviewInternal()
+                        mIsPreviewing.set(false)
+                    }
                     mDeviceOrientation.enable()
                     mCameraRequest = this
                     startPreviewInternal()
+                    mIsPreviewing.set(true)
                 }
             }
             MSG_STOP_PREVIEW -> {
-                mDeviceOrientation.disable()
-                mCameraRequest = null
-                mPreviewDataCbList.clear()
-                stopPreviewInternal()
-                mThread?.quitSafely()
-                mThread = null
-                mCameraHandler = null
+                (msg.obj as Boolean).let { stopped ->
+                    mDeviceOrientation.disable()
+                    stopPreviewInternal()
+                    mIsPreviewing.set(false)
+                    if (stopped) {
+                        mCameraRequest = null
+                        mPreviewDataCbList.clear()
+                        mThread?.quitSafely()
+                        mThread = null
+                        mCameraHandler = null
+                    }
+                }
             }
             MSG_CAPTURE_IMAGE -> {
                 captureImageInternal(msg.obj as? String)
             }
             MSG_SWITCH_CAMERA -> {
                 switchCameraInternal(msg.obj as? String)
-            }
-            MSG_UPDATE_RESOLUTION -> {
-                (msg.obj as PreviewSize).let {
-                    updateResolutionInternal(it.width, it.height)
-                }
             }
         }
         return true
@@ -129,8 +137,8 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request)?.sendToTarget()
     }
 
-    fun stopPreview() {
-        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
+    fun stopPreview(needThreadStop: Boolean = true) {
+        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW, needThreadStop)?.sendToTarget()
     }
 
     fun captureImage(callBack: ICaptureCallBack, savePath: String?) {
@@ -140,12 +148,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
 
     fun switchCamera(cameraId: String? = null) {
         mCameraHandler?.obtainMessage(MSG_SWITCH_CAMERA, cameraId)?.sendToTarget()
-    }
-
-    fun updateResolution(width: Int, height: Int) {
-        PreviewSize(width, height).apply {
-            mCameraHandler?.obtainMessage(MSG_UPDATE_RESOLUTION, this)
-        }
     }
 
     private fun setSurfaceTexture(surfaceTexture: SurfaceTexture) {
@@ -195,11 +197,9 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                 when (event) {
                     Lifecycle.Event.ON_START -> {
                         register()
-//                        mCameraHandler?.obtainMessage(MSG_START_PREVIEW)?.sendToTarget()
                     }
                     Lifecycle.Event.ON_STOP -> {
                         unRegister()
-//                        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
                     }
                     Lifecycle.Event.ON_DESTROY -> {
                         stopPreview()
@@ -212,7 +212,10 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     }
 
     fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
-        this.mPreviewDataCbList.add(callBack)
+        if (mPreviewDataCbList.contains(callBack)) {
+            return
+        }
+        mPreviewDataCbList.add(callBack)
     }
 
     companion object {
@@ -222,7 +225,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         private const val MSG_STOP_PREVIEW = 0x02
         private const val MSG_CAPTURE_IMAGE = 0x03
         private const val MSG_SWITCH_CAMERA = 0x04
-        private const val MSG_UPDATE_RESOLUTION = 0x05
 
         internal const val TYPE_FRONT = 0
         internal const val TYPE_BACK = 1

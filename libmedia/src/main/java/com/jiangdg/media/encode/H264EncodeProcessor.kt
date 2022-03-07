@@ -22,8 +22,13 @@ import android.view.Surface
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import java.lang.Exception
-/** Encode h264 by MediaCodec
+
+/**
+ * Encode h264 by MediaCodec
  *
+ * @property width yuv width
+ * @property height yuv height
+ * @property gLESRender rendered by opengl flag
  * @author Created by jiangdg on 2022/2/10
  */
 class H264EncodeProcessor(
@@ -79,6 +84,11 @@ class H264EncodeProcessor(
 
     override fun getPTSUs(bufferSize: Int): Long = System.nanoTime() / 1000L
 
+    /**
+     * Set on encode ready listener
+     *
+     * @param listener input surface ready listener
+     */
     fun setOnEncodeReadyListener(listener: OnEncodeReadyListener) {
         this.mReadyListener = listener
     }
@@ -105,12 +115,26 @@ class H264EncodeProcessor(
         return bitRate.toInt()
     }
 
+    /**
+     * Set encode rate
+     *
+     * @param bitRate encode bit rate, kpb/s
+     * @param frameRate encode frame rate, fp/s
+     */
     fun setEncodeRate(bitRate: Int?, frameRate: Int?) {
         this.mBitRate = bitRate
         this.mFrameRate = frameRate
     }
 
+    /**
+     * On encode ready listener
+     */
     interface OnEncodeReadyListener {
+        /**
+         * On ready
+         *
+         * @param surface mediacodec input surface for getting raw data
+         */
         fun onReady(surface: Surface?)
     }
 

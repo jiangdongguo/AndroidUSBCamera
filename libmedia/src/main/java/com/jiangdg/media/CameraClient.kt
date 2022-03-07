@@ -229,7 +229,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun captureImage(callBack: ICaptureCallBack, path: String? = null) {
         if (Utils.debugCamera) {
-            Logger.i(TAG, "takePicture")
+            Logger.i(TAG, "captureImage...")
         }
         if (isEnableGLEs) {
             mRenderManager?.saveImage(callBack, path)
@@ -363,12 +363,26 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      *
      * @param width camera preview width, see [PreviewSize]
      * @param height camera preview height, [PreviewSize]
+     * @return result of operation
      */
-    fun updateResolution(width: Int, height: Int) {
+    fun updateResolution(width: Int, height: Int): Boolean {
         if (Utils.debugCamera) {
             Logger.i(TAG, "updateResolution size = ${width}x${height}")
         }
-        mCamera?.updateResolution(width, height)
+        getCameraRequest().apply {
+            if (this == null) {
+                Logger.e(TAG, "updateResolution failed, camera request is null.")
+                return false
+            }
+            if (mVideoProcess?.isEncoding() == true) {
+                Logger.e(TAG, "updateResolution failed, video recording...")
+                return false
+            }
+            previewWidth = width
+            previewHeight = height
+            openCamera(mCameraView)
+        }
+        return true
     }
 
     /**
@@ -392,7 +406,15 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun getCameraRequest() = mRequest
 
+    /**
+     * Get camera strategy
+     *
+     * @return camera strategy, see [ICameraStrategy]
+     */
+    fun getCameraStrategy() = mCamera
+
     private fun initEncodeProcessor() {
+        releaseEncodeProcessor()
         val  encodeWidth = if (isEnableGLEs) {
             mRequest!!.previewHeight
         } else {

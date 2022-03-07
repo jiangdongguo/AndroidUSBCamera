@@ -32,7 +32,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.Exception
 
-
 /** AAC encode by MediaCodec
  *
  * @author Created by jiangdg on 2022/2/10
@@ -120,7 +119,7 @@ class AACEncodeProcessor : AbstractProcessor() {
     /**
      * Play audio start
      *
-     * @param callBack play status, see [IPlayCallBack]
+     * @param callBack play status call back, see [IPlayCallBack]
      */
     fun playAudioStart(callBack: IPlayCallBack?) {
         mAudioThreadPool.submit {
@@ -168,9 +167,9 @@ class AACEncodeProcessor : AbstractProcessor() {
     }
 
     /**
-     *  Record mp3 start
+     * Record mp3start
      *
-     * @param audioPath mp3 save path
+     * @param audioPath custom mp4 record saving path, default is [/data/data/packagename/files]
      * @param callBack record status, see [ICaptureCallBack]
      */
     fun recordMp3Start(audioPath: String?, callBack: ICaptureCallBack) {
@@ -239,7 +238,7 @@ class AACEncodeProcessor : AbstractProcessor() {
     }
 
     /**
-     *  Record mp3 stop
+     * Record mp3stop
      */
     fun recordMp3Stop() {
         mRecordMp3State.set(false)

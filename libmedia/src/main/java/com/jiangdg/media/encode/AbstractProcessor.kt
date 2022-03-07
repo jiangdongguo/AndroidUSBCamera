@@ -29,6 +29,7 @@ import java.lang.Exception
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
+
 /** Abstract processor
  *
  * @author Created by jiangdg on 2022/2/10
@@ -47,6 +48,11 @@ abstract class AbstractProcessor {
         AtomicBoolean(false)
     }
 
+    /**
+     * Start encode
+     *
+     * [getThreadName] diff audio thread or  video thread
+     */
     fun startEncode() {
         mEncodeThread = HandlerThread(this.getThreadName())
         mEncodeThread?.start()
@@ -64,6 +70,9 @@ abstract class AbstractProcessor {
         mEncodeHandler?.obtainMessage(MSG_START)?.sendToTarget()
     }
 
+    /**
+     * Stop encode
+     */
     fun stopEncode() {
         mEncodeState.set(false)
         mEncodeHandler?.obtainMessage(MSG_STOP)?.sendToTarget()
@@ -73,10 +82,21 @@ abstract class AbstractProcessor {
         mEncodeDataCb = null
     }
 
+    /**
+     * Add encode data call back
+     *
+     * @param callBack aac or h264 data call back, see [IEncodeDataCallBack]
+     */
     fun addEncodeDataCallBack(callBack: IEncodeDataCallBack) {
         this.mEncodeDataCb = callBack
     }
 
+    /**
+     * Set mp4muxer
+     *
+     * @param muxer mp4 media muxer
+     * @param isVideo data type, audio or video
+     */
     @Synchronized
     fun setMp4Muxer(muxer: Mp4Muxer, isVideo: Boolean) {
         this.mMp4Muxer = muxer
@@ -86,6 +106,11 @@ abstract class AbstractProcessor {
         }
     }
 
+    /**
+     * Put raw data
+     *
+     * @param data media data, pcm or yuv
+     */
     fun putRawData(data: RawData) {
         if (! mEncodeState.get()) {
             return
@@ -96,13 +121,44 @@ abstract class AbstractProcessor {
         mRawDataQueue.offer(data)
     }
 
+    /**
+     * Is encoding
+     */
+    fun isEncoding() = mEncodeState.get()
+
+    /**
+     * Get thread name
+     *
+     * @return Get encode thread name
+     */
     protected abstract fun getThreadName(): String
+
+    /**
+     * Handle start encode
+     */
     protected abstract fun handleStartEncode()
+
+    /**
+     * Handle stop encode
+     */
     protected abstract fun handleStopEncode()
+
+    /**
+     * Get presentation time
+     *
+     * @param bufferSize buffer size
+     * @return presentation time in us
+     */
     protected abstract fun getPTSUs(bufferSize: Int): Long
 
+    /**
+     * Is lower lollipop
+     */
     protected fun isLowerLollipop() = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
 
+    /**
+     * Do encode data
+     */
     protected fun doEncodeData() {
         while (mEncodeState.get()) {
             try {

@@ -35,7 +35,15 @@ import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
 
-/** MediaMuxer for Mp4
+/**
+ * MediaMuxer for Mp4
+ *
+ * @property path mp4 saving path
+ * @property durationInSec mp4 file auto divided in seconds
+ *
+ * @constructor
+ * @param context context
+ * @param callBack mp4 capture status, see [ICaptureCallBack]
  *
  * @author Created by jiangdg on 2022/2/10
  */
@@ -82,6 +90,12 @@ class Mp4Muxer(
         }
     }
 
+    /**
+     * Add tracker
+     *
+     * @param mediaFormat media format, see [MediaFormat]
+     * @param isVideo media type, audio or video
+     */
     @Synchronized
     fun addTracker(mediaFormat: MediaFormat?, isVideo: Boolean) {
         if (isMuxerStarter() || mediaFormat == null) {
@@ -130,6 +144,13 @@ class Mp4Muxer(
         }
     }
 
+    /**
+     * write audio(aac) or video(h264) data to media muxer
+     *
+     * @param outputBuffer encode output buffer, see [MediaCodec]
+     * @param bufferInfo encode output buffer info, see [MediaCodec.BufferInfo]
+     * @param isVideo media data type, audio or video
+     */
     @Synchronized
     fun pumpStream(outputBuffer: ByteBuffer, bufferInfo: MediaCodec.BufferInfo, isVideo: Boolean) {
         try {
@@ -192,6 +213,9 @@ class Mp4Muxer(
         }
     }
 
+    /**
+     * Release mp4 muxer resource
+     */
     @Synchronized
     fun release() {
         try {

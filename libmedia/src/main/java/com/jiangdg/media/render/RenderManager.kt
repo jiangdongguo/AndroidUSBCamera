@@ -84,9 +84,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         this.mCameraRender = CameraRender(context)
         this.mScreenRender = ScreenRender(context)
         this.mCaptureRender = CaptureRender(context)
-        mTextureId = mCameraRender?.createOESTexture()!!
-        mCameraSurfaceTexture = SurfaceTexture(mTextureId)
-        mCameraSurfaceTexture?.setOnFrameAvailableListener(this)
         addLifecycleObserver(context)
 
         Logger.i(TAG, "create RenderManager, Open ES version is ${Utils.getGLESVersion(context)}")
@@ -192,6 +189,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 mCameraRender?.releaseGLES()
                 mScreenRender?.releaseGLES()
                 mCaptureRender?.releaseGLES()
+                mCameraSurfaceTexture?.setOnFrameAvailableListener(null)
                 mCameraSurfaceTexture = null
             }
         }
@@ -206,6 +204,11 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     }
 
     fun startRenderScreen(w: Int, h: Int, outSurface: Surface?, listener: CameraSurfaceTextureListener? = null) {
+        if (mCameraSurfaceTexture == null) {
+            mTextureId = mCameraRender?.createOESTexture()!!
+            mCameraSurfaceTexture = SurfaceTexture(mTextureId)
+            mCameraSurfaceTexture?.setOnFrameAvailableListener(this)
+        }
         listener?.onSurfaceTextureAvailable(mCameraSurfaceTexture)
         mRenderThread = HandlerThread(RENDER_THREAD)
         mRenderThread?.start()
@@ -375,7 +378,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         }
         mCaptureState.set(false)
         if (Utils.debugCamera) {
-            Logger.i(TAG, "takePictureInternal save path = $path")
+            Logger.i(TAG, "captureImageInternal save path = $path")
         }
     }
 

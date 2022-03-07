@@ -39,12 +39,11 @@ object Logger {
 
     fun init(application: Application, folderPath: String? = null) {
         val androidPrinter = AndroidPrinter(true)
-        val consolePrinter = ConsolePrinter()
         val config = LogConfiguration.Builder().apply {
             logLevel(LogLevel.ALL)
             tag(TAG)
             enableThreadInfo()
-            enableStackTrace(3)
+            enableStackTrace(2)
         }.build()
         val filePrinter = folderPath.let {
             FilePrinter.Builder(
@@ -55,7 +54,7 @@ object Logger {
                 flattener(MyFlatterer())
             }.build()
         }
-        XLog.init(config, androidPrinter, consolePrinter, filePrinter)
+        XLog.init(config,androidPrinter , filePrinter)
     }
 
     fun i(flag: String, msg: String) {
