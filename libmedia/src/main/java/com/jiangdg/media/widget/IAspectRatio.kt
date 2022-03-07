@@ -26,4 +26,5 @@ interface IAspectRatio {
     fun getSurfaceWidth(): Int
     fun getSurfaceHeight(): Int
     fun getSurface(): Surface
+    fun postUITask(task: ()->Unit)
 }

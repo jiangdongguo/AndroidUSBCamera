@@ -40,7 +40,6 @@ abstract class CameraActivity : BaseActivity(){
     private var mCameraClient: CameraClient? = null
 
     override fun initData() {
-        val client = getCameraClient() ?: getDefault()
         when (val cameraView = getCameraView()) {
             is AspectRatioTextureView -> {
                 handleTextureView(cameraView)
@@ -58,8 +57,8 @@ abstract class CameraActivity : BaseActivity(){
                 removeAllViews()
                 addView(view, getViewLayoutParams(this))
             }
-            mCameraClient = getCameraClient() ?: getDefault()
         }
+        mCameraClient = getCameraClient() ?: getDefault()
     }
 
     private fun handleTextureView(textureView: AspectRatioTextureView) {

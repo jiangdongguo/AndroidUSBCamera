@@ -59,8 +59,8 @@ abstract class CameraFragment : BaseFragment() {
                 removeAllViews()
                 addView(view, getViewLayoutParams(this))
             }
-            mCameraClient = getCameraClient() ?: getDefault()
         }
+        mCameraClient = getCameraClient() ?: getDefault()
     }
 
     private fun handleTextureView(textureView: AspectRatioTextureView) {

@@ -52,6 +52,12 @@ class AspectRatioSurfaceView: SurfaceView, IAspectRatio {
 
     override fun getSurface(): Surface = holder.surface
 
+    override fun postUITask(task: () -> Unit) {
+        post {
+            task()
+        }
+    }
+
     private fun setAspectRatio(aspectRatio: Double) {
         if (aspectRatio < 0 || mAspectRatio == aspectRatio) {
             return

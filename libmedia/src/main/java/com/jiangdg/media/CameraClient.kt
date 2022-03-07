@@ -101,19 +101,27 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     fun openCamera(cameraView: IAspectRatio?) {
         if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
-        when (val view = mCameraView ?: cameraView) {
+        val previewWidth = mRequest!!.previewWidth
+        val previewHeight = mRequest!!.previewHeight
+        when (cameraView) {
             is AspectRatioSurfaceView -> {
+                cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
-                    mCamera?.startPreview(mRequest!!, view.holder)
-                    mCamera?.addPreviewDataCallBack(this)
+                    cameraView.postUITask {
+                        mCamera?.startPreview(mRequest!!, cameraView.holder)
+                        mCamera?.addPreviewDataCallBack(this)
+                    }
                     return
                 }
                 cameraView
             }
             is AspectRatioTextureView -> {
+                cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
-                    mCamera?.startPreview(mRequest!!, view.surfaceTexture)
-                    mCamera?.addPreviewDataCallBack(this)
+                    cameraView.postUITask {
+                        mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture)
+                        mCamera?.addPreviewDataCallBack(this)
+                    }
                     return
                 }
                 cameraView
@@ -126,21 +134,30 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         }
         // using opengl es
         // mCameraView is null, means offscreen render
-        val listener = object : RenderManager.CameraSurfaceTextureListener {
-            override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
-                surfaceTexture?.let {
-                    mCamera?.startPreview(mRequest!!, it)
+        mCameraView.apply {
+            val listener = object : RenderManager.CameraSurfaceTextureListener {
+                override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
+                    surfaceTexture?.let {
+                        mCamera?.startPreview(mRequest!!, it)
+                    }
                 }
             }
+            if (this == null) {
+                mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
+                mRenderManager?.addRenderFilter(mDefaultFilter)
+                Logger.i(TAG, "Offscreen render, width=$previewWidth, height=$previewHeight")
+                return@apply
+            }
+            setAspectRatio(previewWidth, previewHeight)
+            postUITask {
+                val surfaceWidth = getSurfaceWidth()
+                val surfaceHeight = getSurfaceHeight()
+                val surface = getSurface()
+                mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
+                mRenderManager?.addRenderFilter(mDefaultFilter)
+                Logger.i(TAG, "Display render, width=$surfaceWidth, height=$surfaceHeight")
+            }
         }
-        val previewWidth = mRequest!!.previewWidth
-        val previewHeight = mRequest!!.previewHeight
-//        mCameraView?.setAspectRatio(previewWidth, previewHeight)
-        val surfaceWidth = mCameraView?.getSurfaceWidth() ?: previewWidth
-        val surfaceHeight = mCameraView?.getSurfaceHeight() ?: previewHeight
-        val surface = mCameraView?.getSurface()
-        mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
-        mRenderManager?.addRenderFilter(mDefaultFilter)
     }
 
     /**

@@ -30,7 +30,7 @@ ext {
     androidXVersion = '1.3.1'
     versionCompiler = 29
     // when target=27, 9.0 is ok
-    versionTarget = 29
+    versionTarget = 27
     minSdkVersion = 19
     versionCode = 110
     versionNameString = '3.0.20220315'
