@@ -335,7 +335,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     @SuppressLint("CheckResult")
     private fun showResolutionDialog() {
         mMoreMenu?.dismiss()
-        getAllPreviewSizes(0.75).let { previewSizes ->
+        getAllPreviewSizes().let { previewSizes ->
             if (previewSizes.isNullOrEmpty()) {
                 ToastUtils.show("Get camera preview size failed")
                 return

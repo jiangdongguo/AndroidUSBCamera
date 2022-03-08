@@ -127,25 +127,47 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         return true
     }
 
-    fun startPreview(request: CameraRequest, surfaceTexture: SurfaceTexture) {
-        setSurfaceTexture(surfaceTexture)
-        mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request)?.sendToTarget()
+    /**
+     * Start preview
+     *
+     * @param request camera quest, see [CameraRequest]
+     * @param renderSurface [SurfaceHolder] or [SurfaceTexture]
+     */
+    fun <T> startPreview(request: CameraRequest, renderSurface: T) {
+        when(renderSurface) {
+            is SurfaceTexture -> setSurfaceTexture(renderSurface)
+            is SurfaceHolder -> setSurfaceHolder(renderSurface)
+            else -> throw IllegalStateException("startPreview failed. only support SurfaceTexture or SurfaceHolder")
+        }.also {
+            mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request)?.sendToTarget()
+        }
     }
 
-    fun startPreview(request: CameraRequest, holder: SurfaceHolder) {
-        setSurfaceHolder(holder)
-        mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request)?.sendToTarget()
-    }
-
+    /**
+     * Stop preview
+     *
+     * @param needThreadStop stop camera thread flag
+     */
     fun stopPreview(needThreadStop: Boolean = true) {
         mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW, needThreadStop)?.sendToTarget()
     }
 
+    /**
+     * Capture image
+     *
+     * @param callBack capture status, see [ICaptureCallBack]
+     * @param savePath image save path
+     */
     fun captureImage(callBack: ICaptureCallBack, savePath: String?) {
         this.mCaptureDataCb = callBack
         mCameraHandler?.obtainMessage(MSG_CAPTURE_IMAGE, savePath)?.sendToTarget()
     }
 
+    /**
+     * Switch camera
+     *
+     * @param cameraId camera id, camera1/camera2/camerax is null
+     */
     fun switchCamera(cameraId: String? = null) {
         mCameraHandler?.obtainMessage(MSG_SWITCH_CAMERA, cameraId)?.sendToTarget()
     }
@@ -158,32 +180,127 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         this.mSurfaceHolder = holder
     }
 
+    /**
+     * Get all preview sizes
+     *
+     * @param aspectRatio preview size aspect ratio
+     * @return preview size list
+     */
     abstract fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize>?
 
+    /**
+     * Get surface texture
+     *
+     * @return camera render [SurfaceTexture]
+     */
     fun getSurfaceTexture(): SurfaceTexture? = mSurfaceTexture
+
+    /**
+     * Get surface holder
+     *
+     * @return camera render [SurfaceHolder]
+     */
     fun getSurfaceHolder(): SurfaceHolder? = mSurfaceHolder
+
+    /**
+     * Get context
+     *
+     * @return context
+     */
     protected fun getContext(): Context? = mContext
+
+    /**
+     * Get request
+     *
+     * @return camera request, see [CameraRequest]
+     */
     protected fun getRequest(): CameraRequest? = mCameraRequest
+
+    /**
+     * Get camera handler
+     *
+     * @return camera thread handler, see [HandlerThread]
+     */
     protected fun getCameraHandler(): Handler? = mCameraHandler
+
+    /**
+     * Get device orientation
+     *
+     * @return device orientation angle
+     */
     protected fun getDeviceOrientation(): Int = mDeviceOrientation.orientation
 
+    /**
+     * Release uvc camera, see [CameraUvcStrategy]
+     */
     protected open fun release() {}
+
+    /**
+     * Register uvc camera monitor, see [CameraUvcStrategy]
+     */
     protected open fun register() {}
+
+    /**
+     * Un register uvc camera monitor, see [CameraUvcStrategy]
+     */
     protected open fun unRegister() {}
 
+    /**
+     * Load camera info,
+     *  see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     */
     protected abstract fun loadCameraInfo()
+
+    /**
+     * Start preview internal,
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     */
     protected abstract fun startPreviewInternal()
+
+    /**
+     * Stop preview internal,
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     */
     protected abstract fun stopPreviewInternal()
+
+    /**
+     * Capture image internal,
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @param savePath
+     */
     protected abstract fun captureImageInternal(savePath: String?)
+
+    /**
+     * Switch camera internal,
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @param cameraId camera id. only uvc camera used
+     */
     protected abstract fun switchCameraInternal(cameraId: String?)
+
+    /**
+     * Update resolution internal
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @param width
+     * @param height
+     */
     protected abstract fun updateResolutionInternal(width: Int, height: Int)
 
+    /**
+     * Has camera permission
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @return true was granted
+     */
     protected fun hasCameraPermission(): Boolean{
         getContext() ?: return false
         val locPermission = ContextCompat.checkSelfPermission(getContext()!!, Manifest.permission.CAMERA)
         return locPermission == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Has storage permission
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @return true was granted
+     */
     protected fun hasStoragePermission(): Boolean {
         getContext() ?: return false
         val locPermission = ContextCompat.checkSelfPermission(getContext()!!, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -211,6 +328,11 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         })
     }
 
+    /**
+     * Add preview data call back
+     * see [Camera1Strategy] or [Camera2Strategy] or [CameraUvcStrategy]
+     * @param callBack preview data call back
+     */
     fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
         if (mPreviewDataCbList.contains(callBack)) {
             return

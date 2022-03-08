@@ -15,6 +15,7 @@
  */
 package com.jiangdg.media.camera.bean
 
+
 /** Camera request parameters
  *
  * @author Created by jiangdg on 2021/12/20
@@ -30,41 +31,87 @@ class CameraRequest private constructor() {
         private set
 
 
+    /**
+     * Camera request builder
+     *
+     * @constructor Create empty Camera request builder
+     */
     class CameraRequestBuilder {
         private val mRequest by lazy {
             CameraRequest()
         }
 
+        /**
+         * Set preview width
+         *
+         * @param width camera preview width
+         * @return see [CameraRequestBuilder]
+         */
         fun setPreviewWidth(width: Int): CameraRequestBuilder {
             mRequest.previewWidth = width
             return this
         }
 
+        /**
+         * Set preview height
+         *
+         * @param height camera preview height
+         * @return [CameraRequestBuilder]
+         */
         fun setPreviewHeight(height: Int): CameraRequestBuilder {
             mRequest.previewHeight = height
             return this
         }
 
+        /**
+         * Set camera id
+         *
+         * @param cameraId camera id
+         * @return [CameraRequestBuilder]
+         */
         fun setCameraId(cameraId: String): CameraRequestBuilder {
             mRequest.cameraId = cameraId
             return this
         }
 
+        /**
+         * Set front camera
+         *
+         * @param isFrontCamera front camera flag
+         * @return [CameraRequestBuilder]
+         */
         fun setFrontCamera(isFrontCamera: Boolean): CameraRequestBuilder {
             mRequest.isFrontCamera = isFrontCamera
             return this
         }
 
+        /**
+         * Set continuous a f model
+         *
+         * @param isContinuousAF
+         * @return [CameraRequestBuilder]
+         */
         fun setContinuousAFModel(isContinuousAF: Boolean): CameraRequestBuilder {
             mRequest.isContinuousAFModel = isContinuousAF
             return this
         }
 
+        /**
+         * Set continuous auto model
+         *
+         * @param isContinuousAuto
+         * @return [CameraRequestBuilder]
+         */
         fun setContinuousAutoModel(isContinuousAuto: Boolean): CameraRequestBuilder {
             mRequest.isContinuousAEModel = isContinuousAuto
             return this
         }
 
+        /**
+         * Create a CameraRequest
+         *
+         * @return [CameraRequest]
+         */
         fun create(): CameraRequest {
             return mRequest
         }

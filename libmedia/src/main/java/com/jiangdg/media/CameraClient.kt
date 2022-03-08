@@ -111,7 +111,6 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                         mCamera?.startPreview(mRequest!!, cameraView.holder)
                         mCamera?.addPreviewDataCallBack(this)
                     }
-                    return
                 }
                 cameraView
             }
@@ -122,7 +121,6 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                         mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture)
                         mCamera?.addPreviewDataCallBack(this)
                     }
-                    return
                 }
                 cameraView
             }
@@ -130,32 +128,35 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 cameraView
             }
         }.also { view->
-            mCameraView = view
-        }
-        // using opengl es
-        // mCameraView is null, means offscreen render
-        mCameraView.apply {
-            val listener = object : RenderManager.CameraSurfaceTextureListener {
-                override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
-                    surfaceTexture?.let {
-                        mCamera?.startPreview(mRequest!!, it)
+            // If view is null, should cache the last set
+            // otherwise it can't recover the last status
+            mCameraView = view ?: mCameraView
+            if (! isEnableGLEs) return
+
+            // using opengl es
+            // cameraView is null, means offscreen render
+            view.apply {
+                val listener = object : RenderManager.CameraSurfaceTextureListener {
+                    override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
+                        surfaceTexture?.let {
+                            mCamera?.startPreview(mRequest!!, it)
+                        }
                     }
                 }
-            }
-            if (this == null) {
-                mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
-                mRenderManager?.addRenderFilter(mDefaultFilter)
-                Logger.i(TAG, "Offscreen render, width=$previewWidth, height=$previewHeight")
-                return@apply
-            }
-            setAspectRatio(previewWidth, previewHeight)
-            postUITask {
-                val surfaceWidth = getSurfaceWidth()
-                val surfaceHeight = getSurfaceHeight()
-                val surface = getSurface()
-                mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
-                mRenderManager?.addRenderFilter(mDefaultFilter)
-                Logger.i(TAG, "Display render, width=$surfaceWidth, height=$surfaceHeight")
+                if (this == null) {
+                    mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
+                    mRenderManager?.addRenderFilter(mDefaultFilter)
+                    Logger.i(TAG, "Offscreen render, width=$previewWidth, height=$previewHeight")
+                    return@apply
+                }
+                postUITask {
+                    val surfaceWidth = getSurfaceWidth()
+                    val surfaceHeight = getSurfaceHeight()
+                    val surface = getSurface()
+                    mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
+                    mRenderManager?.addRenderFilter(mDefaultFilter)
+                    Logger.i(TAG, "Display render, width=$surfaceWidth, height=$surfaceHeight")
+                }
             }
         }
     }

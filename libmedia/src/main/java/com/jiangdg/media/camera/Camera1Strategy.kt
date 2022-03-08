@@ -221,10 +221,8 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                     focusMode = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
                 }
                 setPreviewSize(width, height)
-                setPictureSize(width, height)
                 set("orientation", "portrait")
                 set("rotation", 90)
-
                 request.previewWidth = width
                 request.previewHeight = height
             }.also {
@@ -263,6 +261,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
             Logger.i(TAG, "destroyCamera")
         }
         mCamera?.setPreviewCallbackWithBuffer(null)
+        mCamera?.addCallbackBuffer(null)
         mCamera?.stopPreview()
         mCamera?.release()
         mCamera = null
@@ -311,6 +310,12 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     override fun onPreviewFrame(data: ByteArray?, camera: Camera?) {
+        data ?: return
+        getRequest() ?: return
+        val frameSize = getRequest()!!.previewWidth * getRequest()!!.previewHeight * 3 /2
+        if (data.size != frameSize) {
+            return
+        }
         mPreviewDataCbList.forEach { cb ->
             cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
         }
