@@ -1692,6 +1692,9 @@ static void free_iso_urbs(struct linux_transfer_priv *tpriv)
 {
 	int i;
 	for (i = 0; i < tpriv->num_urbs; i++) {
+		if (tpriv->iso_urbs == NULL) {
+			break;
+		}
 		struct usbfs_urb *urb = tpriv->iso_urbs[i];
 		if (!urb)
 			break;
@@ -2292,6 +2295,9 @@ static int handle_iso_completion(struct usbi_transfer *itransfer,
 
 	usbi_mutex_lock(&itransfer->lock);
 	for (i = 0; i < num_urbs; i++) {
+		if (tpriv->iso_urbs == NULL) {
+			break;
+		}
 		if (urb == tpriv->iso_urbs[i]) {
 			urb_idx = i + 1;
 			break;

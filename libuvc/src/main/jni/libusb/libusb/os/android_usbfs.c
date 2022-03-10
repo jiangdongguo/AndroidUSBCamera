@@ -2728,7 +2728,10 @@ static int handle_iso_completion(struct libusb_device_handle *handle,	// XXX add
 	for (i = 0; i < num_urbs; i++) {
 	    // 修复拨出摄像头崩溃(addr2line)
 	    // tpriv->iso_urbs可能为null
-		if (tpriv->iso_urbs != NULL && urb == tpriv->iso_urbs[i]) {
+	    if (tpriv->iso_urbs == NULL) {
+			break;
+	    }
+		if (urb == tpriv->iso_urbs[i]) {
 			urb_idx = i + 1;
 			break;
 		}

@@ -641,7 +641,7 @@ static void _uvc_delete_transfer(struct libusb_transfer *transfer) {
 				libusb_cancel_transfer(strmh->transfers[i]);	// XXX 20141112追加
 				UVC_DEBUG("Freeing transfer %d (%p)", i, transfer);
 				free(transfer->buffer);
-				libusb_free_transfer(transfer);
+				// libusb_free_transfer(transfer);
 				strmh->transfers[i] = NULL;
 				break;
 			}
