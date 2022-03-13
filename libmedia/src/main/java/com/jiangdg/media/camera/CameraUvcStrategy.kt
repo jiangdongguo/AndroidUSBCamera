@@ -88,6 +88,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 ctrlBlock: USBMonitor.UsbControlBlock?,
                 createNew: Boolean
             ) {
+                startPreview(null, null)
                 mDevSettableFuture.set(device)
                 mCtrlBlockSettableFuture.set(ctrlBlock)
                 if (Utils.debugCamera) {
@@ -100,6 +101,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
+                stopPreview()
                 mDevSettableFuture.set(null)
                 mCtrlBlockSettableFuture.set(null)
                 mDevConnectCallBack?.onDisConnectDec(device)
@@ -113,6 +115,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
+                stopPreview()
                 mDevSettableFuture.set(null)
                 mCtrlBlockSettableFuture.set(null)
                 mDevConnectCallBack?.onDisConnectDec(device)
@@ -233,6 +236,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
             mUVCCamera?.startPreview()
             mUVCCamera?.updateCameraParams()
+            mIsPreviewing.set(true)
             if (Utils.debugCamera) {
                 Logger.i(TAG, "realStartPreview")
             }
@@ -242,13 +246,14 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun stopPreviewInternal() {
+        if (Utils.debugCamera && mIsPreviewing.get()) {
+            Logger.i(TAG, "stopPreviewInternal")
+        }
+        mIsPreviewing.set(false)
         mUVCCamera?.stopPreview()
         mUVCCamera?.setFrameCallback(null, 0)
         mUVCCamera?.destroy()
         mUVCCamera = null
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "stopPreviewInternal")
-        }
     }
 
     override fun captureImageInternal(savePath: String?) {

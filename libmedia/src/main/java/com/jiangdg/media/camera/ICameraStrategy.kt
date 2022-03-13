@@ -31,6 +31,8 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.bean.CameraInfo
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
+import com.jiangdg.media.utils.Logger
+import com.jiangdg.media.utils.Utils
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -54,7 +56,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     protected val mSaveImageExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     protected val mCameraInfoMap = hashMapOf<Int, CameraInfo>()
     protected var mIsCapturing: AtomicBoolean = AtomicBoolean(false)
-    private var mIsPreviewing: AtomicBoolean = AtomicBoolean(false)
+    protected var mIsPreviewing: AtomicBoolean = AtomicBoolean(false)
 
     protected val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
@@ -73,13 +75,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     }
 
     init {
-        val thread = HandlerThread(THREAD_NAME).apply {
-            start()
-        }.also {
-            mCameraHandler = Handler(it.looper, this)
-            mCameraHandler?.obtainMessage(MSG_INIT)?.sendToTarget()
-        }
-        this.mThread = thread
         this.mContext = context.applicationContext
         addLifecycleObserver(context)
     }
@@ -95,27 +90,19 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                     if (mIsPreviewing.get()) {
                         mDeviceOrientation.disable()
                         stopPreviewInternal()
-                        mIsPreviewing.set(false)
                     }
                     mDeviceOrientation.enable()
                     mCameraRequest = this
                     startPreviewInternal()
-                    mIsPreviewing.set(true)
                 }
             }
             MSG_STOP_PREVIEW -> {
-                (msg.obj as Boolean).let { stopped ->
-                    mDeviceOrientation.disable()
-                    stopPreviewInternal()
-                    mIsPreviewing.set(false)
-                    if (stopped) {
-                        mCameraRequest = null
-                        mPreviewDataCbList.clear()
-                        mThread?.quitSafely()
-                        mThread = null
-                        mCameraHandler = null
-                    }
-                }
+                mCameraInfoMap.clear()
+                mDeviceOrientation.disable()
+                stopPreviewInternal()
+                mThread?.quitSafely()
+                mThread = null
+                mCameraHandler = null
             }
             MSG_CAPTURE_IMAGE -> {
                 captureImageInternal(msg.obj as? String)
@@ -133,24 +120,49 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      * @param request camera quest, see [CameraRequest]
      * @param renderSurface [SurfaceHolder] or [SurfaceTexture]
      */
-    fun <T> startPreview(request: CameraRequest, renderSurface: T) {
-        when(renderSurface) {
-            is SurfaceTexture -> setSurfaceTexture(renderSurface)
-            is SurfaceHolder -> setSurfaceHolder(renderSurface)
-            else -> throw IllegalStateException("startPreview failed. only support SurfaceTexture or SurfaceHolder")
+    @Synchronized
+    fun <T> startPreview(request: CameraRequest?, renderSurface: T?) {
+        if (mIsPreviewing.get() && mThread?.isAlive == true) {
+            if (Utils.debugCamera) {
+                Logger.w(TAG, "start preview failed, already started.")
+            }
+            return
+        }
+        if (mCameraRequest == null && request == null) {
+            throw IllegalStateException("camera request can't be null")
+        }
+        if (mSurfaceHolder == null && mSurfaceTexture == null && renderSurface == null) {
+            throw IllegalStateException("render surface can't be null")
+        }
+        when (renderSurface) {
+            is SurfaceTexture -> {
+                setSurfaceTexture(renderSurface)
+            }
+            is SurfaceHolder -> {
+                setSurfaceHolder(renderSurface)
+            }
+            else -> {
+            }
         }.also {
-            mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request)?.sendToTarget()
+            val thread = HandlerThread(THREAD_NAME).apply {
+                start()
+            }.also {
+                mCameraHandler = Handler(it.looper, this)
+                mCameraHandler?.obtainMessage(MSG_INIT)?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.sendToTarget()
+            }
+            this.mThread = thread
         }
     }
 
     /**
      * Stop preview
-     *
-     * @param needThreadStop stop camera thread flag
      */
-    fun stopPreview(needThreadStop: Boolean = true) {
-        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW, needThreadStop)?.sendToTarget()
+    @Synchronized
+    fun stopPreview() {
+        mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
     }
+
 
     /**
      * Capture image
@@ -158,6 +170,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      * @param callBack capture status, see [ICaptureCallBack]
      * @param savePath image save path
      */
+    @Synchronized
     fun captureImage(callBack: ICaptureCallBack, savePath: String?) {
         this.mCaptureDataCb = callBack
         mCameraHandler?.obtainMessage(MSG_CAPTURE_IMAGE, savePath)?.sendToTarget()
@@ -168,6 +181,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      *
      * @param cameraId camera id, camera1/camera2/camerax is null
      */
+    @Synchronized
     fun switchCamera(cameraId: String? = null) {
         mCameraHandler?.obtainMessage(MSG_SWITCH_CAMERA, cameraId)?.sendToTarget()
     }
@@ -341,6 +355,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     }
 
     companion object {
+        private const val TAG = "ICameraStrategy"
         private const val THREAD_NAME = "camera_manager"
         private const val MSG_INIT = 0x00
         private const val MSG_START_PREVIEW = 0x01

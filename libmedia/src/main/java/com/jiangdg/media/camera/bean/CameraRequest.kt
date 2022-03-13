@@ -15,11 +15,14 @@
  */
 package com.jiangdg.media.camera.bean
 
+import androidx.annotation.Keep
+
 
 /** Camera request parameters
  *
  * @author Created by jiangdg on 2021/12/20
  */
+@Keep
 class CameraRequest private constructor() {
     var previewWidth: Int = DEFAULT_WIDTH
     var previewHeight: Int = DEFAULT_HEIGHT
@@ -30,6 +33,11 @@ class CameraRequest private constructor() {
     var isContinuousAEModel: Boolean = true
         private set
 
+    override fun toString(): String {
+        return "CameraRequest(previewWidth=$previewWidth, previewHeight=$previewHeight, " +
+                "cameraId='$cameraId', isFrontCamera=$isFrontCamera, " +
+                "isContinuousAFModel=$isContinuousAFModel, isContinuousAEModel=$isContinuousAEModel)"
+    }
 
     /**
      * Camera request builder
@@ -115,12 +123,6 @@ class CameraRequest private constructor() {
         fun create(): CameraRequest {
             return mRequest
         }
-    }
-
-    override fun toString(): String {
-        return "CameraRequest(previewWidth=$previewWidth, previewHeight=$previewHeight, " +
-                "cameraId='$cameraId', isFrontCamera=$isFrontCamera, " +
-                "isContinuousAFModel=$isContinuousAFModel, isContinuousAEModel=$isContinuousAEModel)"
     }
 
     companion object {

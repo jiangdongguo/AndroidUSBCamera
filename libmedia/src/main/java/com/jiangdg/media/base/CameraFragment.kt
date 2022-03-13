@@ -26,6 +26,7 @@ import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.Camera1Strategy
+import com.jiangdg.media.camera.CameraUvcStrategy
 import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
@@ -355,7 +356,7 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(false)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
-            .setCameraStrategy(Camera1Strategy(requireContext()))
+            .setCameraStrategy(CameraUvcStrategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()

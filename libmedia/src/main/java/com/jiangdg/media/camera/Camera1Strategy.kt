@@ -250,6 +250,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 mCamera?.setPreviewDisplay(holder)
             }
             mCamera?.startPreview()
+            mIsPreviewing.set(true)
             if (Utils.debugCamera) {
                 Logger.i(TAG, "realStartPreview width =$width, height=$height")
             }
@@ -257,9 +258,10 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun destroyCamera() {
-        if (Utils.debugCamera && mCamera != null) {
+        if (Utils.debugCamera && mIsPreviewing.get()) {
             Logger.i(TAG, "destroyCamera")
         }
+        mIsPreviewing.set(false)
         mCamera?.setPreviewCallbackWithBuffer(null)
         mCamera?.addCallbackBuffer(null)
         mCamera?.stopPreview()

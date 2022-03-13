@@ -386,18 +386,23 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
                 return
             }
             cameraSession.setRepeatingRequest(captureRequest, null, getCameraHandler())
+            mIsPreviewing.set(true)
         }
         Logger.i(TAG, "realStartPreview success!")
     }
 
     private fun closeSession() {
+        if (Utils.debugCamera && mIsPreviewing.get())
+            Logger.i(TAG, "closeSession success.")
         val session = mCameraSessionFuture?.get(3, TimeUnit.SECONDS)
         session?.close()
         mCameraSessionFuture = null
-        Logger.i(TAG, "closeSession success.")
     }
 
     private fun closeCamera() {
+        if (Utils.debugCamera && mIsPreviewing.get())
+            Logger.i(TAG, "closeCamera success.")
+        mIsPreviewing.set(false)
         mCameraDeviceFuture?.get(3, TimeUnit.SECONDS)?.close()
         mPreviewDataImageReader?.close()
         mPreviewDataImageReader = null
@@ -405,7 +410,6 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
         mJpegImageReader = null
         mCameraDeviceFuture = null
         mCameraCharacteristicsFuture = null
-        Logger.i(TAG, "closeCamera success.")
     }
 
     private fun getCameraCharacteristics(id: String): CameraCharacteristics? {
