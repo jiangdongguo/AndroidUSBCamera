@@ -121,7 +121,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      */
     @Synchronized
     fun <T> startPreview(request: CameraRequest?, renderSurface: T?, callback: ICameraCallBack?) {
-        if (mIsPreviewing.get() && mThread?.isAlive == true) {
+        if (mIsPreviewing.get() || mThread?.isAlive == true) {
             if (Utils.debugCamera) {
                 Logger.w(TAG, "start preview failed, already started.")
             }
@@ -147,12 +147,8 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                 start()
             }.also {
                 mCameraHandler = Handler(it.looper, this)
-                mCameraHandler?.obtainMessage(MSG_INIT)?.apply {
-                    mCameraHandler?.sendMessageDelayed(this, 100)
-                }
-                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.apply {
-                    mCameraHandler?.sendMessageDelayed(this, 150)
-                }
+                mCameraHandler?.obtainMessage(MSG_INIT)?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.sendToTarget()
             }
             this.mThread = thread
             this.mCameraCallBack = callback
@@ -164,6 +160,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      */
     @Synchronized
     fun stopPreview() {
+        mThread ?: return
         mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
         mThread?.quitSafely()
         mThread = null

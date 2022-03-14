@@ -17,7 +17,10 @@ package com.jiangdg.media
 
 import android.content.Context
 import android.graphics.SurfaceTexture
+import android.os.Handler
+import android.os.Looper
 import android.view.Surface
+import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -50,7 +53,6 @@ import java.lang.IllegalArgumentException
  * @author Created by jiangdg on 2022/2/20
  */
 class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack {
-
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
     private val mCamera: ICameraStrategy? = builder.camera
@@ -62,6 +64,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     private var mAudioProcess: AbstractProcessor? = null
     private var mVideoProcess: AbstractProcessor? = null
     private var mMediaMuxer: Mp4Muxer? = null
+    private val mMainHandler: Handler = Handler(Looper.getMainLooper())
 
     private val mRenderManager: RenderManager? by lazy {
         RenderManager(mCtx!!, mRequest!!.previewWidth, mRequest!!.previewHeight)
@@ -99,7 +102,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param cameraView camera render view, null means offscreen render
      */
     fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false, callback: ICameraCallBack? = null) {
-        Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
+        Logger.i(TAG, "start open camera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
         val previewWidth = mRequest!!.previewWidth
         val previewHeight = mRequest!!.previewHeight
@@ -378,6 +381,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param height camera preview height, [PreviewSize]
      * @return result of operation
      */
+    @MainThread
     fun updateResolution(width: Int, height: Int): Boolean {
         if (Utils.debugCamera) {
             Logger.i(TAG, "updateResolution size = ${width}x${height}")
@@ -394,7 +398,9 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             previewWidth = width
             previewHeight = height
             closeCamera()
-            openCamera(mCameraView, true)
+            mMainHandler.postDelayed({
+                openCamera(mCameraView, true)
+            }, 300)
         }
         return true
     }

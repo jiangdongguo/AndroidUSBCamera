@@ -78,6 +78,8 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (mCacheDeviceList.contains(device)) {
                     mCacheDeviceList.remove(device)
                 }
+                mDevSettableFuture.set(null)
+                mCtrlBlockSettableFuture.set(null)
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDetach device = ${device?.toString()}")
                 }
@@ -102,8 +104,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     return
                 }
                 stopPreview()
-                mDevSettableFuture.set(null)
-                mCtrlBlockSettableFuture.set(null)
                 mDevConnectCallBack?.onDisConnectDec(device)
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
@@ -116,8 +116,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     return
                 }
                 stopPreview()
-                mDevSettableFuture.set(null)
-                mCtrlBlockSettableFuture.set(null)
                 mDevConnectCallBack?.onDisConnectDec(device)
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onCancel device = ${device?.toString()}")
@@ -176,7 +174,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 }
             }
             if (Utils.debugCamera) {
-                Logger.i(TAG, "createCamera, id = ${it.deviceId}, name = ${it.deviceName}")
+                Logger.i(TAG, "start preview success!!!, id = ${it.deviceId}, name = ${it.deviceName}")
             }
         }
     }
@@ -187,7 +185,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         getRequest()?.let { request ->
             val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
             try {
-                stopPreviewInternal()
                 val camera = UVCCamera().apply {
                     open(ctrlBlock)
                 }
@@ -241,7 +238,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 mCameraCallBack?.onOpen(getRequest()!!.previewWidth, getRequest()!!.previewHeight)
             }
             if (Utils.debugCamera) {
-                Logger.i(TAG, "realStartPreview")
+                Logger.i(TAG, "realStartPreview...")
             }
         } catch (e: Exception) {
             Logger.e(TAG, "realStartPreview, err = ${e.localizedMessage}", e)
@@ -254,7 +251,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         }
         mIsPreviewing.set(false)
         mUVCCamera?.stopPreview()
-        mUVCCamera?.setFrameCallback(null, 0)
         mUVCCamera?.destroy()
         mUVCCamera = null
         mMainHandler.post {
