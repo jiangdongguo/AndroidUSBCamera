@@ -18,7 +18,6 @@ package com.jiangdg.media
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.view.Surface
-import android.view.SurfaceHolder
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -29,6 +28,7 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.*
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
+import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.encode.AACEncodeProcessor
 import com.jiangdg.media.encode.AbstractProcessor
 import com.jiangdg.media.encode.H264EncodeProcessor
@@ -98,8 +98,8 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      *
      * @param cameraView camera render view, null means offscreen render
      */
-    fun openCamera(cameraView: IAspectRatio?) {
-        if (Utils.debugCamera) Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
+    fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false, callback: ICameraCallBack? = null) {
+        Logger.i(TAG, "openCamera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
         val previewWidth = mRequest!!.previewWidth
         val previewHeight = mRequest!!.previewHeight
@@ -108,7 +108,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
-                        mCamera?.startPreview(mRequest!!, cameraView.holder)
+                        mCamera?.startPreview(mRequest!!, cameraView.holder, callback)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
@@ -118,7 +118,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
-                        mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture)
+                        mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture, callback)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
@@ -131,22 +131,28 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             // If view is null, should cache the last set
             // otherwise it can't recover the last status
             mCameraView = view ?: mCameraView
-            if (! isEnableGLEs) return
 
             // using opengl es
             // cameraView is null, means offscreen render
+            if (! isEnableGLEs) return
             view.apply {
                 val listener = object : RenderManager.CameraSurfaceTextureListener {
                     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                         surfaceTexture?.let {
-                            mCamera?.startPreview(mRequest!!, it)
+                            mCamera?.startPreview(mRequest!!, it, callback)
                         }
                     }
                 }
                 if (this == null) {
-                    mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
-                    mRenderManager?.addRenderFilter(mDefaultFilter)
                     Logger.i(TAG, "Offscreen render, width=$previewWidth, height=$previewHeight")
+                    mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
+                    if (isReboot) {
+                        mRenderManager?.getCacheFilterList()?.forEach { filter ->
+                            mRenderManager?.addRenderFilter(filter)
+                        }
+                        return@apply
+                    }
+                    mRenderManager?.addRenderFilter(mDefaultFilter)
                     return@apply
                 }
                 postUITask {
@@ -154,6 +160,12 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                     val surfaceHeight = getSurfaceHeight()
                     val surface = getSurface()
                     mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
+                    if (isReboot) {
+                        mRenderManager?.getCacheFilterList()?.forEach { filter ->
+                            mRenderManager?.addRenderFilter(filter)
+                        }
+                        return@postUITask
+                    }
                     mRenderManager?.addRenderFilter(mDefaultFilter)
                     Logger.i(TAG, "Display render, width=$surfaceWidth, height=$surfaceHeight")
                 }
@@ -381,10 +393,12 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             }
             previewWidth = width
             previewHeight = height
-            openCamera(mCameraView)
+            closeCamera()
+            openCamera(mCameraView, true)
         }
         return true
     }
+
 
     /**
      * Get all preview sizes

@@ -51,7 +51,7 @@ class GlSurfaceFragment: BaseFragment() {
                     }
                 }
 
-                mCamera.startPreview(getCameraRequest(), surface)
+                mCamera.startPreview(getCameraRequest(), surface, null)
             }
 
             override fun onSurfaceDestroyed() {

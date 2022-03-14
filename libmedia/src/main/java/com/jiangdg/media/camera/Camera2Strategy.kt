@@ -63,16 +63,8 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
     // 输出到拍照ImageReader的Surface
     // 便于从中获取拍照数据
     private var mJpegDataSurface: Surface? = null
-
     private var mCameraManager: CameraManager? = null
-
-    private val mYUVData by lazy {
-        if (getRequest() == null) {
-            ByteArray(0)
-        } else {
-            ByteArray(getRequest()!!.previewWidth * getRequest()!!.previewHeight * 3 / 2)
-        }
-    }
+    private var mYUVData: ByteArray? = null
 
     override fun loadCameraInfo() {
         mCameraManager = getContext()?.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
@@ -228,9 +220,6 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
                     }
                 }
                 request.cameraId = cameraId
-                if (mCameraDeviceFuture?.get() != null) {
-                    stopPreviewInternal()
-                }
                 mCameraManager!!.openCamera(cameraId, mCameraStateCallBack, mMainHandler)
                 Logger.i(TAG, "openCamera success, id = $cameraId.")
             }catch (e: CameraAccessException) {
@@ -290,7 +279,7 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
             mPreviewSurface = previewSurface
             request.previewWidth = previewSize.width
             request.previewHeight = previewSize.height
-
+            mYUVData = ByteArray(request.previewWidth * request.previewHeight * 3 / 2)
             // 创建预览ImageReader & Preview Data Surface
             val imageFormat = ImageFormat.YUV_420_888
             val streamConfigurationMap = characteristics[CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP]
@@ -394,21 +383,20 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
     private fun closeSession() {
         if (Utils.debugCamera && mIsPreviewing.get())
             Logger.i(TAG, "closeSession success.")
-        val session = mCameraSessionFuture?.get(3, TimeUnit.SECONDS)
-        session?.close()
+        mIsPreviewing.set(false)
+        mCameraSessionFuture?.get(10, TimeUnit.MILLISECONDS)?.close()
+        mCameraDeviceFuture?.get(10, TimeUnit.MILLISECONDS)?.close()
         mCameraSessionFuture = null
+        mCameraDeviceFuture = null
     }
 
     private fun closeCamera() {
         if (Utils.debugCamera && mIsPreviewing.get())
             Logger.i(TAG, "closeCamera success.")
-        mIsPreviewing.set(false)
-        mCameraDeviceFuture?.get(3, TimeUnit.SECONDS)?.close()
         mPreviewDataImageReader?.close()
         mPreviewDataImageReader = null
         mJpegImageReader?.close()
         mJpegImageReader = null
-        mCameraDeviceFuture = null
         mCameraCharacteristicsFuture = null
     }
 
@@ -545,33 +533,35 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
         val image = imageReader?.acquireNextImage()
         image?.use {
             val request = getRequest()
-            if (request == null || mYUVData.isEmpty()) {
-                return@OnImageAvailableListener
-            }
-            val planes = it.planes
-            // Y通道
-            val yBuffer = planes[0].buffer
-            val yuv420pYLen = request.previewWidth * request.previewHeight
-            yBuffer.get(mYUVData, 0, yuv420pYLen)
+            request ?: return@OnImageAvailableListener
+            mYUVData ?: return@OnImageAvailableListener
+            try {
+                val planes = it.planes
+                // Y通道
+                val yBuffer = planes[0].buffer
+                val yuv420pYLen = request.previewWidth * request.previewHeight
+                yBuffer.get(mYUVData!!, 0, yuv420pYLen)
+                // V通道
+                val vBuffer = planes[2].buffer
+                val vPixelStride = planes[2].pixelStride
+                for ((index, i) in (0 until vBuffer.remaining() step vPixelStride).withIndex()) {
+                    mYUVData!![yuv420pYLen + 2 * index] = vBuffer.get(i)
+                }
 
-            // V通道
-            val vBuffer = planes[2].buffer
-            val vPixelStride = planes[2].pixelStride
-            for ((index, i) in (0 until vBuffer.remaining() step vPixelStride).withIndex()) {
-                mYUVData[yuv420pYLen + 2 * index] = vBuffer.get(i)
-            }
+                // U通道
+                val uBuffer = planes[1].buffer
+                val uPixelStride = planes[1].pixelStride
+                for ((index, i) in (0 until uBuffer.remaining() step uPixelStride).withIndex()) {
+                    mYUVData!![yuv420pYLen + (2 * index + 1)] = uBuffer.get(i)
+                }
 
-            // U通道
-            val uBuffer = planes[1].buffer
-            val uPixelStride = planes[1].pixelStride
-            for ((index, i) in (0 until uBuffer.remaining() step uPixelStride).withIndex()) {
-                mYUVData[yuv420pYLen + (2 * index + 1)] = uBuffer.get(i)
+                mPreviewDataCbList.forEach { cb ->
+                    cb.onPreviewData(mYUVData, IPreviewDataCallBack.DataFormat.NV21)
+                }
+                it.close()
+            } catch (e: IndexOutOfBoundsException) {
+                e.printStackTrace()
             }
-
-            mPreviewDataCbList.forEach { cb ->
-                cb.onPreviewData(mYUVData, IPreviewDataCallBack.DataFormat.NV21)
-            }
-            it.close()
         }
     }
 

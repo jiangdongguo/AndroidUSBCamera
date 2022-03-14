@@ -28,7 +28,7 @@ import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import java.io.File
-import java.lang.Exception
+import kotlin.Exception
 
 /** Camera1 usage
  *
@@ -196,8 +196,11 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 }
             } catch (e: Exception) {
                 Logger.e(TAG, "open camera failed, err = ${e.localizedMessage}", e)
+                mMainHandler.post {
+                    mCameraCallBack?.onError(e)
+                }
                 null
-            }
+            } ?: return
             getAllPreviewSizes()
             if (Utils.debugCamera) {
                 Logger.i(TAG, "createCamera id = ${request.cameraId}, front camera = ${request.isFrontCamera}")
@@ -206,28 +209,41 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun setParameters() {
-        getRequest()?.let { request->
-            mCamera?.parameters?.apply {
-                val suitablePreviewSize = getSuitableSize(
-                    supportedPreviewSizes,
-                    request.previewWidth,
-                    request.previewHeight
-                )
-                val width = suitablePreviewSize.width
-                val height = suitablePreviewSize.height
-                previewFormat = ImageFormat.NV21
-                pictureFormat = ImageFormat.JPEG
-                if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                    focusMode = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+        try {
+            getRequest()?.let { request ->
+                mCamera?.parameters?.apply {
+                    val suitablePreviewSize = getSuitableSize(
+                        supportedPreviewSizes,
+                        request.previewWidth,
+                        request.previewHeight
+                    )
+                    val width = suitablePreviewSize.width
+                    val height = suitablePreviewSize.height
+                    previewFormat = ImageFormat.NV21
+                    pictureFormat = ImageFormat.JPEG
+                    if (supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                        focusMode = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+                    }
+                    setPreviewSize(width, height)
+                    set("orientation", "portrait")
+                    set("rotation", 90)
+                    request.previewWidth = width
+                    request.previewHeight = height
+                }.also {
+                    mCamera?.parameters = it
                 }
-                setPreviewSize(width, height)
-                set("orientation", "portrait")
-                set("rotation", 90)
-                request.previewWidth = width
-                request.previewHeight = height
-            }.also {
-                mCamera?.parameters = it
             }
+        } catch (e: Exception) {
+            Logger.e(TAG, "open camera failed, err = ${e.localizedMessage}", e)
+            mIsPreviewing.set(false)
+            mCamera?.setPreviewCallbackWithBuffer(null)
+            mCamera?.addCallbackBuffer(null)
+            mCamera?.release()
+            mCamera = null
+            mMainHandler.post {
+                mCameraCallBack?.onError(e)
+            }
+            return
         }
     }
 
@@ -235,31 +251,44 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         val st = getSurfaceTexture()
         val holder = getSurfaceHolder()
         if (st == null && holder == null) {
+            mMainHandler.post {
+                mCameraCallBack?.onError(IllegalStateException("SurfaceTexture or SurfaceHolder cannot be null"))
+            }
             Logger.e(TAG, "realStartPreview failed, SurfaceTexture or SurfaceHolder cannot be null.")
             return
         }
-        getRequest()?.let { request->
-            val width = request.previewWidth
-            val height = request.previewHeight
-            mCamera?.setDisplayOrientation(getPreviewDegree(getContext(), getRequest()?.isFrontCamera ?: false))
-            mCamera?.setPreviewCallbackWithBuffer(this)
-            mCamera?.addCallbackBuffer(ByteArray(width * height * 3 / 2))
-            if (st != null) {
-                mCamera?.setPreviewTexture(st)
-            } else {
-                mCamera?.setPreviewDisplay(holder)
+        try {
+            getRequest()?.let { request->
+                val width = request.previewWidth
+                val height = request.previewHeight
+                mCamera?.setDisplayOrientation(getPreviewDegree(getContext(), getRequest()?.isFrontCamera ?: false))
+                mCamera?.setPreviewCallbackWithBuffer(this)
+                mCamera?.addCallbackBuffer(ByteArray(width * height * 3 / 2))
+                if (st != null) {
+                    mCamera?.setPreviewTexture(st)
+                } else {
+                    mCamera?.setPreviewDisplay(holder)
+                }
+                mCamera?.startPreview()
+                mIsPreviewing.set(true)
+                mMainHandler.post {
+                    mCameraCallBack?.onOpen(width, height)
+                }
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "realStartPreview width =$width, height=$height")
+                }
             }
-            mCamera?.startPreview()
-            mIsPreviewing.set(true)
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "realStartPreview width =$width, height=$height")
-            }
+        } catch (e: Exception) {
+
         }
     }
 
     private fun destroyCamera() {
         if (Utils.debugCamera && mIsPreviewing.get()) {
             Logger.i(TAG, "destroyCamera")
+        }
+        mMainHandler.post {
+            mCameraCallBack?.onClose()
         }
         mIsPreviewing.set(false)
         mCamera?.setPreviewCallbackWithBuffer(null)
@@ -314,14 +343,18 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     override fun onPreviewFrame(data: ByteArray?, camera: Camera?) {
         data ?: return
         getRequest() ?: return
-        val frameSize = getRequest()!!.previewWidth * getRequest()!!.previewHeight * 3 /2
-        if (data.size != frameSize) {
-            return
+        try {
+            val frameSize = getRequest()!!.previewWidth * getRequest()!!.previewHeight * 3 /2
+            if (data.size != frameSize) {
+                return
+            }
+            mPreviewDataCbList.forEach { cb ->
+                cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
+            }
+            mCamera?.addCallbackBuffer(data)
+        } catch (e: IndexOutOfBoundsException) {
+            e.printStackTrace()
         }
-        mPreviewDataCbList.forEach { cb ->
-            cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
-        }
-        mCamera?.addCallbackBuffer(data)
     }
 
     companion object {

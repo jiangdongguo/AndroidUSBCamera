@@ -16,16 +16,19 @@
 package com.jiangdg.media.base
 
 import android.graphics.SurfaceTexture
+import android.os.Build
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import androidx.annotation.RequiresApi
 import com.jiangdg.media.CameraClient
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.Camera1Strategy
+import com.jiangdg.media.camera.Camera2Strategy
 import com.jiangdg.media.camera.CameraUvcStrategy
 import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest

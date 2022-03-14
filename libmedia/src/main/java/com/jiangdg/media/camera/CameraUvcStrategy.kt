@@ -88,7 +88,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 ctrlBlock: USBMonitor.UsbControlBlock?,
                 createNew: Boolean
             ) {
-                startPreview(null, null)
+                startPreview(null, null, null)
                 mDevSettableFuture.set(device)
                 mCtrlBlockSettableFuture.set(ctrlBlock)
                 if (Utils.debugCamera) {
@@ -237,6 +237,9 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             mUVCCamera?.startPreview()
             mUVCCamera?.updateCameraParams()
             mIsPreviewing.set(true)
+            mMainHandler.post {
+                mCameraCallBack?.onOpen(getRequest()!!.previewWidth, getRequest()!!.previewHeight)
+            }
             if (Utils.debugCamera) {
                 Logger.i(TAG, "realStartPreview")
             }
@@ -254,6 +257,9 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         mUVCCamera?.setFrameCallback(null, 0)
         mUVCCamera?.destroy()
         mUVCCamera = null
+        mMainHandler.post {
+            mCameraCallBack?.onClose()
+        }
     }
 
     override fun captureImageInternal(savePath: String?) {

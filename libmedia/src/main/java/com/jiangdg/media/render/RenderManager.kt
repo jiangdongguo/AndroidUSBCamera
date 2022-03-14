@@ -43,7 +43,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Render engine manager class
+/**
+ * Render manager
+ *
+ * @property previewWidth camera preview width
+ * @property previewHeight camera preview height
+ *
+ * @param context context
  *
  * @author Created by jiangdg on 2021/12/28
  */
@@ -65,6 +71,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     private var mFBOId: Int = 0
     private var mContext: Context = context
     private var mFilterList = arrayListOf<AbstractFilter>()
+    private var mCacheFilterList = arrayListOf<AbstractFilter>()
     private var mCaptureDataCb: ICaptureCallBack? = null
     private var mPreviewDataCb: IPreviewDataCallBack? = null
     private val mMainHandler: Handler by lazy {
@@ -90,9 +97,9 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     }
 
     /**
-     *  渲染处理逻辑
+     * Rendering processing logic
      *
-     *  注意： 必须先初始化EGL，否则GL无法运行
+     * Note: EGL must be initialized first, otherwise GL cannot run
      */
     override fun handleMessage(msg: Message): Boolean {
         Utils.getGLESVersion(mContext)?.let { version ->
@@ -169,6 +176,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                     it.initGLES()
                     it.setSize(mWidth, mHeight)
                     mFilterList.add(it)
+                    mCacheFilterList.add(it)
                     Logger.i(TAG, "add filter, name = ${it.javaClass.simpleName}, size = ${mFilterList.size}")
                 }
             }
@@ -179,6 +187,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                     }
                     it.releaseGLES()
                     mFilterList.remove(it)
+                    mCacheFilterList.remove(it)
                     Logger.i(TAG, "remove filter, name = ${it.javaClass.simpleName}, size = ${mFilterList.size}")
                 }
             }
@@ -186,6 +195,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 mFilterList.forEach { filter ->
                     filter.releaseGLES()
                 }
+                mFilterList.clear()
                 mCameraRender?.releaseGLES()
                 mScreenRender?.releaseGLES()
                 mCaptureRender?.releaseGLES()
@@ -203,6 +213,14 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         }
     }
 
+    /**
+     * Start render screen
+     *
+     * @param w surface width
+     * @param h surface height
+     * @param outSurface render surface
+     * @param listener acquire camera surface texture, see [CameraSurfaceTextureListener]
+     */
     fun startRenderScreen(w: Int, h: Int, outSurface: Surface?, listener: CameraSurfaceTextureListener? = null) {
         if (mCameraSurfaceTexture == null) {
             mTextureId = mCameraRender?.createOESTexture()!!
@@ -219,6 +237,9 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         setRenderSize(w, h)
     }
 
+    /**
+     * Stop render screen
+     */
     fun stopRenderScreen() {
         mRenderHandler?.obtainMessage(MSG_GL_RELEASE)?.sendToTarget()
         mRenderThread?.quitSafely()
@@ -226,28 +247,66 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         mRenderHandler = null
     }
 
+    /**
+     * Start render codec
+     *
+     * @param inputSurface mediacodec input surface, see [android.media.MediaCodec]
+     * @param width camera preview width
+     * @param height camera preview height
+     */
     fun startRenderCodec(inputSurface: Surface, width: Int, height: Int) {
         Triple(inputSurface, width, height).apply {
             mRenderHandler?.obtainMessage(MSG_GL_START_RENDER_CODEC, this)?.sendToTarget()
         }
     }
 
+    /**
+     * Stop render codec
+     */
     fun stopRenderCodec() {
         mRenderHandler?.obtainMessage(MSG_GL_STOP_RENDER_CODEC)?.sendToTarget()
     }
 
+    /**
+     * Set render size
+     *
+     * @param w surface width
+     * @param h surface height
+     */
     fun setRenderSize(w: Int, h: Int) {
         mRenderHandler?.obtainMessage(MSG_GL_CHANGED_SIZE, Pair(w, h))?.sendToTarget()
     }
 
+    /**
+     * Add render filter
+     *
+     * @param filter add a filter, see [AbstractFilter]
+     */
     fun addRenderFilter(filter: AbstractFilter?) {
         mRenderHandler?.obtainMessage(MSG_GL_ADD_FILTER, filter)?.sendToTarget()
     }
 
+    /**
+     * Remove render filter
+     *
+     * @param filter a filter removed, see [AbstractFilter]
+     */
     fun removeRenderFilter(filter: AbstractFilter?) {
         mRenderHandler?.obtainMessage(MSG_GL_REMOVE_FILTER, filter)?.sendToTarget()
     }
 
+    /**
+     * Get cache render filter list
+     * @return current filters
+     */
+    fun getCacheFilterList() = mCacheFilterList
+
+    /**
+     * Save image
+     *
+     * @param callBack capture image status, see [ICaptureCallBack]
+     * @param path custom image path
+     */
     fun saveImage(callBack: ICaptureCallBack?, path: String?) {
         this.mCaptureDataCb = callBack
         mRenderHandler?.obtainMessage(MSG_GL_SAVE_IMAGE, path)?.sendToTarget()
@@ -410,11 +469,26 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         return null
     }
 
+    /**
+     * Add preview data call back
+     *
+     * @param callBack preview data call back, see [IPreviewDataCallBack]
+     */
     fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
         this.mPreviewDataCb = callBack
     }
 
+    /**
+     * Camera surface texture listener
+     *
+     * @constructor Create empty Camera surface texture listener
+     */
     interface CameraSurfaceTextureListener {
+        /**
+         * On surface texture available
+         *
+         * @param surfaceTexture camera render surface texture
+         */
         fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?)
     }
 

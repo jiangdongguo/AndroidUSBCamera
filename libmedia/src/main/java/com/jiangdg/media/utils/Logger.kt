@@ -43,7 +43,7 @@ object Logger {
             logLevel(LogLevel.ALL)
             tag(TAG)
             enableThreadInfo()
-            enableStackTrace(2)
+            enableStackTrace(3)
         }.build()
         val filePrinter = folderPath.let {
             FilePrinter.Builder(
@@ -58,19 +58,19 @@ object Logger {
     }
 
     fun i(flag: String, msg: String) {
-        XLog.i("Info->$flag###$msg")
+        XLog.i("++++++++Info->$flag###$msg")
     }
 
     fun d(flag: String, msg: String) {
-        XLog.d("Debug->$flag###$msg")
+        XLog.d("++++++++Debug->$flag###$msg")
     }
 
     fun w(flag: String, msg: String) {
-        XLog.w("Warning->$flag###$msg")
+        XLog.w("++++++++Warning->$flag###$msg")
     }
 
     fun e(flag: String, msg: String, throwable: Throwable? = null) {
-        XLog.e("Error->$flag###$msg", throwable)
+        XLog.e("++++++++Error->$flag###$msg", throwable)
     }
 
     class MyFileNameGenerator : FileNameGenerator {

@@ -15,16 +15,13 @@
  */
 package com.jiangdg.media.camera.callback
 
-import java.lang.Exception
 
 /** Camera Status Callback
  *
  * @author Created by jiangdg on 2022/1/27
  */
 interface ICameraCallBack {
-    fun onOpen()
+    fun onOpen(previewWidth:Int, previewHeight: Int)
     fun onClose()
-    fun onStartPreview(previewWidth:Int, previewHeight: Int)
-    fun onStopPreview()
     fun onError(e: Exception)
 }

@@ -31,6 +31,7 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.bean.CameraInfo
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
+import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import java.text.SimpleDateFormat
@@ -57,6 +58,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     protected val mCameraInfoMap = hashMapOf<Int, CameraInfo>()
     protected var mIsCapturing: AtomicBoolean = AtomicBoolean(false)
     protected var mIsPreviewing: AtomicBoolean = AtomicBoolean(false)
+    protected var mCameraCallBack: ICameraCallBack? = null
 
     protected val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
@@ -100,9 +102,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                 mCameraInfoMap.clear()
                 mDeviceOrientation.disable()
                 stopPreviewInternal()
-                mThread?.quitSafely()
-                mThread = null
-                mCameraHandler = null
             }
             MSG_CAPTURE_IMAGE -> {
                 captureImageInternal(msg.obj as? String)
@@ -121,7 +120,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      * @param renderSurface [SurfaceHolder] or [SurfaceTexture]
      */
     @Synchronized
-    fun <T> startPreview(request: CameraRequest?, renderSurface: T?) {
+    fun <T> startPreview(request: CameraRequest?, renderSurface: T?, callback: ICameraCallBack?) {
         if (mIsPreviewing.get() && mThread?.isAlive == true) {
             if (Utils.debugCamera) {
                 Logger.w(TAG, "start preview failed, already started.")
@@ -148,10 +147,15 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                 start()
             }.also {
                 mCameraHandler = Handler(it.looper, this)
-                mCameraHandler?.obtainMessage(MSG_INIT)?.sendToTarget()
-                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_INIT)?.apply {
+                    mCameraHandler?.sendMessageDelayed(this, 100)
+                }
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.apply {
+                    mCameraHandler?.sendMessageDelayed(this, 150)
+                }
             }
             this.mThread = thread
+            this.mCameraCallBack = callback
         }
     }
 
@@ -161,8 +165,10 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     @Synchronized
     fun stopPreview() {
         mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
+        mThread?.quitSafely()
+        mThread = null
+        mCameraHandler = null
     }
-
 
     /**
      * Capture image
