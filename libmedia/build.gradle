@@ -37,6 +37,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
     implementation 'com.elvishew:xlog:1.10.1'
     api 'com.gyf.immersionbar:immersionbar:3.0.0'
+    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:3.0.2'
     implementation project(path: ':libuvc')
     implementation project(path: ':libnative')
 }

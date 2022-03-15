@@ -27,7 +27,7 @@ abstract class BaseDialog(
         landscapeWidthRatio: Float = 0.5F
 ) : DialogInterface {
     private val mContext: Activity = activity
-    private val mDialog: Dialog = Dialog(mContext, R.style.CommonDialogStyle)
+    protected val mDialog: Dialog = Dialog(mContext, R.style.CommonDialogStyle)
 
     init {
         mDialog.setContentView(this.getContentLayoutId())

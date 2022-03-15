@@ -27,6 +27,22 @@ class FilterSoul(context: Context): AbstractFilter(context) {
         super.init()
     }
 
+    override fun getId(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun getFilterName(): String {
+        TODO("Not yet implemented")
+    }
+
+    override fun getFilterImageId(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun getClassifyId(): Int {
+        TODO("Not yet implemented")
+    }
+
     override fun beforeDraw() {
         super.beforeDraw()
     }

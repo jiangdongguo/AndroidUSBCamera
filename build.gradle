@@ -15,6 +15,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://jitpack.io" }
 
         flatDir{
             dirs project(':libuvc').file('libs')

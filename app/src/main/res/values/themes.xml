@@ -62,4 +62,9 @@
         <item name="android:windowDisablePreview">true</item>
         <item name="android:windowNoDisplay">false</item>
     </style>
+
+    <style name="camera2_anim_down_to_top" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/push_bottom_in</item>
+        <item name="android:windowExitAnimation">@anim/push_bottom_out</item>
+    </style>
 </resources>
