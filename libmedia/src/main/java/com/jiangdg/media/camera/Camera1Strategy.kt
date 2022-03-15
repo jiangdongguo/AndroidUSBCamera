@@ -184,9 +184,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 Logger.i(TAG, "openCamera failed, has no camera permission.")
                 return
             }
-            if (mCamera != null) {
-                stopPreviewInternal()
-            }
+            stopPreviewInternal()
             mCamera = try {
                 if (request.isFrontCamera) {
                     val cameraId = mCameraInfoMap[TYPE_FRONT]!!.cameraId
@@ -284,18 +282,19 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
     }
 
     private fun destroyCamera() {
-        if (Utils.debugCamera && mIsPreviewing.get()) {
-            Logger.i(TAG, "destroyCamera")
-        }
-        mMainHandler.post {
-            mCameraCallBack?.onClose()
-        }
+        if (! mIsPreviewing.get()) return
         mIsPreviewing.set(false)
         mCamera?.setPreviewCallbackWithBuffer(null)
         mCamera?.addCallbackBuffer(null)
         mCamera?.stopPreview()
         mCamera?.release()
         mCamera = null
+        mMainHandler.post {
+            mCameraCallBack?.onClose()
+        }
+        if (Utils.debugCamera) {
+            Logger.i(TAG, "destroyCamera")
+        }
     }
 
     private fun getSuitableSize(

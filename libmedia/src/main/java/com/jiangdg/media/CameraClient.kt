@@ -400,7 +400,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             closeCamera()
             mMainHandler.postDelayed({
                 openCamera(mCameraView, true)
-            }, 300)
+            }, 500)
         }
         return true
     }
