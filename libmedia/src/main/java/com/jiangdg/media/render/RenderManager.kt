@@ -36,6 +36,8 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.render.internal.*
 import com.jiangdg.media.utils.*
+import com.jiangdg.media.utils.bus.BusKey
+import com.jiangdg.media.utils.bus.EventBus
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -74,6 +76,9 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     private var mCacheFilterList = arrayListOf<AbstractFilter>()
     private var mCaptureDataCb: ICaptureCallBack? = null
     private var mPreviewDataCb: IPreviewDataCallBack? = null
+    private var mFrameRate = 0
+    private var mEndTime: Long = 0L
+    private var mStartTime = System.currentTimeMillis()
     private val mMainHandler: Handler by lazy {
         Handler(Looper.getMainLooper())
     }
@@ -312,7 +317,17 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         mRenderHandler?.obtainMessage(MSG_GL_SAVE_IMAGE, path)?.sendToTarget()
     }
 
+    /**
+     * Add preview data call back
+     *
+     * @param callBack preview data call back, see [IPreviewDataCallBack]
+     */
+    fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
+        this.mPreviewDataCb = callBack
+    }
+
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
+        emitFrameRate()
         mRenderHandler?.obtainMessage(MSG_GL_DRAW)?.sendToTarget()
     }
 
@@ -447,10 +462,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
             override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                 when (event) {
                     Lifecycle.Event.ON_DESTROY -> {
-                        mRenderHandler?.obtainMessage(MSG_GL_RELEASE)?.sendToTarget()
-                        mRenderThread?.quitSafely()
-                        mRenderThread = null
-                        mRenderHandler = null
+                        stopRenderScreen()
                     }
                     else -> {}
                 }
@@ -469,13 +481,17 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         return null
     }
 
-    /**
-     * Add preview data call back
-     *
-     * @param callBack preview data call back, see [IPreviewDataCallBack]
-     */
-    fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
-        this.mPreviewDataCb = callBack
+    private fun emitFrameRate() {
+        mFrameRate++
+        mEndTime = System.currentTimeMillis()
+        if (mEndTime - mStartTime >= 1000) {
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "camera render frame rate is $mFrameRate fps")
+            }
+            EventBus.with<Int>(BusKey.KEY_FRAME_RATE).postMessage(mFrameRate)
+            mStartTime = mEndTime
+            mFrameRate = 0
+        }
     }
 
     /**

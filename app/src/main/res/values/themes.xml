@@ -44,4 +44,22 @@
         <item name="android:layout_marginTop">12dp</item>
         <item name="android:gravity">center</item>
     </style>
+
+    <style name="SplashActivityStyle" parent="Theme.AppCompat.NoActionBar">
+        <!-- The form background color is transparent -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- The form has no border -->
+        <item name="android:windowFrame">@null</item>
+        <!-- The form does not contain a title bar -->
+        <item name="android:windowNoTitle">true</item>
+        <!-- Window suspension -->
+        <item name="android:windowIsFloating">false</item>
+        <!-- Remove redundant shadows when customizing TitleBar-->
+        <item name="android:windowContentOverlay">@null</item>
+        <!-- Do not allow form background to be dimmed -->
+        <item name="android:backgroundDimEnabled">false</item>
+        <!-- Disable the preview animation of the window -->
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowNoDisplay">false</item>
+    </style>
 </resources>

@@ -357,9 +357,9 @@ abstract class CameraFragment : BaseFragment() {
 
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(requireContext())
-            .setEnableGLES(false)
+            .setEnableGLES(true)
             .setDefaultFilter(FilterBlackWhite(requireContext()))
-            .setCameraStrategy(CameraUvcStrategy(requireContext()))
+            .setCameraStrategy(Camera1Strategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()
