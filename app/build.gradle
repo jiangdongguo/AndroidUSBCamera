@@ -47,7 +47,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-    implementation "com.github.bumptech.glide:glide:$glide_version"
+    implementation "com.github.CymChad:BaseRecyclerViewAdapterHelper:$quick_version"
     implementation "com.afollestad.material-dialogs:core:$dialog_version"
     implementation project(':libmedia')
 }

@@ -38,11 +38,6 @@ import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.Target
 import com.jiangdg.media.base.CameraFragment
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.usbcamera.databinding.FragmentDemoBinding
@@ -56,6 +51,8 @@ import com.jiangdg.media.utils.MediaUtils
 import com.jiangdg.media.utils.ToastUtils
 import com.jiangdg.media.utils.bus.BusKey
 import com.jiangdg.media.utils.bus.EventBus
+import com.jiangdg.media.utils.imageloader.ILoader
+import com.jiangdg.media.utils.imageloader.ImageLoaders
 import com.jiangdg.media.widget.*
 import com.jiangdg.usbcamera.databinding.DialogMoreBinding
 import kotlinx.coroutines.Dispatchers
@@ -446,33 +443,22 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 MediaUtils.findRecentMedia(requireContext())
             }?.also { path ->
                 val size = Utils.dp2px(requireContext(), 38F)
-                Glide.with(this@DemoFragment)
-                    .asBitmap()
-                    .centerCrop()
-                    .load(path)
-                    .listener(object : RequestListener<Bitmap> {
-                        override fun onLoadFailed(
-                            e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean
-                        ): Boolean {
-                            lifecycleScope.launch(Dispatchers.Main) {
-                                ToastUtils.show("Capture image error.${e?.causes}")
-                                mViewBinding.albumPreviewIv.cancelAnimation()
-                            }
-                            return true
-                        }
-
-                        override fun onResourceReady(
-                            resource: Bitmap?, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?,
-                            isFirstResource: Boolean
-                        ): Boolean {
+                ImageLoaders.of(this@DemoFragment)
+                    .loadAsBitmap(path, size, size, object : ILoader.OnLoadedResultListener {
+                        override fun onLoadedSuccess(bitmap: Bitmap?) {
                             lifecycleScope.launch(Dispatchers.Main) {
                                 mViewBinding.albumPreviewIv.canShowImageBorder = true
-                                mViewBinding.albumPreviewIv.setImageBitmap(resource)
+                                mViewBinding.albumPreviewIv.setImageBitmap(bitmap)
                             }
-                            return true
+                        }
+
+                        override fun onLoadedFailed(error: Exception?) {
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                ToastUtils.show("Capture image error.${error?.localizedMessage}")
+                                mViewBinding.albumPreviewIv.cancelAnimation()
+                            }
                         }
                     })
-                    .submit(size, size)
             }
         }
     }

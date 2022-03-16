@@ -32,14 +32,6 @@ class FilterZoom(context: Context) : AbstractFilter(context) {
         mTimeStampsHandler = GLES20.glGetUniformLocation(mProgram, "timeStamps")
     }
 
-    override fun getId(): String = ""
-
-    override fun getFilterName(): String = "Zoom"
-
-    override fun getFilterImageId(): Int = 0
-
-    override fun getClassifyId(): Int = CLASSIFY_ID_ANIMATION
-
     override fun beforeDraw() {
         if (mTimeCount > 65535) {
             mTimeCount = 0

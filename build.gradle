@@ -46,6 +46,6 @@ ext {
     materialVersion = '1.3.0'
     constraintlayoutVersion = '2.0.4'
     lifecycle_version = '2.2.0'
-    glide_version= '4.10.0'
+    quick_version= '2.9.50'
     dialog_version= '3.2.1'
 }

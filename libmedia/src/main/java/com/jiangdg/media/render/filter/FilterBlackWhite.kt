@@ -23,23 +23,9 @@ import com.jiangdg.media.R
  * @author Created by jiangdg on 2022/1/26
  */
 class FilterBlackWhite(ctx: Context) : AbstractFilter(ctx) {
-    override fun getId(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getFilterName(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getFilterImageId(): Int {
-        TODO("Not yet implemented")
-    }
-
-    override fun getClassifyId(): Int {
-        TODO("Not yet implemented")
-    }
 
     override fun getVertexSourceId(): Int = R.raw.base_vertex
 
     override fun getFragmentSourceId(): Int = R.raw.filter_blackw_fragment
+
 }

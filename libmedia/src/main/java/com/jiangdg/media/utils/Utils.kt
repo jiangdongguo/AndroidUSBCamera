@@ -19,10 +19,14 @@ import android.Manifest
 import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
 import android.os.PowerManager
+import androidx.annotation.RawRes
 import androidx.core.content.ContextCompat
+import java.io.InputStream
 
 /** Common Utils
  *
@@ -63,6 +67,31 @@ object Utils  {
     fun getGLESVersion(context: Context): String? {
         (context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).apply {
             return deviceConfigurationInfo.glEsVersion
+        }
+    }
+
+    fun getScreenWidth(context: Context): Int {
+        return context.resources.displayMetrics.widthPixels
+    }
+
+    fun getScreenHeight(context: Context): Int {
+        return context.resources.displayMetrics.heightPixels
+    }
+
+    fun loadBitmapFromRawResource(context: Context, @RawRes id: Int): Bitmap? {
+        var inputStream: InputStream? = null
+        return try {
+            inputStream = context.resources?.openRawResource(id)
+            BitmapFactory.decodeStream(inputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        } finally {
+            try {
+                inputStream?.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

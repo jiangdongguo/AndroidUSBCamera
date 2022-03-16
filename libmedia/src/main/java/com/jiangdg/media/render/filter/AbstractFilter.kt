@@ -18,44 +18,8 @@ package com.jiangdg.media.render.filter
 import android.content.Context
 import com.jiangdg.media.render.internal.AbstractFboRender
 
-
 /** abstract filter class, extended from AbstractFboRender
  *
  * @author Created by jiangdg on 2022/1/26
  */
-abstract class AbstractFilter(ctx: Context) : AbstractFboRender(ctx) {
-    var isSelected: Boolean = false
-
-    /**
-     * Get filter id
-     *
-     * @return filter class' md5 value
-     */
-    abstract fun getId(): String
-
-    /**
-     * Get filter name
-     *
-     * @return filter name
-     */
-    abstract fun getFilterName(): String
-
-    /**
-     * Get filter image id
-     *
-     * @return  image id
-     */
-    abstract fun getFilterImageId(): Int
-
-    /**
-     * Get classify id
-     *
-     * @return classify, see [CLASSIFY_ID_FILTER] and [CLASSIFY_ID_ANIMATION]
-     */
-    abstract fun getClassifyId(): Int
-
-    companion object {
-        const val CLASSIFY_ID_FILTER = 1
-        const val CLASSIFY_ID_ANIMATION = 2
-    }
-}
+abstract class AbstractFilter(ctx: Context) : AbstractFboRender(ctx)
