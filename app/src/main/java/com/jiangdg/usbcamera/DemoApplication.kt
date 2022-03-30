@@ -15,14 +15,25 @@
  */
 package com.jiangdg.usbcamera
 
+import android.content.Context
+import androidx.multidex.MultiDex
 import com.jiangdg.media.base.BaseApplication
+import com.tencent.bugly.crashreport.CrashReport
 
 /**
  *
  * @author Created by jiangdg on 2022/2/28
  */
 class DemoApplication: BaseApplication() {
+
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        MultiDex.install(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
+        // init bugly library
+        CrashReport.initCrashReport(this, "165c46d5b1", true)
     }
 }

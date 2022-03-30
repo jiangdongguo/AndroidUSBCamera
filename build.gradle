@@ -48,4 +48,6 @@ ext {
     lifecycle_version = '2.2.0'
     quick_version= '2.9.50'
     dialog_version= '3.2.1'
+    bugly_version = '3.4.4'
+    bugly_native_version = '3.9.0'
 }

@@ -11,6 +11,12 @@ android {
         targetSdkVersion rootProject.ext.versionTarget
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionNameString
+
+        multiDexEnabled true
+
+        ndk{
+            abiFilters 'armeabi-v7a','arm64-v8a'
+        }
     }
     buildTypes {
         release {
@@ -49,5 +55,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
     implementation "com.github.CymChad:BaseRecyclerViewAdapterHelper:$quick_version"
     implementation "com.afollestad.material-dialogs:core:$dialog_version"
+
+    implementation "com.tencent.bugly:crashreport:$bugly_version"
+    implementation "com.tencent.bugly:nativecrashreport:$bugly_native_version"
+
     implementation project(':libmedia')
 }
