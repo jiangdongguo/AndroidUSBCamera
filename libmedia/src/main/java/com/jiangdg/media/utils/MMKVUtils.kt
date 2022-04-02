@@ -15,6 +15,7 @@
  */
 package com.jiangdg.media.utils
 
+import android.content.Context
 import android.os.Parcelable
 import com.tencent.mmkv.MMKV
 
@@ -26,6 +27,15 @@ object MMKVUtils {
 
     private val mKv: MMKV by lazy {
         MMKV.defaultMMKV()
+    }
+
+    /**
+     * Init MMKV
+     *
+     * @param context
+     */
+    fun init(context: Context) {
+        MMKV.initialize(context.applicationContext)
     }
 
     /**

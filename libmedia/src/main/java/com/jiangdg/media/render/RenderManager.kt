@@ -33,6 +33,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
+import com.jiangdg.media.render.env.RotateType
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.render.internal.*
 import com.jiangdg.media.utils.*
@@ -150,6 +151,11 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
             }
             MSG_GL_STOP_RENDER_CODEC -> {
                 stopRenderCodecInternal()
+            }
+            MSG_GL_ROUTE_ANGLE -> {
+                (msg.obj as? RotateType)?.apply {
+                    mCameraRender?.setRotateAngle(this)
+                }
             }
             MSG_GL_DRAW -> {
                 // 将摄像头数据渲染到SurfaceTexture
@@ -298,6 +304,16 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
      */
     fun removeRenderFilter(filter: AbstractFilter?) {
         mRenderHandler?.obtainMessage(MSG_GL_REMOVE_FILTER, filter)?.sendToTarget()
+    }
+
+    /**
+     * Rotate camera render angle
+     *
+     * @param type rotate angle, null means rotating nothing
+     * see [RotateType.ANGLE_90], [RotateType.ANGLE_270],...etc.
+     */
+    fun setRotateType(type: RotateType?) {
+        mRenderHandler?.obtainMessage(MSG_GL_ROUTE_ANGLE, type)?.sendToTarget()
     }
 
     /**
@@ -522,6 +538,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         private const val MSG_GL_ADD_FILTER = 0x06
         private const val MSG_GL_REMOVE_FILTER = 0x07
         private const val MSG_GL_SAVE_IMAGE = 0x08
+        private const val MSG_GL_ROUTE_ANGLE = 0x09
 
         // codec
         private const val MSG_GL_RENDER_CODEC_INIT = 0x11

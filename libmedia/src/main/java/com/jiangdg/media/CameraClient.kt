@@ -38,7 +38,9 @@ import com.jiangdg.media.encode.H264EncodeProcessor
 import com.jiangdg.media.encode.bean.RawData
 import com.jiangdg.media.encode.muxer.Mp4Muxer
 import com.jiangdg.media.render.RenderManager
+import com.jiangdg.media.render.env.RotateType
 import com.jiangdg.media.render.filter.AbstractFilter
+import com.jiangdg.media.render.filter.bean.CameraFilter
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.media.widget.AspectRatioSurfaceView
@@ -61,6 +63,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     private var mDefaultFilter: AbstractFilter? = builder.defaultFilter
     private val mEncodeBitRate: Int? = builder.videoEncodeBitRate
     private val mEncodeFrameRate: Int? = builder.videoEncodeFrameRate
+    private val mDefaultRotateType: RotateType? = builder.defaultRotateType
     private var mAudioProcess: AbstractProcessor? = null
     private var mVideoProcess: AbstractProcessor? = null
     private var mMediaMuxer: Mp4Muxer? = null
@@ -163,6 +166,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                     val surfaceHeight = getSurfaceHeight()
                     val surface = getSurface()
                     mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
+                    mRenderManager?.setRotateType(mDefaultRotateType)
                     if (isReboot) {
                         mRenderManager?.getCacheFilterList()?.forEach { filter ->
                             mRenderManager?.addRenderFilter(filter)
@@ -188,6 +192,16 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             mRenderManager?.stopRenderScreen()
         }
         mCamera?.stopPreview()
+    }
+
+    /**
+     * Rotate camera render angle
+     *
+     * @param type rotate angle, null means rotating nothing
+     * see [RotateType.ANGLE_90], [RotateType.ANGLE_270],...etc.
+     */
+    fun setRotateType(type: RotateType?) {
+        mRenderManager?.setRotateType(type)
     }
 
     /**
@@ -223,6 +237,22 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun removeRenderFilter(filter: AbstractFilter) {
         mRenderManager?.removeRenderFilter(filter)
+    }
+
+    /**
+     * Update render filter
+     *
+     * @param classifyId filter classify id
+     * @param filter new filter, null means set none
+     */
+    fun updateRenderFilter(classifyId: Int, filter: AbstractFilter?) {
+        mRenderManager?.getCacheFilterList()?.find {
+            it.getClassifyId() == classifyId
+        }?.also {
+            removeRenderFilter(it)
+        }
+        filter ?: return
+        addRenderFilter(filter)
     }
 
     /**
@@ -434,6 +464,13 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun getCameraStrategy() = mCamera
 
+    /**
+     * Get default filter
+     *
+     * @return default filter, see [AbstractFilter]
+     */
+    fun getDefaultFilter() = mDefaultFilter
+
     private fun initEncodeProcessor() {
         releaseEncodeProcessor()
         val  encodeWidth = if (isEnableGLEs) {
@@ -487,6 +524,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         internal var defaultFilter: AbstractFilter? = null
         internal var videoEncodeBitRate: Int? = null
         internal var videoEncodeFrameRate: Int? = null
+        internal var defaultRotateType: RotateType? = null
 
         constructor(context: Context) : this() {
             this.context = context
@@ -568,6 +606,17 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
          */
         fun openDebug(debug: Boolean): Builder {
             Utils.debugCamera = debug
+            return this
+        }
+
+        /**
+         * Set default camera render angle
+         *
+         * @param type rotate angle, null means rotating nothing
+         * see [RotateType.ANGLE_90], [RotateType.ANGLE_270],...etc.
+         */
+        fun setDefaultRotateType(type: RotateType?): Builder {
+            this.defaultRotateType = type
             return this
         }
 

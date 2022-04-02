@@ -22,4 +22,19 @@ import com.jiangdg.media.render.internal.AbstractFboRender
  *
  * @author Created by jiangdg on 2022/1/26
  */
-abstract class AbstractFilter(ctx: Context) : AbstractFboRender(ctx)
+abstract class AbstractFilter(ctx: Context) : AbstractFboRender(ctx) {
+
+    /**
+     * Get filter id
+     *
+     * @return filter id
+     */
+    abstract fun getId(): Int
+
+    /**
+     * Get classify id
+     *
+     * @return filter classify id
+     */
+    abstract fun getClassifyId(): Int
+}

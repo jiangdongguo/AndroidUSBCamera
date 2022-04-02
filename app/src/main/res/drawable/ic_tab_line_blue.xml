@@ -4,5 +4,5 @@
         android:topRightRadius="12dp"
         android:bottomRightRadius="12dp"
         android:bottomLeftRadius="12dp"/>
-    <size android:height="3dp" android:width="40dp"/>
+    <size android:height="3dp" android:width="16dp"/>
 </shape>

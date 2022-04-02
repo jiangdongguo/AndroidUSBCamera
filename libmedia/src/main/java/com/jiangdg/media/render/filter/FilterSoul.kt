@@ -16,6 +16,7 @@
 package com.jiangdg.media.render.filter
 
 import android.content.Context
+import com.jiangdg.media.render.filter.bean.CameraFilter
 
 /** Soul Filter
  *
@@ -27,6 +28,10 @@ class FilterSoul(context: Context): AbstractFilter(context) {
         super.init()
     }
 
+    override fun getId(): Int = ID
+
+    override fun getClassifyId(): Int = CameraFilter.CLASSIFY_ID_ANIMATION
+
     override fun beforeDraw() {
         super.beforeDraw()
     }
@@ -37,5 +42,9 @@ class FilterSoul(context: Context): AbstractFilter(context) {
 
     override fun getFragmentSourceId(): Int {
         TODO("Not yet implemented")
+    }
+
+    companion object {
+        const val ID = 200
     }
 }

@@ -17,7 +17,9 @@ package com.jiangdg.usbcamera
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.graphics.Typeface
 import android.view.Gravity
+import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.TextView
@@ -27,6 +29,9 @@ import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.jiangdg.media.base.BaseDialog
 import com.jiangdg.media.render.filter.bean.CameraFilter
+import com.jiangdg.media.utils.Logger
+import com.jiangdg.media.utils.MMKVUtils
+import com.jiangdg.media.utils.ToastUtils
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.media.utils.imageloader.ImageLoaders
 
@@ -35,24 +40,26 @@ import com.jiangdg.media.utils.imageloader.ImageLoaders
  * @author Created by jiangdg on 2022/2/8
  */
 @SuppressLint("NotifyDataSetChanged")
-class FilterListDialog(activity: Activity): BaseDialog(activity, portraitWidthRatio = 1f) {
+class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthRatio = 1f),
+    View.OnClickListener {
+    private var mListener: OnFilterClickListener? = null
+    private var mAdapter: FilterListAdapter? = null
     private var mRecyclerView: RecyclerView? = null
     private var mFilterTabBtn: TextView? = null
     private var mAnimTabBtn: TextView? = null
     private var mFilterList: ArrayList<CameraFilter> = ArrayList()
     private val mFilterMap = HashMap<Int, List<CameraFilter>>()
 
+    override fun getContentLayoutId(): Int = R.layout.dialog_filters
+
     init {
-        mRecyclerView = mDialog.findViewById(R.id.filterRv)
-        mFilterTabBtn = mDialog.findViewById(R.id.tabFilterBtn)
-        mAnimTabBtn = mDialog.findViewById(R.id.tabAnimBtn)
         mDialog.window?.let {
             it.setGravity(Gravity.BOTTOM)
             it.setWindowAnimations(R.style.camera2_anim_down_to_top)
 
             it.attributes?.run {
                 width = WindowManager.LayoutParams.MATCH_PARENT
-                height = (240f / 360f * Utils.getScreenWidth(activity)).toInt()
+                height = (200f / 360f * Utils.getScreenWidth(activity)).toInt()
                 mDialog.window?.attributes = this
             }
         }
@@ -61,31 +68,83 @@ class FilterListDialog(activity: Activity): BaseDialog(activity, portraitWidthRa
         setCanceledOnTouchOutside(true)
         setCancelable(true)
         // recycler view
-        FilterListAdapter().apply {
+        mAdapter = FilterListAdapter().apply {
             setOnItemChildClickListener { _, _, position ->
                 data.getOrNull(position)?.let {
                     if (getCurrFilter()?.id == it.id) {
                         return@setOnItemChildClickListener
                     }
                     setCurrFilter(it)
+                    mListener?.onFilterClick(it)
                     notifyDataSetChanged()
                 }
             }
-        }.also { adapter ->
-            mRecyclerView?.layoutManager = LinearLayoutManager(activity, RecyclerView.HORIZONTAL, false)
-            mRecyclerView?.adapter = adapter
         }
+        mRecyclerView = mDialog.findViewById(R.id.filterRv)
+        mFilterTabBtn = mDialog.findViewById(R.id.tabFilterBtn)
+        mAnimTabBtn = mDialog.findViewById(R.id.tabAnimBtn)
+        mAnimTabBtn?.setOnClickListener(this)
+        mFilterTabBtn?.setOnClickListener(this)
+        mRecyclerView?.layoutManager =
+            LinearLayoutManager(mDialog.context, LinearLayoutManager.HORIZONTAL, false)
+        mRecyclerView?.adapter = mAdapter
     }
 
-    fun setData(list: List<CameraFilter>) {
+    fun setData(list: List<CameraFilter>, listener: OnFilterClickListener) {
+        mListener = listener
         mFilterList.clear()
         mFilterList.addAll(list)
         initFilterData()
         initEffectTabs()
     }
 
-    private fun initEffectTabs() {
+    private fun getCurFilterId() = MMKVUtils.getInt(KEY_FILTER, CameraFilter.ID_NONE_FILTER)
 
+    private fun getCurAnimationId() = MMKVUtils.getInt(KEY_ANIMATION, CameraFilter.ID_NONE_ANIMATION)
+
+    private fun initEffectTabs() {
+        getCurAnimationId().let { curAnimId ->
+            if (curAnimId != CameraFilter.ID_NONE_ANIMATION) {
+                mAnimTabBtn?.typeface = Typeface.DEFAULT_BOLD
+                mAnimTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.black))
+                mAnimTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_blue
+                )
+                mFilterTabBtn?.typeface = Typeface.DEFAULT
+                mFilterTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.common_a8_black))
+                mFilterTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_white
+                )
+                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION])
+                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == curAnimId })
+                return
+            }
+        }
+        val curFilterId = getCurFilterId()
+        mFilterTabBtn?.typeface = Typeface.DEFAULT_BOLD
+        mFilterTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.black))
+        mFilterTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+            0,
+            0,
+            0,
+            R.drawable.ic_tab_line_blue
+        )
+        mAnimTabBtn?.typeface = Typeface.DEFAULT
+        mAnimTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.common_a8_black))
+        mAnimTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+            0,
+            0,
+            0,
+            R.drawable.ic_tab_line_white
+        )
+        mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_FILTER])
+        mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == curFilterId })
     }
 
     private fun initFilterData() {
@@ -111,12 +170,65 @@ class FilterListDialog(activity: Activity): BaseDialog(activity, portraitWidthRa
         }
     }
 
-    override fun getContentLayoutId(): Int {
-        return R.layout.dialog_filters
+    override fun onClick(v: View?) {
+        when (v?.id) {
+            R.id.tabFilterBtn -> {
+                mFilterTabBtn?.typeface = Typeface.DEFAULT_BOLD
+                mFilterTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.black))
+                mFilterTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_blue
+                )
+                mAnimTabBtn?.typeface = Typeface.DEFAULT
+                mAnimTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.common_a8_black))
+                mAnimTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_white
+                )
+                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_FILTER])
+                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == getCurFilterId() })
+            }
+            R.id.tabAnimBtn -> {
+                mAnimTabBtn?.typeface = Typeface.DEFAULT_BOLD
+                mAnimTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.black))
+                mAnimTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_blue
+                )
+                mFilterTabBtn?.typeface = Typeface.DEFAULT
+                mFilterTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.common_a8_black))
+                mFilterTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    R.drawable.ic_tab_line_white
+                )
+                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION])
+                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == getCurAnimationId() })
+            }
+            else -> {
+            }
+        }
+    }
+
+    interface OnFilterClickListener {
+        fun onFilterClick(filter: CameraFilter)
+    }
+
+    companion object {
+        const val KEY_FILTER = "filter"
+        const val KEY_ANIMATION = "animation"
     }
 }
 
-private class FilterListAdapter : BaseQuickAdapter<CameraFilter, BaseViewHolder>(R.layout.dialog_filter_item) {
+private class FilterListAdapter :
+    BaseQuickAdapter<CameraFilter, BaseViewHolder>(R.layout.dialog_filter_item) {
 
     private var mCurrFilter: CameraFilter? = null
 
@@ -132,7 +244,6 @@ private class FilterListAdapter : BaseQuickAdapter<CameraFilter, BaseViewHolder>
                 notifyItemChanged(newPosition)
             }
         }
-
     }
 
     fun getCurrFilter(): CameraFilter? = mCurrFilter
@@ -153,10 +264,10 @@ private class FilterListAdapter : BaseQuickAdapter<CameraFilter, BaseViewHolder>
         helper.setText(R.id.filter_name, item.name)
         helper.getView<ImageView>(R.id.filter_effect).also {
             item.coverResId?.apply {
-                ImageLoaders.of(mContext).loadCircle(it, this, R.drawable.filter_placeholder)
+                ImageLoaders.of(mContext).loadCircle(it, this, R.drawable.filter_none)
                 return@also
             }
-            ImageLoaders.of(mContext).loadCircle(it, item.coverUrl, R.drawable.filter_placeholder)
+            ImageLoaders.of(mContext).loadCircle(it, item.coverUrl, R.drawable.filter_none)
         }
         helper.addOnClickListener(R.id.filter_effect)
         // update check status

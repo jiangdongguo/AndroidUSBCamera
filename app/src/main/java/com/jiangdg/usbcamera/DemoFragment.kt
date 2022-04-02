@@ -39,21 +39,24 @@ import androidx.lifecycle.lifecycleScope
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
 import com.jiangdg.media.base.CameraFragment
-import com.jiangdg.media.utils.Utils
 import com.jiangdg.usbcamera.databinding.FragmentDemoBinding
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.Camera2Strategy
 import com.jiangdg.media.camera.CameraUvcStrategy
-import com.jiangdg.media.utils.Logger
-import com.jiangdg.media.utils.MediaUtils
-import com.jiangdg.media.utils.ToastUtils
+import com.jiangdg.media.render.filter.FilterBlackWhite
+import com.jiangdg.media.render.filter.FilterSoul
+import com.jiangdg.media.render.filter.FilterZoom
+import com.jiangdg.media.render.filter.bean.CameraFilter
+import com.jiangdg.media.utils.*
 import com.jiangdg.media.utils.bus.BusKey
 import com.jiangdg.media.utils.bus.EventBus
 import com.jiangdg.media.utils.imageloader.ILoader
 import com.jiangdg.media.utils.imageloader.ImageLoaders
 import com.jiangdg.media.widget.*
+import com.jiangdg.usbcamera.FilterListDialog.Companion.KEY_ANIMATION
+import com.jiangdg.usbcamera.FilterListDialog.Companion.KEY_FILTER
 import com.jiangdg.usbcamera.databinding.DialogMoreBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,6 +80,11 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC to R.id.takePictureModeTv,
         CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO to R.id.recordVideoModeTv,
         CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO to R.id.recordAudioModeTv
+    )
+    private val mFilterData = arrayListOf(
+        FilterBlackWhite.cameraFilter,
+        FilterZoom.cameraFilter,
+        FilterSoul.cameraFilter
     )
 
     private val mTakePictureTipView: TipView by lazy {
@@ -130,6 +138,21 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         EventBus.with<Int>(BusKey.KEY_FRAME_RATE).observe(this, {
             mViewBinding.frameRateTv.text = "frame rate:  $it fps"
         })
+        // init status
+        getCurrentCameraStrategy().apply {
+            mViewBinding.uvcLogoIv.visibility = if (this is CameraUvcStrategy) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        }
+        getDefaultFilter()?.apply {
+            when(getClassifyId()) {
+                CameraFilter.CLASSIFY_ID_FILTER ->MMKVUtils.set(KEY_FILTER, getId())
+                CameraFilter.CLASSIFY_ID_ANIMATION -> MMKVUtils.set(KEY_ANIMATION, getId())
+                else -> throw IllegalStateException("Unsupported classify")
+            }
+        }
     }
 
     private fun switchLayoutClick() {
@@ -294,6 +317,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                         switchCamera()
                     }
                     mViewBinding.filtersBtn -> {
+                        showFilterDialog()
                     }
                     mViewBinding.cameraTypeBtn -> {
                         showCameraTypeDialog()
@@ -329,6 +353,27 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         })
     }
 
+    private fun showFilterDialog() {
+        FilterListDialog(requireActivity()).apply {
+            setData(mFilterData, object : FilterListDialog.OnFilterClickListener {
+                override fun onFilterClick(filter: CameraFilter) {
+                    if (filter.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION) {
+                        KEY_ANIMATION
+                    } else {
+                        KEY_FILTER
+                    }.also { key ->
+                        MMKVUtils.set(key, filter.id)
+                    }
+                    // make the settings take effect
+//                    mFilterData.find {it.id == filter.id}.also {
+//                        updateRenderFilter(filter.classifyId)
+//                    }
+                }
+            })
+            show()
+        }
+    }
+
     @SuppressLint("CheckResult")
     private fun showCameraTypeDialog() {
         val typeList = arrayListOf(
@@ -348,7 +393,11 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 items = typeList,
                 initialSelection = selectedIndex
             ) { dialog, index, text ->
-
+                mViewBinding.uvcLogoIv.visibility = if (index == 2) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
             }
         }
     }
@@ -649,3 +698,27 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         private const val WHAT_STOP_TIMER = 0x01
     }
 }
+
+val FilterBlackWhite.Companion.cameraFilter: CameraFilter
+    get() = CameraFilter(
+        ID,
+        "BlackWhite",
+        CameraFilter.CLASSIFY_ID_FILTER,
+        coverResId = R.mipmap.filter0
+    )
+
+val FilterSoul.Companion.cameraFilter: CameraFilter
+    get() = CameraFilter(
+        ID,
+        "Soul",
+        CameraFilter.CLASSIFY_ID_ANIMATION,
+        coverResId = R.mipmap.filter1
+    )
+
+val FilterZoom.Companion.cameraFilter: CameraFilter
+    get() = CameraFilter(
+        ID,
+        "Zoom",
+        CameraFilter.CLASSIFY_ID_ANIMATION,
+        coverResId = R.mipmap.filter2
+    )

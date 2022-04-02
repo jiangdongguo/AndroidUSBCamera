@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/white">
 
     <View
         android:id="@+id/view"
@@ -25,12 +25,13 @@
         android:layout_width="80dp"
         android:layout_height="0dp"
         android:layout_marginEnd="10dp"
-        android:text="Filter"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:textColor="@color/black"
-        android:textStyle="bold"
+        android:clickable="true"
         android:drawableBottom="@drawable/ic_tab_line_blue"
+        android:gravity="center"
+        android:text="Filter"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/view"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="parent" />
@@ -40,23 +41,24 @@
         android:layout_width="80dp"
         android:layout_height="0dp"
         android:layout_marginStart="10dp"
-        android:text="Animation"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:drawablePadding="4dp"
         android:drawableBottom="@drawable/ic_tab_line_white"
+        android:drawablePadding="4dp"
+        android:gravity="center"
+        android:text="Animation"
+        android:textColor="@color/common_a8_black"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="@+id/view"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/filterRv"
-        android:layout_width="409dp"
-        android:layout_height="689dp"
-        android:layout_marginTop="60dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

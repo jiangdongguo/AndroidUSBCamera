@@ -33,6 +33,7 @@ import com.jiangdg.media.camera.CameraUvcStrategy
 import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
+import com.jiangdg.media.render.env.RotateType
 import com.jiangdg.media.render.filter.AbstractFilter
 import com.jiangdg.media.render.filter.FilterBlackWhite
 import com.jiangdg.media.widget.AspectRatioSurfaceView
@@ -174,6 +175,16 @@ abstract class CameraFragment : BaseFragment() {
     }
 
     /**
+     * Update render filter
+     *
+     * @param classifyId filter classify id
+     * @param filter new filter, null means set none
+     */
+    protected fun updateRenderFilter(classifyId: Int, filter: AbstractFilter?) {
+        mCameraClient?.updateRenderFilter(classifyId, filter)
+    }
+
+    /**
      * Start push
      */
     protected fun startPush() {
@@ -274,6 +285,23 @@ abstract class CameraFragment : BaseFragment() {
      */
     protected fun getCurrentCameraStrategy() = mCameraClient?.getCameraStrategy()
 
+    /**
+     * Get default filter
+     *
+     * @return default filter, see [AbstractFilter]
+     */
+    protected fun getDefaultFilter() = mCameraClient?.getDefaultFilter()
+
+    /**
+     * Rotate camera angle
+     *
+     * @param type rotate angle, null means rotating nothing
+     * see [RotateType.ANGLE_90], [RotateType.ANGLE_270],...etc.
+     */
+    protected fun setRotateType(type: RotateType) {
+        mCameraClient?.setRotateType(type)
+    }
+
     private fun openCamera(st: IAspectRatio? = null) {
         mCameraClient?.openCamera(st)
     }
@@ -361,6 +389,7 @@ abstract class CameraFragment : BaseFragment() {
             .setDefaultFilter(FilterBlackWhite(requireContext()))
             .setCameraStrategy(Camera1Strategy(requireContext()))
             .setCameraRequest(getCameraRequest())
+            .setDefaultRotateType(RotateType.ANGLE_0)
             .openDebug(true)
             .build()
     }

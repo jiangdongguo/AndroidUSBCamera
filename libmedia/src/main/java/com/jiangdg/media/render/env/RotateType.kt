@@ -20,10 +20,10 @@ package com.jiangdg.media.render.env
  * @author Created by jiangdg on 2021/12/28
  */
 enum class RotateType {
-    ANGLE_0,        // 默认值
+    ANGLE_0,        // default, do nothing
     ANGLE_90,
     ANGLE_180,
     ANGLE_270,
-    FLIP_UP_DOWN,    // 上下翻转
-    FLIP_LEFT_RIGHT  // 左右翻转
+    FLIP_UP_DOWN,    // flip vertically
+    FLIP_LEFT_RIGHT  // horizontal flip(mirror)
 }

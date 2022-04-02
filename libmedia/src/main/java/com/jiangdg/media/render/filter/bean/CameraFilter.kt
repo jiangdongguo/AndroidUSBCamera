@@ -16,6 +16,11 @@
 package com.jiangdg.media.render.filter.bean
 
 import androidx.annotation.Keep
+import com.jiangdg.media.R
+import com.jiangdg.media.render.filter.AbstractFilter
+import com.jiangdg.media.render.filter.FilterBlackWhite
+import com.jiangdg.media.render.filter.FilterSoul
+import com.jiangdg.media.render.filter.FilterZoom
 
 /** camera filter info
  *
@@ -26,6 +31,7 @@ data class CameraFilter(
     val id: Int,
     val name: String,
     val classifyId: Int,
+    val filter: AbstractFilter? = null,
     val coverResId: Int? = null,
     val coverUrl: String? = null
 ) {
@@ -33,16 +39,18 @@ data class CameraFilter(
         val NONE_FILTER by lazy {
             CameraFilter(
                 ID_NONE_FILTER,
-                "filter_none",
-                CLASSIFY_ID_FILTER
+                NAME_NONE,
+                CLASSIFY_ID_FILTER,
+                coverResId = R.drawable.filter_none
             )
         }
 
         val NONE_ANIMATION by lazy {
             CameraFilter(
                 ID_NONE_ANIMATION,
-                "animation_none",
-                CLASSIFY_ID_ANIMATION
+                NAME_NONE,
+                CLASSIFY_ID_ANIMATION,
+                coverResId = R.drawable.filter_none
             )
         }
 
@@ -50,5 +58,6 @@ data class CameraFilter(
         const val CLASSIFY_ID_ANIMATION = 2
         const val ID_NONE_FILTER = -1
         const val ID_NONE_ANIMATION = -2
+        private const val NAME_NONE = "None"
     }
 }

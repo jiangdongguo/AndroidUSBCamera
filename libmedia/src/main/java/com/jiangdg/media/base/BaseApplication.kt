@@ -18,6 +18,7 @@ package com.jiangdg.media.base
 import android.app.Application
 import com.jiangdg.media.utils.CrashUtils
 import com.jiangdg.media.utils.Logger
+import com.jiangdg.media.utils.MMKVUtils
 import com.jiangdg.media.utils.ToastUtils
 
 /** Base Application
@@ -31,5 +32,6 @@ open class BaseApplication: Application() {
         CrashUtils.init(this)
         Logger.init(this)
         ToastUtils.init(this)
+        MMKVUtils.init(this)
     }
 }

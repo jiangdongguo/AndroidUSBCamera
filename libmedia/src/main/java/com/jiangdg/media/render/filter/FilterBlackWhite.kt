@@ -17,6 +17,7 @@ package com.jiangdg.media.render.filter
 
 import android.content.Context
 import com.jiangdg.media.R
+import com.jiangdg.media.render.filter.bean.CameraFilter
 
 /** Black White filter
  *
@@ -24,8 +25,15 @@ import com.jiangdg.media.R
  */
 class FilterBlackWhite(ctx: Context) : AbstractFilter(ctx) {
 
+    override fun getId(): Int = ID
+
+    override fun getClassifyId(): Int = CameraFilter.CLASSIFY_ID_FILTER
+
     override fun getVertexSourceId(): Int = R.raw.base_vertex
 
     override fun getFragmentSourceId(): Int = R.raw.filter_blackw_fragment
 
+    companion object {
+        const val ID = 100
+    }
 }
