@@ -26,7 +26,7 @@ import android.widget.RelativeLayout
 import com.jiangdg.media.CameraClient
 import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.bean.CameraRequest
-import com.jiangdg.media.render.filter.FilterBlackWhite
+import com.jiangdg.media.render.effect.EffectBlackWhite
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.widget.AspectRatioSurfaceView
 import com.jiangdg.media.widget.AspectRatioTextureView
@@ -173,7 +173,7 @@ abstract class CameraActivity : BaseActivity(){
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(this)
             .setEnableGLES(true)
-            .setDefaultFilter(FilterBlackWhite(this))
+            .setDefaultEffect(EffectBlackWhite(this))
             .setCameraStrategy(Camera1Strategy(this))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)

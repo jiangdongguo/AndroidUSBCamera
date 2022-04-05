@@ -39,7 +39,7 @@ import com.jiangdg.media.encode.bean.RawData
 import com.jiangdg.media.encode.muxer.Mp4Muxer
 import com.jiangdg.media.render.RenderManager
 import com.jiangdg.media.render.env.RotateType
-import com.jiangdg.media.render.filter.AbstractFilter
+import com.jiangdg.media.render.effect.AbstractEffect
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.media.widget.AspectRatioSurfaceView
@@ -59,7 +59,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     private val mCamera: ICameraStrategy? = builder.camera
     private var mCameraView: IAspectRatio? = null
     private var mRequest: CameraRequest? = builder.cameraRequest
-    private var mDefaultFilter: AbstractFilter? = builder.defaultFilter
+    private var mDefaultEffect: AbstractEffect? = builder.defaultEffect
     private val mEncodeBitRate: Int? = builder.videoEncodeBitRate
     private val mEncodeFrameRate: Int? = builder.videoEncodeFrameRate
     private val mDefaultRotateType: RotateType? = builder.defaultRotateType
@@ -152,12 +152,12 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                     Logger.i(TAG, "Offscreen render, width=$previewWidth, height=$previewHeight")
                     mRenderManager?.startRenderScreen(previewWidth, previewHeight, null, listener)
                     if (isReboot) {
-                        mRenderManager?.getCacheFilterList()?.forEach { filter ->
-                            mRenderManager?.addRenderFilter(filter)
+                        mRenderManager?.getCacheEffectList()?.forEach { effect ->
+                            mRenderManager?.addRenderEffect(effect)
                         }
                         return@apply
                     }
-                    mRenderManager?.addRenderFilter(mDefaultFilter)
+                    mRenderManager?.addRenderEffect(mDefaultEffect)
                     return@apply
                 }
                 postUITask {
@@ -167,12 +167,12 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                     mRenderManager?.startRenderScreen(surfaceWidth, surfaceHeight, surface, listener)
                     mRenderManager?.setRotateType(mDefaultRotateType)
                     if (isReboot) {
-                        mRenderManager?.getCacheFilterList()?.forEach { filter ->
-                            mRenderManager?.addRenderFilter(filter)
+                        mRenderManager?.getCacheEffectList()?.forEach { effect ->
+                            mRenderManager?.addRenderEffect(effect)
                         }
                         return@postUITask
                     }
-                    mRenderManager?.addRenderFilter(mDefaultFilter)
+                    mRenderManager?.addRenderEffect(mDefaultEffect)
                     Logger.i(TAG, "Display render, width=$surfaceWidth, height=$surfaceHeight")
                 }
             }
@@ -214,44 +214,44 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     /**
-     * Add render filter.There is only one setting in the same category
+     * Add render effect.There is only one setting in the same category
      * <p>
-     * The default filters:
-     * @see [com.jiangdg.media.render.filter.FilterBlackWhite]
-     * @see [com.jiangdg.media.render.filter.FilterZoom]
-     * @see [com.jiangdg.media.render.filter.FilterSoul]
+     * The default effects:
+     * @see [com.jiangdg.media.render.effect.EffectBlackWhite]
+     * @see [com.jiangdg.media.render.effect.EffectZoom]
+     * @see [com.jiangdg.media.render.effect.EffectSoul]
      * <p>
-     * Of course, you can also realize a custom filter by extending from [AbstractFilter]
+     * Of course, you can also realize a custom effect by extending from [AbstractEffect]
      *
-     * @param filter a filter
+     * @param effect a effect
      */
-    fun addRenderFilter(filter: AbstractFilter) {
-        mRenderManager?.addRenderFilter(filter)
+    fun addRenderEffect(effect: AbstractEffect) {
+        mRenderManager?.addRenderEffect(effect)
     }
 
     /**
-     * Remove render filter
+     * Remove render effect
      *
-     * @param filter a filter, extending from [AbstractFilter]
+     * @param effect a effect, extending from [AbstractEffect]
      */
-    fun removeRenderFilter(filter: AbstractFilter) {
-        mRenderManager?.removeRenderFilter(filter)
+    fun removeRenderEffect(effect: AbstractEffect) {
+        mRenderManager?.removeRenderEffect(effect)
     }
 
     /**
-     * Update render filter
+     * Update render effect
      *
-     * @param classifyId filter classify id
-     * @param filter new filter, null means set none
+     * @param classifyId effect classify id
+     * @param effect new effect, null means set none
      */
-    fun updateRenderFilter(classifyId: Int, filter: AbstractFilter?) {
-        mRenderManager?.getCacheFilterList()?.find {
+    fun updateRenderEffect(classifyId: Int, effect: AbstractEffect?) {
+        mRenderManager?.getCacheEffectList()?.find {
             it.getClassifyId() == classifyId
         }?.also {
-            removeRenderFilter(it)
+            removeRenderEffect(it)
         }
-        filter ?: return
-        addRenderFilter(filter)
+        effect ?: return
+        addRenderEffect(effect)
     }
 
     /**
@@ -464,11 +464,11 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     fun getCameraStrategy() = mCamera
 
     /**
-     * Get default filter
+     * Get default effect
      *
-     * @return default filter, see [AbstractFilter]
+     * @return default effect, see [AbstractEffect]
      */
-    fun getDefaultFilter() = mDefaultFilter
+    fun getDefaultEffect() = mDefaultEffect
 
     private fun initEncodeProcessor() {
         releaseEncodeProcessor()
@@ -520,7 +520,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         internal var cameraRequest: CameraRequest? = null
         internal var enableGLEs: Boolean = true
         internal var camera: ICameraStrategy? = null
-        internal var defaultFilter: AbstractFilter? = null
+        internal var defaultEffect: AbstractEffect? = null
         internal var videoEncodeBitRate: Int? = null
         internal var videoEncodeFrameRate: Int? = null
         internal var defaultRotateType: RotateType? = null
@@ -564,14 +564,14 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         }
 
         /**
-         * Set default filter
+         * Set default effect
          * <p>
-         * @param filter default filter,
-         *  see [com.jiangdg.media.render.filter.FilterBlackWhite], [com.jiangdg.media.render.filter.FilterZoom] etc.
+         * @param effect default effect,
+         *  see [com.jiangdg.media.render.effect.EffectBlackWhite], [com.jiangdg.media.render.effect.EffectZoom] etc.
          * @return [CameraClient.Builder]
          */
-        fun setDefaultFilter(filter: AbstractFilter): Builder {
-            this.defaultFilter = filter
+        fun setDefaultEffect(effect: AbstractEffect): Builder {
+            this.defaultEffect = effect
             return this
         }
 

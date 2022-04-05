@@ -5,7 +5,7 @@
     android:layout_height="114dp">
 
     <ImageView
-        android:id="@+id/filter_effect"
+        android:id="@+id/effectIv"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:layout_marginStart="8dp"
@@ -14,20 +14,20 @@
         android:layout_marginBottom="4dp" />
 
     <ImageView
-        android:id="@+id/filter_check"
+        android:id="@+id/effectCheckIv"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:layout_alignTop="@id/filter_effect"
-        android:layout_alignEnd="@id/filter_effect"
-        android:layout_alignBottom="@id/filter_effect"
-        android:layout_toStartOf="@id/filter_effect"
+        android:layout_alignTop="@id/effectIv"
+        android:layout_alignEnd="@id/effectIv"
+        android:layout_alignBottom="@id/effectIv"
+        android:layout_toStartOf="@id/effectIv"
         android:src="@mipmap/camera_icon_filter_check" />
 
     <TextView
-        android:id="@+id/filter_name"
+        android:id="@+id/effectName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/filter_effect"
+        android:layout_below="@id/effectIv"
         android:layout_centerHorizontal="true"
         android:textColor="#232325"
         android:textSize="12sp" />

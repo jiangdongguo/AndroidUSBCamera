@@ -30,8 +30,8 @@ import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.render.env.RotateType
-import com.jiangdg.media.render.filter.AbstractFilter
-import com.jiangdg.media.render.filter.FilterBlackWhite
+import com.jiangdg.media.render.effect.AbstractEffect
+import com.jiangdg.media.render.effect.EffectBlackWhite
 import com.jiangdg.media.widget.AspectRatioSurfaceView
 import com.jiangdg.media.widget.AspectRatioTextureView
 import com.jiangdg.media.widget.IAspectRatio
@@ -153,31 +153,31 @@ abstract class CameraFragment : BaseFragment() {
     protected fun getAllPreviewSizes(aspectRatio: Double? = null) = mCameraClient?.getAllPreviewSizes(aspectRatio)
 
     /**
-     * Add render filter
+     * Add render effect
      *
-     * @param filter a filter will be added, only enable opengl render worked, see [AbstractFilter]
+     * @param effect a effect will be added, only enable opengl render worked, see [AbstractEffect]
      */
-    protected fun addRenderFilter(filter: AbstractFilter) {
-        mCameraClient?.addRenderFilter(filter)
+    protected fun addRenderEffect(effect: AbstractEffect) {
+        mCameraClient?.addRenderEffect(effect)
     }
 
     /**
-     * Remove render filter
+     * Remove render effect
      *
-     * @param filter a filter will be removed, only enable opengl render worked, see [AbstractFilter]
+     * @param effect a effect will be removed, only enable opengl render worked, see [AbstractEffect]
      */
-    protected fun removeRenderFilter(filter: AbstractFilter) {
-        mCameraClient?.removeRenderFilter(filter)
+    protected fun removeRenderEffect(effect: AbstractEffect) {
+        mCameraClient?.removeRenderEffect(effect)
     }
 
     /**
-     * Update render filter
+     * Update render effect
      *
-     * @param classifyId filter classify id
-     * @param filter new filter, null means set none
+     * @param classifyId effect classify id
+     * @param effect new effect, null means set none
      */
-    protected fun updateRenderFilter(classifyId: Int, filter: AbstractFilter?) {
-        mCameraClient?.updateRenderFilter(classifyId, filter)
+    protected fun updateRenderEffect(classifyId: Int, effect: AbstractEffect?) {
+        mCameraClient?.updateRenderEffect(classifyId, effect)
     }
 
     /**
@@ -282,11 +282,11 @@ abstract class CameraFragment : BaseFragment() {
     protected fun getCurrentCameraStrategy() = mCameraClient?.getCameraStrategy()
 
     /**
-     * Get default filter
+     * Get default effect
      *
-     * @return default filter, see [AbstractFilter]
+     * @return default effect, see [AbstractEffect]
      */
-    protected fun getDefaultFilter() = mCameraClient?.getDefaultFilter()
+    protected fun getDefaultEffect() = mCameraClient?.getDefaultEffect()
 
     /**
      * Rotate camera angle
@@ -382,7 +382,7 @@ abstract class CameraFragment : BaseFragment() {
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
-            .setDefaultFilter(FilterBlackWhite(requireContext()))
+            .setDefaultEffect(EffectBlackWhite(requireContext()))
             .setCameraStrategy(Camera1Strategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .setDefaultRotateType(RotateType.ANGLE_0)

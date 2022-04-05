@@ -41,13 +41,13 @@
         style="@style/Camera2TopButtonStyle"
         android:src="@mipmap/camera_toolbar_more"
         app:layout_constraintBottom_toBottomOf="@+id/toolbarBg"
-        app:layout_constraintEnd_toStartOf="@id/filtersBtn"
+        app:layout_constraintEnd_toStartOf="@id/effects_btn"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="@id/toolbarBg"
         app:layout_constraintTop_toTopOf="@id/toolbarBg" />
 
     <ImageView
-        android:id="@+id/filtersBtn"
+        android:id="@+id/effects_btn"
         style="@style/Camera2TopButtonStyle"
         android:src="@mipmap/camera_toolbar_filter"
         app:layout_constraintBottom_toBottomOf="@+id/toolbarBg"
@@ -61,7 +61,7 @@
         android:src="@mipmap/camera_toolbar_type"
         app:layout_constraintBottom_toTopOf="@id/toolbarBottomBarrier"
         app:layout_constraintEnd_toStartOf="@id/voiceBtn"
-        app:layout_constraintStart_toEndOf="@id/filtersBtn"
+        app:layout_constraintStart_toEndOf="@id/effects_btn"
         app:layout_constraintTop_toTopOf="@id/toolbarBg"/>
 
     <ImageView
@@ -87,13 +87,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="settingsBtn,filtersBtn,cameraTypeBtn,voiceBtn,zoomBtn" />
+        app:constraint_referenced_ids="settingsBtn,@+id/effects_btn,cameraTypeBtn,voiceBtn,zoomBtn" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/toolbarGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="toolbarBottomBarrier, settingsBtn,filtersBtn,cameraTypeBtn,voiceBtn,zoomBtn"/>
+        app:constraint_referenced_ids="toolbarBottomBarrier, settingsBtn,@+id/effects_btn,cameraTypeBtn,voiceBtn,zoomBtn"/>
 
     <View
         android:id="@+id/controlPanelLayout"

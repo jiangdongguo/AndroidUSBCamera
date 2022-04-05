@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.media.render.filter
+package com.jiangdg.media.render.effect
 
 import android.content.Context
 import android.opengl.GLES20
 import com.jiangdg.media.R
-import com.jiangdg.media.render.filter.bean.CameraFilter
+import com.jiangdg.media.render.effect.bean.CameraEffect
 
-/** Soul Filter
+/** Soul effect
  *
  * @author Created by jiangdg on 2022/2/17
  */
-class FilterSoul(context: Context): AbstractFilter(context) {
+class EffectSoul(context: Context): AbstractEffect(context) {
 
     private var mTimeStampsHandler = -1
     private var mTimeCount = 0
 
     override fun getId(): Int = ID
 
-    override fun getClassifyId(): Int = CameraFilter.CLASSIFY_ID_ANIMATION
+    override fun getClassifyId(): Int = CameraEffect.CLASSIFY_ID_ANIMATION
 
     override fun init() {
         mTimeStampsHandler = GLES20.glGetUniformLocation(mProgram, "timeStamps")
@@ -46,7 +46,7 @@ class FilterSoul(context: Context): AbstractFilter(context) {
 
     override fun getVertexSourceId(): Int = R.raw.base_vertex
 
-    override fun getFragmentSourceId(): Int = R.raw.filter_soul_fragment
+    override fun getFragmentSourceId(): Int = R.raw.effect_soul_fragment
 
     companion object {
         const val ID = 200

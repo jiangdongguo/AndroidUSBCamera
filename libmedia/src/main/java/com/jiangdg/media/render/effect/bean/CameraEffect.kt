@@ -13,41 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.media.render.filter.bean
+package com.jiangdg.media.render.effect.bean
 
 import androidx.annotation.Keep
 import com.jiangdg.media.R
-import com.jiangdg.media.render.filter.AbstractFilter
+import com.jiangdg.media.render.effect.AbstractEffect
 
 /** camera filter info
  *
  * @author Created by jiangdg on 2022/3/16
  */
 @Keep
-data class CameraFilter(
+data class CameraEffect(
     val id: Int,
     val name: String,
     val classifyId: Int,
-    val filter: AbstractFilter? = null,
+    val effect: AbstractEffect? = null,
     val coverResId: Int? = null,
     val coverUrl: String? = null
 ) {
     companion object {
         val NONE_FILTER by lazy {
-            CameraFilter(
+            CameraEffect(
                 ID_NONE_FILTER,
                 NAME_NONE,
                 CLASSIFY_ID_FILTER,
-                coverResId = R.drawable.filter_none
+                coverResId = R.drawable.effect_none
             )
         }
 
         val NONE_ANIMATION by lazy {
-            CameraFilter(
+            CameraEffect(
                 ID_NONE_ANIMATION,
                 NAME_NONE,
                 CLASSIFY_ID_ANIMATION,
-                coverResId = R.drawable.filter_none
+                coverResId = R.drawable.effect_none
             )
         }
 

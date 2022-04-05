@@ -34,7 +34,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.render.env.RotateType
-import com.jiangdg.media.render.filter.AbstractFilter
+import com.jiangdg.media.render.effect.AbstractEffect
 import com.jiangdg.media.render.internal.*
 import com.jiangdg.media.utils.*
 import com.jiangdg.media.utils.bus.BusKey
@@ -73,8 +73,8 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     private var mHeight: Int = 0
     private var mFBOId: Int = 0
     private var mContext: Context = context
-    private var mFilterList = arrayListOf<AbstractFilter>()
-    private var mCacheFilterList = arrayListOf<AbstractFilter>()
+    private var mEffectList = arrayListOf<AbstractEffect>()
+    private var mCacheEffectList = arrayListOf<AbstractEffect>()
     private var mCaptureDataCb: ICaptureCallBack? = null
     private var mPreviewDataCb: IPreviewDataCallBack? = null
     private var mFrameRate = 0
@@ -167,12 +167,12 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 mCameraRender?.drawFrame(mTextureId)
                 // 滤镜、渲染处理
                 mCameraRender?.getFboTextureId()?.let { fboId ->
-                    var filterId = fboId
-                    mFilterList.forEach { filterRender ->
-                        filterRender.drawFrame(filterId)
-                        filterId = filterRender.getFboTextureId()
+                    var effectId = fboId
+                    mEffectList.forEach { effectRender ->
+                        effectRender.drawFrame(effectId)
+                        effectId = effectRender.getFboTextureId()
                     }
-                    filterId
+                    effectId
                 }?.also { id ->
                     mScreenRender?.drawFrame(id)
                     drawFrame2Capture(id)
@@ -180,35 +180,35 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                     mScreenRender?.swapBuffers(mCameraSurfaceTexture?.timestamp ?: 0)
                 }
             }
-            MSG_GL_ADD_FILTER -> {
-                (msg.obj as? AbstractFilter)?.let { filter->
-                    if (mFilterList.contains(filter)) {
+            MSG_GL_ADD_EFFECT -> {
+                (msg.obj as? AbstractEffect)?.let { effect->
+                    if (mEffectList.contains(effect)) {
                         return@let
                     }
-                    filter.initGLES()
-                    filter.setSize(mWidth, mHeight)
-                    mFilterList.add(filter)
-                    mCacheFilterList.add(filter)
-                    Logger.i(TAG, "add filter, name = ${filter.javaClass.simpleName}, size = ${mFilterList.size}")
+                    effect.initGLES()
+                    effect.setSize(mWidth, mHeight)
+                    mEffectList.add(effect)
+                    mCacheEffectList.add(effect)
+                    Logger.i(TAG, "add effect, name = ${effect.javaClass.simpleName}, size = ${mEffectList.size}")
                 }
             }
-            MSG_GL_REMOVE_FILTER -> {
-                (msg.obj as? AbstractFilter)?.let {
-                    if (! mFilterList.contains(it)) {
+            MSG_GL_REMOVE_EFFECT -> {
+                (msg.obj as? AbstractEffect)?.let {
+                    if (! mEffectList.contains(it)) {
                         return@let
                     }
                     it.releaseGLES()
-                    mFilterList.remove(it)
-                    mCacheFilterList.remove(it)
-                    Logger.i(TAG, "remove filter, name = ${it.javaClass.simpleName}, size = ${mFilterList.size}")
+                    mEffectList.remove(it)
+                    mCacheEffectList.remove(it)
+                    Logger.i(TAG, "remove effect, name = ${it.javaClass.simpleName}, size = ${mEffectList.size}")
                 }
             }
             MSG_GL_RELEASE -> {
                 EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).postMessage(false)
-                mFilterList.forEach { filter ->
-                    filter.releaseGLES()
+                mEffectList.forEach { effect ->
+                    effect.releaseGLES()
                 }
-                mFilterList.clear()
+                mEffectList.clear()
                 mCameraRender?.releaseGLES()
                 mScreenRender?.releaseGLES()
                 mCaptureRender?.releaseGLES()
@@ -291,21 +291,21 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     }
 
     /**
-     * Add render filter
+     * Add render effect
      *
-     * @param filter add a filter, see [AbstractFilter]
+     * @param effect add a effect, see [AbstractEffect]
      */
-    fun addRenderFilter(filter: AbstractFilter?) {
-        mRenderHandler?.obtainMessage(MSG_GL_ADD_FILTER, filter)?.sendToTarget()
+    fun addRenderEffect(effect: AbstractEffect?) {
+        mRenderHandler?.obtainMessage(MSG_GL_ADD_EFFECT, effect)?.sendToTarget()
     }
 
     /**
-     * Remove render filter
+     * Remove render effect
      *
-     * @param filter a filter removed, see [AbstractFilter]
+     * @param effect a effect removed, see [AbstractEffect]
      */
-    fun removeRenderFilter(filter: AbstractFilter?) {
-        mRenderHandler?.obtainMessage(MSG_GL_REMOVE_FILTER, filter)?.sendToTarget()
+    fun removeRenderEffect(effect: AbstractEffect?) {
+        mRenderHandler?.obtainMessage(MSG_GL_REMOVE_EFFECT, effect)?.sendToTarget()
     }
 
     /**
@@ -319,10 +319,10 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     }
 
     /**
-     * Get cache render filter list
-     * @return current filters
+     * Get cache render effect list
+     * @return current effects
      */
-    fun getCacheFilterList() = mCacheFilterList
+    fun getCacheEffectList() = mCacheEffectList
 
     /**
      * Save image
@@ -537,8 +537,8 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         private const val MSG_GL_START_RENDER_CODEC = 0x03
         private const val MSG_GL_STOP_RENDER_CODEC = 0x04
         private const val MSG_GL_CHANGED_SIZE = 0x05
-        private const val MSG_GL_ADD_FILTER = 0x06
-        private const val MSG_GL_REMOVE_FILTER = 0x07
+        private const val MSG_GL_ADD_EFFECT = 0x06
+        private const val MSG_GL_REMOVE_EFFECT = 0x07
         private const val MSG_GL_SAVE_IMAGE = 0x08
         private const val MSG_GL_ROUTE_ANGLE = 0x09
 

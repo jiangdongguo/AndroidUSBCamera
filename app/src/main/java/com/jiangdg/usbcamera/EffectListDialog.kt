@@ -28,29 +28,27 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.jiangdg.media.base.BaseDialog
-import com.jiangdg.media.render.filter.bean.CameraFilter
-import com.jiangdg.media.utils.Logger
+import com.jiangdg.media.render.effect.bean.CameraEffect
 import com.jiangdg.media.utils.MMKVUtils
-import com.jiangdg.media.utils.ToastUtils
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.media.utils.imageloader.ImageLoaders
 
-/** Filter list dialog
+/** Effect list dialog
  *
  * @author Created by jiangdg on 2022/2/8
  */
 @SuppressLint("NotifyDataSetChanged")
-class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthRatio = 1f),
+class EffectListDialog(activity: Activity) : BaseDialog(activity, portraitWidthRatio = 1f),
     View.OnClickListener {
-    private var mListener: OnFilterClickListener? = null
-    private var mAdapter: FilterListAdapter? = null
+    private var mListener: OnEffectClickListener? = null
+    private var mAdapter: EffectListAdapter? = null
     private var mRecyclerView: RecyclerView? = null
     private var mFilterTabBtn: TextView? = null
     private var mAnimTabBtn: TextView? = null
-    private var mFilterList: ArrayList<CameraFilter> = ArrayList()
-    private val mFilterMap = HashMap<Int, List<CameraFilter>>()
+    private var mEffectList: ArrayList<CameraEffect> = ArrayList()
+    private val mEffectMap = HashMap<Int, List<CameraEffect>>()
 
-    override fun getContentLayoutId(): Int = R.layout.dialog_filters
+    override fun getContentLayoutId(): Int = R.layout.dialog_effects
 
     init {
         mDialog.window?.let {
@@ -68,14 +66,14 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
         setCanceledOnTouchOutside(true)
         setCancelable(true)
         // recycler view
-        mAdapter = FilterListAdapter().apply {
+        mAdapter = EffectListAdapter().apply {
             setOnItemChildClickListener { _, _, position ->
                 data.getOrNull(position)?.let {
-                    if (getCurrFilter()?.id == it.id) {
+                    if (getCurrEffect()?.id == it.id) {
                         return@setOnItemChildClickListener
                     }
-                    setCurrFilter(it)
-                    mListener?.onFilterClick(it)
+                    setCurrEffect(it)
+                    mListener?.onEffectClick(it)
                     notifyDataSetChanged()
                 }
             }
@@ -90,21 +88,21 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
         mRecyclerView?.adapter = mAdapter
     }
 
-    fun setData(list: List<CameraFilter>, listener: OnFilterClickListener) {
+    fun setData(list: List<CameraEffect>, listener: OnEffectClickListener) {
         mListener = listener
-        mFilterList.clear()
-        mFilterList.addAll(list)
-        initFilterData()
+        mEffectList.clear()
+        mEffectList.addAll(list)
+        initEffectData()
         initEffectTabs()
     }
 
-    private fun getCurFilterId() = MMKVUtils.getInt(KEY_FILTER, CameraFilter.ID_NONE_FILTER)
+    private fun getCurFilterId() = MMKVUtils.getInt(KEY_FILTER, CameraEffect.ID_NONE_FILTER)
 
-    private fun getCurAnimationId() = MMKVUtils.getInt(KEY_ANIMATION, CameraFilter.ID_NONE_ANIMATION)
+    private fun getCurAnimationId() = MMKVUtils.getInt(KEY_ANIMATION, CameraEffect.ID_NONE_ANIMATION)
 
     private fun initEffectTabs() {
         getCurAnimationId().let { curAnimId ->
-            if (curAnimId != CameraFilter.ID_NONE_ANIMATION) {
+            if (curAnimId != CameraEffect.ID_NONE_ANIMATION) {
                 mAnimTabBtn?.typeface = Typeface.DEFAULT_BOLD
                 mAnimTabBtn?.setTextColor(getDialog().context.resources.getColor(R.color.black))
                 mAnimTabBtn?.setCompoundDrawablesWithIntrinsicBounds(
@@ -121,8 +119,8 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
                     0,
                     R.drawable.ic_tab_line_white
                 )
-                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION])
-                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == curAnimId })
+                mAdapter?.setNewData(mEffectMap[CameraEffect.CLASSIFY_ID_ANIMATION])
+                mAdapter?.setCurrEffect(mAdapter?.data?.find { it.id == curAnimId })
                 return
             }
         }
@@ -143,28 +141,28 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
             0,
             R.drawable.ic_tab_line_white
         )
-        mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_FILTER])
-        mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == curFilterId })
+        mAdapter?.setNewData(mEffectMap[CameraEffect.CLASSIFY_ID_FILTER])
+        mAdapter?.setCurrEffect(mAdapter?.data?.find { it.id == curFilterId })
     }
 
-    private fun initFilterData() {
+    private fun initEffectData() {
         // filter list
-        mFilterList.filter {
-            it.classifyId == CameraFilter.CLASSIFY_ID_FILTER
+        mEffectList.filter {
+            it.classifyId == CameraEffect.CLASSIFY_ID_FILTER
         }.let {
-            val list = ArrayList<CameraFilter>().apply {
+            val list = ArrayList<CameraEffect>().apply {
                 addAll(it)
             }
-            mFilterMap[CameraFilter.CLASSIFY_ID_FILTER] = list
+            mEffectMap[CameraEffect.CLASSIFY_ID_FILTER] = list
         }
         // animation list
-        mFilterList.filter {
-            it.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION
+        mEffectList.filter {
+            it.classifyId == CameraEffect.CLASSIFY_ID_ANIMATION
         }.let {
-            val list = ArrayList<CameraFilter>().apply {
+            val list = ArrayList<CameraEffect>().apply {
                 addAll(it)
             }
-            mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION] = list
+            mEffectMap[CameraEffect.CLASSIFY_ID_ANIMATION] = list
         }
     }
 
@@ -187,8 +185,8 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
                     0,
                     R.drawable.ic_tab_line_white
                 )
-                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_FILTER])
-                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == getCurFilterId() })
+                mAdapter?.setNewData(mEffectMap[CameraEffect.CLASSIFY_ID_FILTER])
+                mAdapter?.setCurrEffect(mAdapter?.data?.find { it.id == getCurFilterId() })
             }
             R.id.tabAnimBtn -> {
                 mAnimTabBtn?.typeface = Typeface.DEFAULT_BOLD
@@ -207,16 +205,16 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
                     0,
                     R.drawable.ic_tab_line_white
                 )
-                mAdapter?.setNewData(mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION])
-                mAdapter?.setCurrFilter(mAdapter?.data?.find { it.id == getCurAnimationId() })
+                mAdapter?.setNewData(mEffectMap[CameraEffect.CLASSIFY_ID_ANIMATION])
+                mAdapter?.setCurrEffect(mAdapter?.data?.find { it.id == getCurAnimationId() })
             }
             else -> {
             }
         }
     }
 
-    interface OnFilterClickListener {
-        fun onFilterClick(filter: CameraFilter)
+    interface OnEffectClickListener {
+        fun onEffectClick(effect: CameraEffect)
     }
 
     companion object {
@@ -225,14 +223,14 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
     }
 }
 
-private class FilterListAdapter :
-    BaseQuickAdapter<CameraFilter, BaseViewHolder>(R.layout.dialog_filter_item) {
+private class EffectListAdapter :
+    BaseQuickAdapter<CameraEffect, BaseViewHolder>(R.layout.dialog_effect_item) {
 
-    private var mCurrFilter: CameraFilter? = null
+    private var mCurrEffect: CameraEffect? = null
 
-    fun setCurrFilter(effect: CameraFilter?) {
-        val oldPosition = getPosition(mCurrFilter)
-        mCurrFilter = effect
+    fun setCurrEffect(effect: CameraEffect?) {
+        val oldPosition = getPosition(mCurrEffect)
+        mCurrEffect = effect
         val newPosition = getPosition(effect)
         if (oldPosition != newPosition) {
             if (oldPosition != -1) {
@@ -244,13 +242,13 @@ private class FilterListAdapter :
         }
     }
 
-    fun getCurrFilter(): CameraFilter? = mCurrFilter
+    fun getCurrEffect(): CameraEffect? = mCurrEffect
 
-    private fun getPosition(cameraFilter: CameraFilter?): Int {
+    private fun getPosition(cameraEffect: CameraEffect?): Int {
         var position = -1
-        cameraFilter ?: return position
+        cameraEffect ?: return position
         data.forEachIndexed { index, filter ->
-            if (filter.id == cameraFilter.id) {
+            if (filter.id == cameraEffect.id) {
                 position = index
                 return@forEachIndexed
             }
@@ -258,21 +256,21 @@ private class FilterListAdapter :
         return position
     }
 
-    override fun convert(helper: BaseViewHolder, item: CameraFilter) {
-        helper.setText(R.id.filter_name, item.name)
-        helper.getView<ImageView>(R.id.filter_effect).also {
+    override fun convert(helper: BaseViewHolder, item: CameraEffect) {
+        helper.setText(R.id.effectName, item.name)
+        helper.getView<ImageView>(R.id.effectIv).also {
             item.coverResId?.apply {
-                ImageLoaders.of(mContext).loadCircle(it, this, R.drawable.filter_none)
+                ImageLoaders.of(mContext).loadCircle(it, this, R.drawable.effect_none)
                 return@also
             }
-            ImageLoaders.of(mContext).loadCircle(it, item.coverUrl, R.drawable.filter_none)
+            ImageLoaders.of(mContext).loadCircle(it, item.coverUrl, R.drawable.effect_none)
         }
-        helper.addOnClickListener(R.id.filter_effect)
+        helper.addOnClickListener(R.id.effectIv)
         // update check status
-        (mCurrFilter?.id == item.id).let { isCheck ->
+        (mCurrEffect?.id == item.id).let { isCheck ->
             val textColor = if (isCheck) 0xFF2E5BFF else 0xFF232325
-            helper.setTextColor(R.id.filter_name, textColor.toInt())
-            helper.setVisible(R.id.filter_check, isCheck)
+            helper.setTextColor(R.id.effectName, textColor.toInt())
+            helper.setVisible(R.id.effectCheckIv, isCheck)
         }
 
     }

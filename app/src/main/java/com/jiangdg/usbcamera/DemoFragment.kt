@@ -45,18 +45,18 @@ import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.Camera2Strategy
 import com.jiangdg.media.camera.CameraUvcStrategy
-import com.jiangdg.media.render.filter.FilterBlackWhite
-import com.jiangdg.media.render.filter.FilterSoul
-import com.jiangdg.media.render.filter.FilterZoom
-import com.jiangdg.media.render.filter.bean.CameraFilter
+import com.jiangdg.media.render.effect.EffectBlackWhite
+import com.jiangdg.media.render.effect.EffectSoul
+import com.jiangdg.media.render.effect.EffectZoom
+import com.jiangdg.media.render.effect.bean.CameraEffect
 import com.jiangdg.media.utils.*
 import com.jiangdg.media.utils.bus.BusKey
 import com.jiangdg.media.utils.bus.EventBus
 import com.jiangdg.media.utils.imageloader.ILoader
 import com.jiangdg.media.utils.imageloader.ImageLoaders
 import com.jiangdg.media.widget.*
-import com.jiangdg.usbcamera.FilterListDialog.Companion.KEY_ANIMATION
-import com.jiangdg.usbcamera.FilterListDialog.Companion.KEY_FILTER
+import com.jiangdg.usbcamera.EffectListDialog.Companion.KEY_ANIMATION
+import com.jiangdg.usbcamera.EffectListDialog.Companion.KEY_FILTER
 import com.jiangdg.usbcamera.databinding.DialogMoreBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,29 +82,29 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO to R.id.recordAudioModeTv
     )
 
-    private val mFilterDataList by lazy {
+    private val mEffectDataList by lazy {
         arrayListOf(
-            CameraFilter.NONE_FILTER,
-            CameraFilter(
-                FilterBlackWhite.ID,
+            CameraEffect.NONE_FILTER,
+            CameraEffect(
+                EffectBlackWhite.ID,
                 "BlackWhite",
-                CameraFilter.CLASSIFY_ID_FILTER,
-                filter = FilterBlackWhite(requireActivity()),
+                CameraEffect.CLASSIFY_ID_FILTER,
+                effect = EffectBlackWhite(requireActivity()),
                 coverResId = R.mipmap.filter0
             ),
-            CameraFilter.NONE_ANIMATION,
-            CameraFilter(
-                FilterZoom.ID,
+            CameraEffect.NONE_ANIMATION,
+            CameraEffect(
+                EffectZoom.ID,
                 "Zoom",
-                CameraFilter.CLASSIFY_ID_ANIMATION,
-                filter = FilterZoom(requireActivity()),
+                CameraEffect.CLASSIFY_ID_ANIMATION,
+                effect = EffectZoom(requireActivity()),
                 coverResId = R.mipmap.filter2
             ),
-            CameraFilter(
-                FilterSoul.ID,
+            CameraEffect(
+                EffectSoul.ID,
                 "Soul",
-                CameraFilter.CLASSIFY_ID_ANIMATION,
-                filter = FilterSoul(requireActivity()),
+                CameraEffect.CLASSIFY_ID_ANIMATION,
+                effect = EffectSoul(requireActivity()),
                 coverResId = R.mipmap.filter1
             ),
         )
@@ -145,7 +145,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     override fun initView() {
         super.initView()
         mViewBinding.lensFacingBtn1.setOnClickListener(this)
-        mViewBinding.filtersBtn.setOnClickListener(this)
+        mViewBinding.effectsBtn.setOnClickListener(this)
         mViewBinding.cameraTypeBtn.setOnClickListener(this)
         mViewBinding.settingsBtn.setOnClickListener(this)
         mViewBinding.voiceBtn.setOnClickListener(this)
@@ -172,56 +172,56 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
         EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).observe(this, { ready ->
             if (! ready) return@observe
-            getDefaultFilter()?.apply {
+            getDefaultEffect()?.apply {
                 when(getClassifyId()) {
-                    CameraFilter.CLASSIFY_ID_FILTER -> {
+                    CameraEffect.CLASSIFY_ID_FILTER -> {
                         // check if need to set anim
                         val animId = MMKVUtils.getInt(KEY_ANIMATION, -99)
                         if (animId != -99) {
-                            mFilterDataList.find {
+                            mEffectDataList.find {
                                 it.id == animId
                             }?.also {
-                                if (it.filter != null) {
-                                    addRenderFilter(it.filter!!)
+                                if (it.effect != null) {
+                                    addRenderEffect(it.effect!!)
                                 }
                             }
                         }
-                        // set filter
+                        // set effect
                         val filterId = MMKVUtils.getInt(KEY_FILTER, -99)
                         if (filterId != -99) {
-                            removeRenderFilter(this)
-                            mFilterDataList.find {
+                            removeRenderEffect(this)
+                            mEffectDataList.find {
                                 it.id == filterId
                             }?.also {
-                                if (it.filter != null) {
-                                    addRenderFilter(it.filter!!)
+                                if (it.effect != null) {
+                                    addRenderEffect(it.effect!!)
                                 }
                             }
                             return@apply
                         }
                         MMKVUtils.set(KEY_FILTER, getId())
                     }
-                    CameraFilter.CLASSIFY_ID_ANIMATION -> {
+                    CameraEffect.CLASSIFY_ID_ANIMATION -> {
                         // check if need to set filter
                         val filterId = MMKVUtils.getInt(KEY_ANIMATION, -99)
                         if (filterId != -99) {
-                            mFilterDataList.find {
+                            mEffectDataList.find {
                                 it.id == filterId
                             }?.also {
-                                if (it.filter != null) {
-                                    addRenderFilter(it.filter!!)
+                                if (it.effect != null) {
+                                    addRenderEffect(it.effect!!)
                                 }
                             }
                         }
                         // set anim
                         val animId = MMKVUtils.getInt(KEY_ANIMATION, -99)
                         if (animId != -99) {
-                            removeRenderFilter(this)
-                            mFilterDataList.find {
+                            removeRenderEffect(this)
+                            mEffectDataList.find {
                                 it.id == animId
                             }?.also {
-                                if (it.filter != null) {
-                                    addRenderFilter(it.filter!!)
+                                if (it.effect != null) {
+                                    addRenderEffect(it.effect!!)
                                 }
                             }
                             return@apply
@@ -395,8 +395,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     mViewBinding.lensFacingBtn1 -> {
                         switchCamera()
                     }
-                    mViewBinding.filtersBtn -> {
-                        showFilterDialog()
+                    mViewBinding.effectsBtn -> {
+                        showEffectDialog()
                     }
                     mViewBinding.cameraTypeBtn -> {
                         showCameraTypeDialog()
@@ -432,23 +432,23 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         })
     }
 
-    private fun showFilterDialog() {
-        FilterListDialog(requireActivity()).apply {
-            setData(mFilterDataList, object : FilterListDialog.OnFilterClickListener {
-                override fun onFilterClick(filter: CameraFilter) {
-                    mFilterDataList.find {it.id == filter.id}.also {
+    private fun showEffectDialog() {
+        EffectListDialog(requireActivity()).apply {
+            setData(mEffectDataList, object : EffectListDialog.OnEffectClickListener {
+                override fun onEffectClick(effect: CameraEffect) {
+                    mEffectDataList.find {it.id == effect.id}.also {
                         if (it == null) {
-                            ToastUtils.show("set filter failed!")
+                            ToastUtils.show("set effect failed!")
                             return@also
                         }
-                        updateRenderFilter(it.classifyId, it.filter)
+                        updateRenderEffect(it.classifyId, it.effect)
                         // save to sp
-                        if (filter.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION) {
+                        if (effect.classifyId == CameraEffect.CLASSIFY_ID_ANIMATION) {
                             KEY_ANIMATION
                         } else {
                             KEY_FILTER
                         }.also { key ->
-                            MMKVUtils.set(key, filter.id)
+                            MMKVUtils.set(key, effect.id)
                         }
                     }
                 }
