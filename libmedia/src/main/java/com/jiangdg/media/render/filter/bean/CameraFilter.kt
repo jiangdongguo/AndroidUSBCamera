@@ -18,9 +18,6 @@ package com.jiangdg.media.render.filter.bean
 import androidx.annotation.Keep
 import com.jiangdg.media.R
 import com.jiangdg.media.render.filter.AbstractFilter
-import com.jiangdg.media.render.filter.FilterBlackWhite
-import com.jiangdg.media.render.filter.FilterSoul
-import com.jiangdg.media.render.filter.FilterZoom
 
 /** camera filter info
  *

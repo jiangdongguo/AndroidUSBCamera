@@ -81,11 +81,34 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO to R.id.recordVideoModeTv,
         CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO to R.id.recordAudioModeTv
     )
-    private val mFilterData = arrayListOf(
-        FilterBlackWhite.cameraFilter,
-        FilterZoom.cameraFilter,
-        FilterSoul.cameraFilter
-    )
+
+    private val mFilterDataList by lazy {
+        arrayListOf(
+            CameraFilter.NONE_FILTER,
+            CameraFilter(
+                FilterBlackWhite.ID,
+                "BlackWhite",
+                CameraFilter.CLASSIFY_ID_FILTER,
+                filter = FilterBlackWhite(requireActivity()),
+                coverResId = R.mipmap.filter0
+            ),
+            CameraFilter.NONE_ANIMATION,
+            CameraFilter(
+                FilterZoom.ID,
+                "Zoom",
+                CameraFilter.CLASSIFY_ID_ANIMATION,
+                filter = FilterZoom(requireActivity()),
+                coverResId = R.mipmap.filter2
+            ),
+            CameraFilter(
+                FilterSoul.ID,
+                "Soul",
+                CameraFilter.CLASSIFY_ID_ANIMATION,
+                filter = FilterSoul(requireActivity()),
+                coverResId = R.mipmap.filter1
+            ),
+        )
+    }
 
     private val mTakePictureTipView: TipView by lazy {
         mViewBinding.takePictureTipViewStub.inflate() as TipView
@@ -138,7 +161,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         EventBus.with<Int>(BusKey.KEY_FRAME_RATE).observe(this, {
             mViewBinding.frameRateTv.text = "frame rate:  $it fps"
         })
-        // init status
+
         getCurrentCameraStrategy().apply {
             mViewBinding.uvcLogoIv.visibility = if (this is CameraUvcStrategy) {
                 View.VISIBLE
@@ -146,13 +169,69 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 View.GONE
             }
         }
-        getDefaultFilter()?.apply {
-            when(getClassifyId()) {
-                CameraFilter.CLASSIFY_ID_FILTER ->MMKVUtils.set(KEY_FILTER, getId())
-                CameraFilter.CLASSIFY_ID_ANIMATION -> MMKVUtils.set(KEY_ANIMATION, getId())
-                else -> throw IllegalStateException("Unsupported classify")
+
+        EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).observe(this, { ready ->
+            if (! ready) return@observe
+            getDefaultFilter()?.apply {
+                when(getClassifyId()) {
+                    CameraFilter.CLASSIFY_ID_FILTER -> {
+                        // check if need to set anim
+                        val animId = MMKVUtils.getInt(KEY_ANIMATION, -99)
+                        if (animId != -99) {
+                            mFilterDataList.find {
+                                it.id == animId
+                            }?.also {
+                                if (it.filter != null) {
+                                    addRenderFilter(it.filter!!)
+                                }
+                            }
+                        }
+                        // set filter
+                        val filterId = MMKVUtils.getInt(KEY_FILTER, -99)
+                        if (filterId != -99) {
+                            removeRenderFilter(this)
+                            mFilterDataList.find {
+                                it.id == filterId
+                            }?.also {
+                                if (it.filter != null) {
+                                    addRenderFilter(it.filter!!)
+                                }
+                            }
+                            return@apply
+                        }
+                        MMKVUtils.set(KEY_FILTER, getId())
+                    }
+                    CameraFilter.CLASSIFY_ID_ANIMATION -> {
+                        // check if need to set filter
+                        val filterId = MMKVUtils.getInt(KEY_ANIMATION, -99)
+                        if (filterId != -99) {
+                            mFilterDataList.find {
+                                it.id == filterId
+                            }?.also {
+                                if (it.filter != null) {
+                                    addRenderFilter(it.filter!!)
+                                }
+                            }
+                        }
+                        // set anim
+                        val animId = MMKVUtils.getInt(KEY_ANIMATION, -99)
+                        if (animId != -99) {
+                            removeRenderFilter(this)
+                            mFilterDataList.find {
+                                it.id == animId
+                            }?.also {
+                                if (it.filter != null) {
+                                    addRenderFilter(it.filter!!)
+                                }
+                            }
+                            return@apply
+                        }
+                        MMKVUtils.set(KEY_ANIMATION, getId())
+                    }
+                    else -> throw IllegalStateException("Unsupported classify")
+                }
             }
-        }
+        })
     }
 
     private fun switchLayoutClick() {
@@ -355,19 +434,23 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
     private fun showFilterDialog() {
         FilterListDialog(requireActivity()).apply {
-            setData(mFilterData, object : FilterListDialog.OnFilterClickListener {
+            setData(mFilterDataList, object : FilterListDialog.OnFilterClickListener {
                 override fun onFilterClick(filter: CameraFilter) {
-                    if (filter.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION) {
-                        KEY_ANIMATION
-                    } else {
-                        KEY_FILTER
-                    }.also { key ->
-                        MMKVUtils.set(key, filter.id)
+                    mFilterDataList.find {it.id == filter.id}.also {
+                        if (it == null) {
+                            ToastUtils.show("set filter failed!")
+                            return@also
+                        }
+                        updateRenderFilter(it.classifyId, it.filter)
+                        // save to sp
+                        if (filter.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION) {
+                            KEY_ANIMATION
+                        } else {
+                            KEY_FILTER
+                        }.also { key ->
+                            MMKVUtils.set(key, filter.id)
+                        }
                     }
-                    // make the settings take effect
-//                    mFilterData.find {it.id == filter.id}.also {
-//                        updateRenderFilter(filter.classifyId)
-//                    }
                 }
             })
             show()
@@ -698,27 +781,3 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         private const val WHAT_STOP_TIMER = 0x01
     }
 }
-
-val FilterBlackWhite.Companion.cameraFilter: CameraFilter
-    get() = CameraFilter(
-        ID,
-        "BlackWhite",
-        CameraFilter.CLASSIFY_ID_FILTER,
-        coverResId = R.mipmap.filter0
-    )
-
-val FilterSoul.Companion.cameraFilter: CameraFilter
-    get() = CameraFilter(
-        ID,
-        "Soul",
-        CameraFilter.CLASSIFY_ID_ANIMATION,
-        coverResId = R.mipmap.filter1
-    )
-
-val FilterZoom.Companion.cameraFilter: CameraFilter
-    get() = CameraFilter(
-        ID,
-        "Zoom",
-        CameraFilter.CLASSIFY_ID_ANIMATION,
-        coverResId = R.mipmap.filter2
-    )

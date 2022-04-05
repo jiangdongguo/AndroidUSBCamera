@@ -40,7 +40,6 @@ import com.jiangdg.media.encode.muxer.Mp4Muxer
 import com.jiangdg.media.render.RenderManager
 import com.jiangdg.media.render.env.RotateType
 import com.jiangdg.media.render.filter.AbstractFilter
-import com.jiangdg.media.render.filter.bean.CameraFilter
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
 import com.jiangdg.media.widget.AspectRatioSurfaceView
@@ -215,7 +214,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     /**
-     * Add render filter
+     * Add render filter.There is only one setting in the same category
      * <p>
      * The default filters:
      * @see [com.jiangdg.media.render.filter.FilterBlackWhite]

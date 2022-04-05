@@ -126,6 +126,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                     mCameraRender?.initGLES()
                     mScreenRender?.initGLES()
                     mCaptureRender?.initGLES()
+                    EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).postMessage(true)
                 }
             }
             MSG_GL_CHANGED_SIZE -> {
@@ -180,15 +181,15 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 }
             }
             MSG_GL_ADD_FILTER -> {
-                (msg.obj as? AbstractFilter)?.let {
-                    if (mFilterList.contains(it)) {
+                (msg.obj as? AbstractFilter)?.let { filter->
+                    if (mFilterList.contains(filter)) {
                         return@let
                     }
-                    it.initGLES()
-                    it.setSize(mWidth, mHeight)
-                    mFilterList.add(it)
-                    mCacheFilterList.add(it)
-                    Logger.i(TAG, "add filter, name = ${it.javaClass.simpleName}, size = ${mFilterList.size}")
+                    filter.initGLES()
+                    filter.setSize(mWidth, mHeight)
+                    mFilterList.add(filter)
+                    mCacheFilterList.add(filter)
+                    Logger.i(TAG, "add filter, name = ${filter.javaClass.simpleName}, size = ${mFilterList.size}")
                 }
             }
             MSG_GL_REMOVE_FILTER -> {
@@ -203,6 +204,7 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 }
             }
             MSG_GL_RELEASE -> {
+                EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).postMessage(false)
                 mFilterList.forEach { filter ->
                     filter.releaseGLES()
                 }

@@ -153,7 +153,6 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
             it.classifyId == CameraFilter.CLASSIFY_ID_FILTER
         }.let {
             val list = ArrayList<CameraFilter>().apply {
-                add(CameraFilter.NONE_FILTER)
                 addAll(it)
             }
             mFilterMap[CameraFilter.CLASSIFY_ID_FILTER] = list
@@ -163,7 +162,6 @@ class FilterListDialog(activity: Activity) : BaseDialog(activity, portraitWidthR
             it.classifyId == CameraFilter.CLASSIFY_ID_ANIMATION
         }.let {
             val list = ArrayList<CameraFilter>().apply {
-                add(CameraFilter.NONE_ANIMATION)
                 addAll(it)
             }
             mFilterMap[CameraFilter.CLASSIFY_ID_ANIMATION] = list

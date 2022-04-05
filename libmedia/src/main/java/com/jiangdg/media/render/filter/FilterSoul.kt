@@ -16,6 +16,8 @@
 package com.jiangdg.media.render.filter
 
 import android.content.Context
+import android.opengl.GLES20
+import com.jiangdg.media.R
 import com.jiangdg.media.render.filter.bean.CameraFilter
 
 /** Soul Filter
@@ -24,25 +26,27 @@ import com.jiangdg.media.render.filter.bean.CameraFilter
  */
 class FilterSoul(context: Context): AbstractFilter(context) {
 
-    override fun init() {
-        super.init()
-    }
+    private var mTimeStampsHandler = -1
+    private var mTimeCount = 0
 
     override fun getId(): Int = ID
 
     override fun getClassifyId(): Int = CameraFilter.CLASSIFY_ID_ANIMATION
 
+    override fun init() {
+        mTimeStampsHandler = GLES20.glGetUniformLocation(mProgram, "timeStamps")
+    }
+
     override fun beforeDraw() {
-        super.beforeDraw()
+        if (mTimeCount > 65535) {
+            mTimeCount = 0
+        }
+        GLES20.glUniform1f(mTimeStampsHandler, (++mTimeCount % 9).toFloat())
     }
 
-    override fun getVertexSourceId(): Int {
-        TODO("Not yet implemented")
-    }
+    override fun getVertexSourceId(): Int = R.raw.base_vertex
 
-    override fun getFragmentSourceId(): Int {
-        TODO("Not yet implemented")
-    }
+    override fun getFragmentSourceId(): Int = R.raw.filter_soul_fragment
 
     companion object {
         const val ID = 200
