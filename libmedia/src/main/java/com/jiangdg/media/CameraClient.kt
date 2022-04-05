@@ -31,7 +31,6 @@ import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.*
 import com.jiangdg.media.camera.bean.CameraRequest
 import com.jiangdg.media.camera.bean.PreviewSize
-import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.encode.AACEncodeProcessor
 import com.jiangdg.media.encode.AbstractProcessor
 import com.jiangdg.media.encode.H264EncodeProcessor
@@ -103,7 +102,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      *
      * @param cameraView camera render view, null means offscreen render
      */
-    fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false, callback: ICameraCallBack? = null) {
+    fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false) {
         Logger.i(TAG, "start open camera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
         val previewWidth = mRequest!!.previewWidth
@@ -113,7 +112,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
-                        mCamera?.startPreview(mRequest!!, cameraView.holder, callback)
+                        mCamera?.startPreview(mRequest!!, cameraView.holder)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
@@ -123,7 +122,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
-                        mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture, callback)
+                        mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
@@ -144,7 +143,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                 val listener = object : RenderManager.CameraSurfaceTextureListener {
                     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                         surfaceTexture?.let {
-                            mCamera?.startPreview(mRequest!!, it, callback)
+                            mCamera?.startPreview(mRequest!!, it)
                         }
                     }
                 }

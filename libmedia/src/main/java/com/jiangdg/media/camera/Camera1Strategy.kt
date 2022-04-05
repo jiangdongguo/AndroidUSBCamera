@@ -23,6 +23,7 @@ import android.hardware.Camera
 import android.provider.MediaStore
 import android.view.Surface
 import com.jiangdg.media.callback.IPreviewDataCallBack
+import com.jiangdg.media.camera.bean.CameraStatus
 import com.jiangdg.media.camera.bean.CameraV1Info
 import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.utils.Logger
@@ -182,6 +183,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         getRequest()?.let { request->
             if (! hasCameraPermission()) {
                 Logger.i(TAG, "openCamera failed, has no camera permission.")
+                postCameraStatus(CameraStatus(CameraStatus.ERROR, "no permission"))
                 return
             }
             stopPreviewInternal()
@@ -194,9 +196,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 }
             } catch (e: Exception) {
                 Logger.e(TAG, "open camera failed, err = ${e.localizedMessage}", e)
-                mMainHandler.post {
-                    mCameraCallBack?.onError(e)
-                }
+                postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
                 null
             } ?: return
             getAllPreviewSizes()
@@ -238,9 +238,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
             mCamera?.addCallbackBuffer(null)
             mCamera?.release()
             mCamera = null
-            mMainHandler.post {
-                mCameraCallBack?.onError(e)
-            }
+            postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
             return
         }
     }
@@ -249,9 +247,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         val st = getSurfaceTexture()
         val holder = getSurfaceHolder()
         if (st == null && holder == null) {
-            mMainHandler.post {
-                mCameraCallBack?.onError(IllegalStateException("SurfaceTexture or SurfaceHolder cannot be null"))
-            }
+            postCameraStatus(CameraStatus(CameraStatus.ERROR, "surface is null"))
             Logger.e(TAG, "realStartPreview failed, SurfaceTexture or SurfaceHolder cannot be null.")
             return
         }
@@ -269,15 +265,13 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 }
                 mCamera?.startPreview()
                 mIsPreviewing.set(true)
-                mMainHandler.post {
-                    mCameraCallBack?.onOpen(width, height)
-                }
+                postCameraStatus(CameraStatus(CameraStatus.START, Pair(width, height).toString()))
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "realStartPreview width =$width, height=$height")
                 }
             }
         } catch (e: Exception) {
-
+            postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
         }
     }
 
@@ -289,9 +283,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
         mCamera?.stopPreview()
         mCamera?.release()
         mCamera = null
-        mMainHandler.post {
-            mCameraCallBack?.onClose()
-        }
+        postCameraStatus(CameraStatus(CameraStatus.STOP))
         if (Utils.debugCamera) {
             Logger.i(TAG, "destroyCamera")
         }

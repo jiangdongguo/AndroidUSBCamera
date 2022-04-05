@@ -30,10 +30,12 @@ import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.bean.CameraInfo
 import com.jiangdg.media.camera.bean.CameraRequest
+import com.jiangdg.media.camera.bean.CameraStatus
 import com.jiangdg.media.camera.bean.PreviewSize
-import com.jiangdg.media.camera.callback.ICameraCallBack
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
+import com.jiangdg.media.utils.bus.BusKey
+import com.jiangdg.media.utils.bus.EventBus
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -58,8 +60,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     protected val mCameraInfoMap = hashMapOf<Int, CameraInfo>()
     protected var mIsCapturing: AtomicBoolean = AtomicBoolean(false)
     protected var mIsPreviewing: AtomicBoolean = AtomicBoolean(false)
-    protected var mCameraCallBack: ICameraCallBack? = null
-
     protected val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
@@ -120,7 +120,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      * @param renderSurface [SurfaceHolder] or [SurfaceTexture]
      */
     @Synchronized
-    fun <T> startPreview(request: CameraRequest?, renderSurface: T?, callback: ICameraCallBack?) {
+    fun <T> startPreview(request: CameraRequest?, renderSurface: T?) {
         if (mIsPreviewing.get() || mThread?.isAlive == true) {
             if (Utils.debugCamera) {
                 Logger.w(TAG, "start preview failed, already started.")
@@ -151,7 +151,6 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                 mCameraHandler?.obtainMessage(MSG_START_PREVIEW, request ?: mCameraRequest)?.sendToTarget()
             }
             this.mThread = thread
-            this.mCameraCallBack = callback
         }
     }
 
@@ -246,6 +245,15 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
      * @return device orientation angle
      */
     protected fun getDeviceOrientation(): Int = mDeviceOrientation.orientation
+
+    /**
+     * Post camera status
+     *
+     * @param status see [CameraStatus]
+     */
+    protected fun postCameraStatus(status: CameraStatus) {
+        EventBus.with<CameraStatus>(BusKey.KEY_CAMERA_STATUS).postMessage(status)
+    }
 
     /**
      * Release uvc camera, see [CameraUvcStrategy]

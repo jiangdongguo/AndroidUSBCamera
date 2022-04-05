@@ -45,6 +45,7 @@ import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.Camera2Strategy
 import com.jiangdg.media.camera.CameraUvcStrategy
+import com.jiangdg.media.camera.bean.CameraStatus
 import com.jiangdg.media.render.effect.EffectBlackWhite
 import com.jiangdg.media.render.effect.EffectSoul
 import com.jiangdg.media.render.effect.EffectZoom
@@ -162,13 +163,28 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             mViewBinding.frameRateTv.text = "frame rate:  $it fps"
         })
 
-        getCurrentCameraStrategy().apply {
-            mViewBinding.uvcLogoIv.visibility = if (this is CameraUvcStrategy) {
-                View.VISIBLE
-            } else {
-                View.GONE
+        EventBus.with<CameraStatus>(BusKey.KEY_CAMERA_STATUS).observe(this, {
+            getCurrentCameraStrategy().apply {
+                when (it.code) {
+                    CameraStatus.START -> {
+                        if (this is CameraUvcStrategy) {
+                            mViewBinding.uvcLogoIv.visibility = View.GONE
+                        }
+                    }
+                    CameraStatus.STOP -> {
+                        if (this is CameraUvcStrategy) {
+                            mViewBinding.uvcLogoIv.visibility = View.VISIBLE
+                        }
+                    }
+                    else -> {
+                        if (this is CameraUvcStrategy) {
+                            mViewBinding.uvcLogoIv.visibility = View.VISIBLE
+                        }
+                        ToastUtils.show(it.message ?: "camera error")
+                    }
+                }
             }
-        }
+        })
 
         EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).observe(this, { ready ->
             if (! ready) return@observe
