@@ -356,7 +356,7 @@ class AACEncodeProcessor : AbstractProcessor() {
         private const val MAX_INPUT_SIZE = 8192
         private const val CHANNEL_COUNT = 1
         private const val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_MONO
-        private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_IN_MONO
+        private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_FORMAT_16BIT = AudioFormat.ENCODING_PCM_16BIT
         private const val AUDIO_TRACK_MODE = AudioTrack.MODE_STREAM
         private const val AUDIO_RECORD_SOURCE = MediaRecorder.AudioSource.MIC
