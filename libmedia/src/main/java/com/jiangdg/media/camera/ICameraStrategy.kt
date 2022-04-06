@@ -365,6 +365,13 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         mPreviewDataCbList.add(callBack)
     }
 
+    /**
+     * check camera opened
+     *
+     * @return camera open status, true or false
+     */
+    fun isCameraOpened() = mIsPreviewing.get()
+
     companion object {
         private const val TAG = "ICameraStrategy"
         private const val THREAD_NAME = "camera_manager"

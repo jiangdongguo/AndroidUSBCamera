@@ -136,6 +136,13 @@ abstract class CameraFragment : BaseFragment() {
     }
 
     /**
+     * Is camera opened
+     *
+     * @return camera open status
+     */
+    protected fun isCameraOpened() = mCameraClient?.isCameraOpened()  ?: false
+
+    /**
      * Update resolution
      *
      * @param width camera preview width, see [com.jiangdg.media.camera.bean.PreviewSize]

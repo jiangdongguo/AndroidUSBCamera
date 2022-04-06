@@ -87,13 +87,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="settingsBtn,@+id/effects_btn,cameraTypeBtn,voiceBtn,zoomBtn" />
+        app:constraint_referenced_ids="settingsBtn,effects_btn,cameraTypeBtn,voiceBtn,zoomBtn" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/toolbarGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="toolbarBottomBarrier, settingsBtn,@+id/effects_btn,cameraTypeBtn,voiceBtn,zoomBtn"/>
+        app:constraint_referenced_ids="toolbarBottomBarrier, settingsBtn,effects_btn,cameraTypeBtn,voiceBtn,zoomBtn"/>
 
     <View
         android:id="@+id/controlPanelLayout"

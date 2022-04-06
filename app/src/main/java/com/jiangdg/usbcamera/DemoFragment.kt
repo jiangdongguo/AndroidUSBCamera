@@ -292,6 +292,10 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     override fun getGravity(): Int = Gravity.TOP
 
     override fun onViewClick(mode: CaptureMediaView.CaptureMode?) {
+        if (! isCameraOpened()) {
+            ToastUtils.show("camera not worked!")
+            return
+        }
         when (mode) {
             CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC -> {
                 captureImage()
@@ -405,6 +409,10 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     }
 
     override fun onClick(v: View?) {
+        if (! isCameraOpened()) {
+            ToastUtils.show("camera not worked!")
+            return
+        }
         clickAnimation(v!!, object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator?) {
                 when (v) {

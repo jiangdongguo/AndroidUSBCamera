@@ -29,6 +29,7 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import androidx.annotation.RequiresApi
 import com.jiangdg.media.callback.IPreviewDataCallBack
+import com.jiangdg.media.camera.bean.CameraStatus
 import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.utils.SettableFuture
 import com.jiangdg.media.camera.bean.CameraV2Info
@@ -350,6 +351,7 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
         if (cameraDevice==null || cameraSession == null) {
             Logger.e(TAG, "realStartPreview failed, camera init failed.")
             stopPreviewInternal()
+            postCameraStatus(CameraStatus(CameraStatus.ERROR, "camera init failed"))
             return
         }
         val previewSurface = mPreviewSurface!!
@@ -372,10 +374,14 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
         }.also { captureRequest->
             if (captureRequest == null) {
                 Logger.e(TAG, "realStartPreview failed, captureRequest is null.")
+                postCameraStatus(CameraStatus(CameraStatus.ERROR, "capture request is null"))
                 return
             }
             cameraSession.setRepeatingRequest(captureRequest, null, getCameraHandler())
             mIsPreviewing.set(true)
+            getRequest()?.apply {
+                postCameraStatus(CameraStatus(CameraStatus.START, Pair(previewWidth, previewHeight).toString()))
+            }
         }
         Logger.i(TAG, "realStartPreview success!")
     }
@@ -398,6 +404,7 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
         mJpegImageReader?.close()
         mJpegImageReader = null
         mCameraCharacteristicsFuture = null
+        postCameraStatus(CameraStatus(CameraStatus.STOP))
     }
 
     private fun getCameraCharacteristics(id: String): CameraCharacteristics? {

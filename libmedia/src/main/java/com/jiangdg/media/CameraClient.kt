@@ -283,6 +283,13 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     /**
+     * check if camera opened
+     *
+     * @return camera open status, true or false
+     */
+    fun isCameraOpened() = mCamera?.isCameraOpened()
+
+    /**
      * Start play mic
      *
      * @param callBack play mic status in real-time, see [IPlayCallBack]
