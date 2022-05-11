@@ -30,7 +30,7 @@ allprojects {
 Step 2. Add the dependency  
 ```java
 dependencies {
-	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.7'
+	implementation 'com.github.jiangdongguo:AndroidUSBCamera:2.3.8'
 }
 ```
 ### 2. APIs Introduction  
