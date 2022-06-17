@@ -17,6 +17,7 @@ package com.jiangdg.media.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.os.Build
 import android.provider.MediaStore
@@ -39,6 +40,7 @@ import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** UVC Camera usage
  *
@@ -54,6 +56,9 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
         LinkedBlockingDeque(MAX_NV21_DATA)
     }
+    private val mRequestPermission: AtomicBoolean by lazy {
+        AtomicBoolean(false)
+    }
     private var mUsbMonitor: USBMonitor? = null
     private var mUVCCamera: UVCCamera? = null
     private var mDevConnectCallBack: IDeviceConnectCallBack? = null
@@ -62,25 +67,36 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     init {
         mUsbMonitor = USBMonitor(getContext(), object : USBMonitor.OnDeviceConnectListener {
             override fun onAttach(device: UsbDevice?) {
-                if (!mCacheDeviceList.contains(device)) {
+                if (! isUsbCamera(device)) {
+                    return
+                }
+                if (! mCacheDeviceList.contains(device)) {
                     device?.let {
                         mCacheDeviceList.add(it)
                     }
+                    mDevConnectCallBack?.onAttachDev(device)
                 }
                 requestCameraPermission(device)
-                mDevConnectCallBack?.onAttachDev(device)
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "attach device = ${device?.toString()}")
                 }
             }
 
             override fun onDetach(device: UsbDevice?) {
+                if (! isUsbCamera(device)) {
+                    return
+                }
                 mDevConnectCallBack?.onDetachDec(device)
                 if (mCacheDeviceList.contains(device)) {
                     mCacheDeviceList.remove(device)
                 }
-                mDevSettableFuture.set(null)
-                mCtrlBlockSettableFuture.set(null)
+                // 重置正在打开的设备
+                val dev = mDevSettableFuture.get()
+                if (dev?.deviceId == device?.deviceId) {
+                    mDevSettableFuture.set(null)
+                    mCtrlBlockSettableFuture.set(null)
+                    mRequestPermission.set(false)
+                }
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDetach device = ${device?.toString()}")
                 }
@@ -91,6 +107,9 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 ctrlBlock: USBMonitor.UsbControlBlock?,
                 createNew: Boolean
             ) {
+                if (! isUsbCamera(device)) {
+                    return
+                }
                 startPreview(null, null)
                 mDevSettableFuture.set(device)
                 mCtrlBlockSettableFuture.set(ctrlBlock)
@@ -100,10 +119,14 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
 
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+                if (! isUsbCamera(device)) {
+                    return
+                }
                 val curDevice = mDevSettableFuture.get()
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
+                mRequestPermission.set(false)
                 stopPreview()
                 mDevConnectCallBack?.onDisConnectDec(device)
                 if (Utils.debugCamera) {
@@ -112,10 +135,14 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
 
             override fun onCancel(device: UsbDevice?) {
+                if (! isUsbCamera(device)) {
+                    return
+                }
                 val curDevice = mDevSettableFuture.get()
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
+                mRequestPermission.set(false)
                 stopPreview()
                 mDevConnectCallBack?.onDisConnectDec(device)
                 if (Utils.debugCamera) {
@@ -124,6 +151,28 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
         })
         register()
+    }
+
+    private fun isUsbCamera(device: UsbDevice?): Boolean {
+        return when(device?.deviceClass) {
+            UsbConstants.USB_CLASS_VIDEO -> {
+                true
+            }
+            UsbConstants.USB_CLASS_MISC -> {
+                var isVideo = false
+                for (i in 0 until device.interfaceCount) {
+                    val cls = device.getInterface(i).interfaceClass
+                    if (cls == UsbConstants.USB_CLASS_VIDEO) {
+                        isVideo = true
+                        break
+                    }
+                }
+                isVideo
+            }
+            else -> {
+                false
+            }
+        }
     }
 
     override fun loadCameraInfo() {
@@ -462,13 +511,20 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         }
         return mUsbMonitor?.getDeviceList(deviceFilters)?.apply {
             mCacheDeviceList.clear()
-            mCacheDeviceList.addAll(this)
+            forEach {
+                if (isUsbCamera(it)) {
+                    mCacheDeviceList.add(it)
+                }
+            }
         }
     }
 
     private fun requestCameraPermission(device: UsbDevice?) {
         if (device == null) {
             Logger.e(TAG, "open camera failed, device is null.")
+            return
+        }
+        if (mRequestPermission.get()) {
             return
         }
         mCacheDeviceList.find {
@@ -478,6 +534,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 Logger.e(TAG, "open camera failed, not found.")
                 return@also
             }
+            mRequestPermission.set(true)
             mUsbMonitor?.requestPermission(dev)
         }
     }
