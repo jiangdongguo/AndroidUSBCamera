@@ -23,6 +23,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Typeface
+import android.hardware.usb.UsbDevice
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -150,7 +152,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mViewBinding.cameraTypeBtn.setOnClickListener(this)
         mViewBinding.settingsBtn.setOnClickListener(this)
         mViewBinding.voiceBtn.setOnClickListener(this)
-        mViewBinding.zoomBtn.setOnClickListener(this)
+        mViewBinding.resolutionBtn.setOnClickListener(this)
         mViewBinding.albumPreviewIv.setOnClickListener(this)
         mViewBinding.captureBtn.setOnViewClickListener(this)
         mViewBinding.albumPreviewIv.setTheme(PreviewImageView.Theme.DARK)
@@ -417,6 +419,12 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             override fun onAnimationEnd(animation: Animator?) {
                 when (v) {
                     mViewBinding.lensFacingBtn1 -> {
+                        getCurrentCameraStrategy()?.let { strategy ->
+                            if (strategy is CameraUvcStrategy) {
+                                showUsbDevicesDialog(strategy.getUsbDeviceList(), strategy.getCurrentDevice())
+                                return
+                            }
+                        }
                         switchCamera()
                     }
                     mViewBinding.effectsBtn -> {
@@ -431,7 +439,8 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     mViewBinding.voiceBtn -> {
                         playMic()
                     }
-                    mViewBinding.zoomBtn -> {
+                    mViewBinding.resolutionBtn -> {
+                        showResolutionDialog()
                     }
                     mViewBinding.albumPreviewIv -> {
                         goToGalley()
@@ -439,12 +448,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     // more settings
                     mMoreBindingView.multiplex, mMoreBindingView.multiplexText -> {
                         goToMultiplexActivity()
-                    }
-                    mMoreBindingView.contract, mMoreBindingView.contractText -> {
-                        showContractDialog()
-                    }
-                    mMoreBindingView.resolution, mMoreBindingView.resolutionText -> {
-                        showResolutionDialog()
                     }
                     mMoreBindingView.contact, mMoreBindingView.contactText -> {
                         showContactDialog()
@@ -454,6 +457,44 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 }
             }
         })
+    }
+
+    @SuppressLint("CheckResult")
+    private fun showUsbDevicesDialog(usbDeviceList: MutableList<UsbDevice>?, curDevice: UsbDevice?) {
+        if (usbDeviceList.isNullOrEmpty()) {
+            ToastUtils.show("Get usb device failed")
+            return
+        }
+        val list = arrayListOf<String>()
+        var selectedIndex: Int = -1
+        for (index in (0 until usbDeviceList.size)) {
+            val dev = usbDeviceList[index]
+            val devName = if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.LOLLIPOP && !dev.productName.isNullOrEmpty()) {
+                dev.productName
+            } else {
+                "${dev.deviceName}(${dev.deviceId})"
+            }
+            val curDevName = if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.LOLLIPOP && !curDevice?.productName.isNullOrEmpty()) {
+                curDevice!!.productName
+            } else {
+                "${curDevice?.deviceName}(${curDevice?.deviceId})"
+            }
+            if (devName == curDevName) {
+                selectedIndex = index
+            }
+            list.add(devName!!)
+        }
+        MaterialDialog(requireContext()).show {
+            listItemsSingleChoice(
+                items = list,
+                initialSelection = selectedIndex
+            ) { dialog, index, text ->
+                if (selectedIndex == index) {
+                    return@listItemsSingleChoice
+                }
+                switchCamera(usbDeviceList[index].deviceId.toString())
+            }
+        }
     }
 
     private fun showEffectDialog() {
@@ -534,15 +575,13 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     items = list,
                     initialSelection = selectedIndex
                 ) { dialog, index, text ->
+                    if (selectedIndex == index) {
+                        return@listItemsSingleChoice
+                    }
                     updateResolution(previewSizes[index].width, previewSizes[index].height)
                 }
             }
         }
-    }
-
-    private fun showContractDialog() {
-        mMoreMenu?.dismiss()
-        ToastUtils.show("developing")
     }
 
     private fun goToMultiplexActivity() {

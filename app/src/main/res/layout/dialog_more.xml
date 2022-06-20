@@ -42,6 +42,7 @@
         android:id="@+id/contract"
         style="@style/Camera2MoreSettingsImageStyle"
         android:src="@mipmap/camera_contrast"
+        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@id/resolution"
         app:layout_constraintStart_toEndOf="@id/multiplex"
         app:layout_constraintTop_toTopOf="@id/background" />
@@ -52,12 +53,14 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Contract"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/contract"
         app:layout_constraintStart_toStartOf="@+id/contract"
         app:layout_constraintTop_toBottomOf="@+id/contract" />
 
     <ImageView
         android:id="@+id/resolution"
+        android:visibility="gone"
         style="@style/Camera2MoreSettingsImageStyle"
         android:src="@mipmap/camera_resolution"
         app:layout_constraintEnd_toStartOf="@id/contact"
@@ -70,6 +73,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Resolution"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@+id/resolution"
         app:layout_constraintStart_toStartOf="@+id/resolution"
         app:layout_constraintTop_toBottomOf="@+id/resolution" />
