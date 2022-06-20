@@ -37,7 +37,6 @@ import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import java.io.File
 import java.lang.Exception
-import java.lang.IllegalArgumentException
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -75,10 +74,10 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "attach device = ${device?.toString()}")
                 }
-                if (! isUsbCamera(device)) {
+                if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
-                if (! mCacheDeviceList.contains(device)) {
+                if (!mCacheDeviceList.contains(device)) {
                     device?.let {
                         mCacheDeviceList.add(it)
                     }
@@ -96,7 +95,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDetach device = ${device?.toString()}")
                 }
-                if (! isUsbCamera(device)) {
+                if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
                 mDevConnectCallBack?.onDetachDec(device)
@@ -107,7 +106,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 val dev = mDevSettableFuture.get()
                 if (dev?.deviceId == device?.deviceId) {
                     mDevSettableFuture.set(null)
-                     mCtrlBlockSettableFuture.set(null)
+                    mCtrlBlockSettableFuture.set(null)
                     mRequestPermission.set(false)
                 }
             }
@@ -125,10 +124,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onConnect device = ${device?.toString()}")
                 }
-                if (! isUsbCamera(device)) {
+                if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
-                startPreview(null, null)
+                getRequest()?.apply {
+                    startPreview(this, getSurfaceTexture())
+                }
                 mDevSettableFuture.set(device)
                 mCtrlBlockSettableFuture.set(ctrlBlock)
             }
@@ -142,7 +143,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
                 }
-                if (! isUsbCamera(device)) {
+                if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
                 val curDevice = mDevSettableFuture.get()
@@ -163,7 +164,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onCancel device = ${device?.toString()}")
                 }
-                if (! isUsbCamera(device)) {
+                if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
                 val curDevice = mDevSettableFuture.get()
@@ -177,8 +178,8 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         register()
     }
 
-    private fun isUsbCamera(device: UsbDevice?): Boolean {
-        return when(device?.deviceClass) {
+    fun isUsbCamera(device: UsbDevice?): Boolean {
+        return when (device?.deviceClass) {
             UsbConstants.USB_CLASS_VIDEO -> {
                 true
             }
@@ -199,10 +200,27 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         }
     }
 
+    private fun isFilterDevice(usbDevice: UsbDevice?): Boolean {
+        return DeviceFilter.getDeviceFilters(getContext(), R.xml.default_device_filter)
+            .find { devFilter ->
+                devFilter.mProductId == usbDevice?.productId && devFilter.mVendorId == usbDevice.vendorId
+            }.let { dev ->
+                dev != null
+            }
+    }
+
     override fun loadCameraInfo() {
         try {
             val devList = getUsbDeviceListInternal()
             if (devList.isNullOrEmpty()) {
+                postCameraStatus(
+                    CameraStatus(
+                        CameraStatus.ERROR,
+                        "Find no uvc devices, " +
+                                "if you want some special device please use getUsbDeviceList() " +
+                                "or add device info into default_device_filter.xml"
+                    )
+                )
                 Logger.e(TAG, "Find no uvc devices.")
                 return
             }
@@ -236,24 +254,30 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun startPreviewInternal() {
-        postCameraStatus(CameraStatus(CameraStatus.STOP))
-        createCamera()
-        realStartPreview()
-        mDevSettableFuture.get().apply {
-            mDevConnectCallBack?.onConnectDev(this)
-        }?.also {
-            mCameraInfoMap[it.deviceId]?.let { cameraInfo ->
-                cameraInfo.cameraPreviewSizes?.clear()
-                getAllPreviewSizes()?.apply {
-                    cameraInfo.cameraPreviewSizes?.addAll(this)
+        try {
+            postCameraStatus(CameraStatus(CameraStatus.STOP))
+            createCamera()
+            realStartPreview()
+            mDevSettableFuture.get().apply {
+                mDevConnectCallBack?.onConnectDev(this)
+            }?.also {
+                mCameraInfoMap[it.deviceId]?.let { cameraInfo ->
+                    cameraInfo.cameraPreviewSizes?.clear()
+                    getAllPreviewSizes()?.apply {
+                        cameraInfo.cameraPreviewSizes?.addAll(this)
+                    }
+                }
+                if (Utils.debugCamera) {
+                    Logger.i(
+                        TAG,
+                        "start preview success!!!, id = ${it.deviceId}, name = ${it.deviceName}"
+                    )
                 }
             }
-            if (Utils.debugCamera) {
-                Logger.i(
-                    TAG,
-                    "start preview success!!!, id = ${it.deviceId}, name = ${it.deviceName}"
-                )
-            }
+        } catch (e: Exception) {
+            stopPreview()
+            Logger.e(TAG, "createCamera failed, err = ${e.localizedMessage}", e)
+            postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
         }
     }
 
@@ -262,38 +286,21 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         val device = mDevSettableFuture.get()
         getRequest()?.let { request ->
             val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
-            try {
-                val camera = UVCCamera().apply {
-                    open(ctrlBlock)
-                }
-                mUVCCamera = camera
-                request.cameraId = device?.deviceId.toString()
-                mUVCCamera?.setPreviewSize(
-                    previewSize.width,
-                    previewSize.height,
-                    MIN_FS,
-                    MAX_FS,
-                    UVCCamera.FRAME_FORMAT_YUYV,
-                    UVCCamera.DEFAULT_BANDWIDTH
-                )
-                mUVCCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
-                Logger.i(TAG, "createCamera request = $request")
-            } catch (e: Exception) {
-                try {
-                    // fallback to YUV mode
-                    mUVCCamera?.setPreviewSize(
-                        previewSize.width,
-                        previewSize.height,
-                        MIN_FS,
-                        MAX_FS,
-                        UVCCamera.DEFAULT_PREVIEW_MODE,
-                        UVCCamera.DEFAULT_BANDWIDTH
-                    )
-                } catch (e1: IllegalArgumentException) {
-                    Logger.e(TAG, "createCamera failed, err = ${e.localizedMessage}", e)
-                }
-                postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
+            val camera = UVCCamera().apply {
+                open(ctrlBlock)
             }
+            mUVCCamera = camera
+            request.cameraId = device?.deviceId.toString()
+            mUVCCamera?.setPreviewSize(
+                previewSize.width,
+                previewSize.height,
+                MIN_FS,
+                MAX_FS,
+                UVCCamera.FRAME_FORMAT_YUYV,
+                UVCCamera.DEFAULT_BANDWIDTH
+            )
+            mUVCCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
+            Logger.i(TAG, "createCamera request = $request")
         }
     }
 
@@ -338,6 +345,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         if (Utils.debugCamera && mIsPreviewing.get()) {
             Logger.i(TAG, "stopPreviewInternal")
         }
+        mRequestPermission.set(false)
         mIsPreviewing.set(false)
         mUVCCamera?.stopPreview()
         mUVCCamera?.destroy()
@@ -413,7 +421,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     override fun switchCameraInternal(cameraId: String?) {
-        getRequest()?.let { request ->
+        getRequest()?.let {
             if (cameraId.isNullOrEmpty()) {
                 Logger.e(TAG, "camera id invalid.")
                 return@let
@@ -500,11 +508,11 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     /**
-     * Add device connect status call back
+     * set device connect status call back
      *
      * @param cb see [IDeviceConnectCallBack]]
      */
-    fun addDeviceConnectCallBack(cb: IDeviceConnectCallBack) {
+    fun setDeviceConnectStatusListener(cb: IDeviceConnectCallBack) {
         this.mDevConnectCallBack = cb
     }
 
@@ -512,34 +520,50 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
      * Get usb device list
      *
      * @param resId device filter regular, like [R.xml.default_device_filter]
-     *         null means need all camera usb devices
-     * @return uvc device list
+     *         null means all usb devices, more than uvc devices
+     * @return device list
      */
-    fun getUsbDeviceList(resId: Int?): MutableList<UsbDevice> {
-        val deviceList = getUsbDeviceListInternal(resId) ?: arrayListOf()
-        loadCameraInfoInternal(deviceList)
-        return deviceList
+    fun getUsbDeviceList(resId: Int?): MutableList<UsbDevice>? {
+        return mUsbMonitor?.deviceList?.let { usbDevList ->
+            val list = arrayListOf<UsbDevice>()
+            if (resId == null) {
+                null
+            } else {
+                DeviceFilter.getDeviceFilters(getContext(), resId)
+            }.also { filterList ->
+                if (filterList == null) {
+                    list.addAll(usbDevList)
+                    return@also
+                }
+                usbDevList.forEach { dev ->
+                    val filterDev = filterList.find {
+                        it.mProductId == dev?.productId && it.mVendorId == dev.vendorId
+                    }
+                    if (filterDev != null) {
+                        list.add(dev)
+                    }
+                }
+            }
+            list
+        }
     }
 
-    private fun getUsbDeviceListInternal(resId: Int? = R.xml.default_device_filter): MutableList<UsbDevice>? {
-        if (mUsbMonitor == null) {
-            Logger.e(TAG, "getUsbDeviceList failed, usbMonitor is null.")
-            return null
+    fun requestUsbDevice(dev: UsbDevice) {
+        mRequestPermission.set(false)
+        if (!mCacheDeviceList.contains(dev)) {
+            mCacheDeviceList.add(dev)
         }
-        val deviceFilters = if (resId == null) {
-            arrayListOf<DeviceFilter>()
-        } else {
-            DeviceFilter.getDeviceFilters(getContext(), resId)
-        }
-        return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList->
+        stopPreview()
+        requestCameraPermission(dev)
+    }
+
+    private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
+        return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
             Logger.i(TAG, "find some device list, = $devList")
             mCacheDeviceList.clear()
             devList.forEach {
                 // check is camera or need device
-                val filterDev = deviceFilters.find { devFilter->
-                    devFilter.mProductId == it.productId && devFilter.mVendorId == it.vendorId
-                }
-                if (isUsbCamera(it) || filterDev!=null) {
+                if (isUsbCamera(it) || isFilterDevice(it)) {
                     mCacheDeviceList.add(it)
                 }
             }
@@ -548,15 +572,11 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
 
     private fun requestCameraPermission(device: UsbDevice?) {
-        if (device == null) {
-            Logger.e(TAG, "open camera failed, device is null.")
-            return
-        }
         if (mRequestPermission.get()) {
             return
         }
         mCacheDeviceList.find {
-            device.deviceId == it.deviceId
+            device?.deviceId == it.deviceId
         }.also { dev ->
             if (dev == null) {
                 Logger.e(TAG, "open camera failed, not found.")
@@ -611,28 +631,28 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         /**
          * On attach dev
          *
-         * @param device uvc device
+         * @param device usb device
          */
         fun onAttachDev(device: UsbDevice?)
 
         /**
          * On detach dev
          *
-         * @param device uvc device
+         * @param device usb device
          */
         fun onDetachDec(device: UsbDevice?)
 
         /**
          * On connect dev
          *
-         * @param device uvc device
+         * @param device usb device
          */
         fun onConnectDev(device: UsbDevice?)
 
         /**
          * On dis connect dev
          *
-         * @param device uvc device
+         * @param device usb device
          */
         fun onDisConnectDec(device: UsbDevice?)
     }

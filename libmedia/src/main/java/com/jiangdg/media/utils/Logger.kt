@@ -16,6 +16,7 @@
 package com.jiangdg.media.utils
 
 import android.app.Application
+import android.util.Log
 import com.elvishew.xlog.LogConfiguration
 import com.elvishew.xlog.LogLevel
 import com.elvishew.xlog.XLog
@@ -35,6 +36,7 @@ import java.util.*
  * @author Created by jiangdg on 2022/1/24
  */
 object Logger {
+    private var mHasInit: Boolean = false
     private const val TAG = "JJCamera"
 
     fun init(application: Application, folderPath: String? = null) {
@@ -43,7 +45,7 @@ object Logger {
             logLevel(LogLevel.ALL)
             tag(TAG)
             enableThreadInfo()
-            enableStackTrace(3)
+            disableStackTrace()
         }.build()
         val filePrinter = folderPath.let {
             FilePrinter.Builder(
@@ -55,22 +57,39 @@ object Logger {
             }.build()
         }
         XLog.init(config,androidPrinter , filePrinter)
+        mHasInit = true
     }
 
     fun i(flag: String, msg: String) {
-        XLog.i("++++++++Info->$flag###$msg")
+        if (mHasInit) {
+            XLog.i("++++++++Info->$flag###$msg")
+            return
+        }
+        Log.i(TAG,"++++++++Info->$flag###$msg")
     }
 
     fun d(flag: String, msg: String) {
-        XLog.d("++++++++Debug->$flag###$msg")
+        if (mHasInit) {
+            XLog.d("++++++++Info->$flag###$msg")
+            return
+        }
+        Log.d(TAG,"++++++++Info->$flag###$msg")
     }
 
     fun w(flag: String, msg: String) {
-        XLog.w("++++++++Warning->$flag###$msg")
+        if (mHasInit) {
+            XLog.w("++++++++Info->$flag###$msg")
+            return
+        }
+        Log.w(TAG,"++++++++Info->$flag###$msg")
     }
 
     fun e(flag: String, msg: String, throwable: Throwable? = null) {
-        XLog.e("++++++++Error->$flag###$msg", throwable)
+        if (mHasInit) {
+            XLog.e("++++++++Info->$flag###$msg")
+            return
+        }
+        Log.e(TAG,"++++++++Info->$flag###$msg")
     }
 
     class MyFileNameGenerator : FileNameGenerator {
