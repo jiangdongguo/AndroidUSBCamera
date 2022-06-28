@@ -122,10 +122,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     @Synchronized
     fun <T> startPreview(request: CameraRequest?, renderSurface: T?) {
         if (mIsPreviewing.get() || mThread?.isAlive == true) {
-            if (Utils.debugCamera) {
-                Logger.w(TAG, "start preview failed, already started.")
-            }
-            return
+            stopPreview()
         }
         if (mCameraRequest == null && request == null) {
             throw IllegalStateException("camera request can't be null")
@@ -160,6 +157,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     @Synchronized
     fun stopPreview() {
         mThread ?: return
+        mCameraHandler ?: return
         mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget()
         mThread?.quitSafely()
         mThread = null

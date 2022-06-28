@@ -76,7 +76,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     private var mEffectList = arrayListOf<AbstractEffect>()
     private var mCacheEffectList = arrayListOf<AbstractEffect>()
     private var mCaptureDataCb: ICaptureCallBack? = null
-    private var mPreviewDataCb: IPreviewDataCallBack? = null
     private var mFrameRate = 0
     private var mEndTime: Long = 0L
     private var mStartTime = System.currentTimeMillis()
@@ -333,15 +332,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     fun saveImage(callBack: ICaptureCallBack?, path: String?) {
         this.mCaptureDataCb = callBack
         mRenderHandler?.obtainMessage(MSG_GL_SAVE_IMAGE, path)?.sendToTarget()
-    }
-
-    /**
-     * Add preview data call back
-     *
-     * @param callBack preview data call back, see [IPreviewDataCallBack]
-     */
-    fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
-        this.mPreviewDataCb = callBack
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {

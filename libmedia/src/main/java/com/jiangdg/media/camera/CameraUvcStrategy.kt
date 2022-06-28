@@ -46,8 +46,8 @@ import kotlin.Exception
  * @author Created by jiangdg on 2021/12/20
  */
 class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
-    private lateinit var mDevSettableFuture: SettableFuture<UsbDevice?>
-    private lateinit var mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?>
+    private var mDevSettableFuture: SettableFuture<UsbDevice?>? = null
+    private var mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?>? = null
     private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
         LinkedBlockingDeque(MAX_NV21_DATA)
     }
@@ -70,11 +70,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "attach device = ${device?.toString()}")
                 }
+                device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(device)) {
                     return
                 }
                 if (!mCacheDeviceList.contains(device)) {
-                    device?.let {
+                    device.let {
                         mCacheDeviceList.add(it)
                     }
                     mDevConnectCallBack?.onAttachDev(device)
@@ -94,6 +95,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (!isUsbCamera(device) && !isFilterDevice(device) && !mCacheDeviceList.contains(device)) {
                     return
                 }
+                mCameraInfoMap.remove(device?.deviceId)
                 mDevConnectCallBack?.onDetachDec(device)
                 if (mCacheDeviceList.contains(device)) {
                     mCacheDeviceList.remove(device)
@@ -126,9 +128,8 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 getRequest()?.apply {
                     startPreview(this, getSurfaceTexture())
                 }
-                mDevSettableFuture.set(device)
-                mCtrlBlockSettableFuture.set(ctrlBlock)
-                Logger.e(TAG, "onConnect mDevSettableFuture = ${mDevSettableFuture.get()}")
+                mDevSettableFuture?.set(device)
+                mCtrlBlockSettableFuture?.set(ctrlBlock)
             }
 
             /**
@@ -143,7 +144,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (!isUsbCamera(device) && !isFilterDevice(device) && !mCacheDeviceList.contains(device)) {
                     return
                 }
-                val curDevice = mDevSettableFuture.get()
+                val curDevice = mDevSettableFuture?.get()
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
@@ -163,7 +164,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 if (!isUsbCamera(device) && !isFilterDevice(device) && !mCacheDeviceList.contains(device)) {
                     return
                 }
-                val curDevice = mDevSettableFuture.get()
+                val curDevice = mDevSettableFuture?.get()
                 if (curDevice?.deviceId != device?.deviceId) {
                     return
                 }
@@ -223,13 +224,16 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
             loadCameraInfoInternal(devList)
         } catch (e: Exception) {
-            Logger.e(TAG, "Find no uvc devices, err = ${e.localizedMessage}", e)
+            Logger.e(TAG, "loadCameraInfo: Find no uvc devices, err = ${e.localizedMessage}", e)
         }
     }
 
     private fun loadCameraInfoInternal(devList: MutableList<UsbDevice>) {
         mCameraInfoMap.clear()
         devList.forEach { dev ->
+            if (mCameraInfoMap.containsKey(dev.deviceId)) {
+                return
+            }
             val cameraInfo = CameraUvcInfo(dev.deviceId.toString()).apply {
                 cameraVid = dev.vendorId
                 cameraPid = dev.productId
@@ -237,7 +241,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 cameraProtocol = dev.deviceProtocol
                 cameraClass = dev.deviceClass
                 cameraSubClass = dev.deviceSubclass
-                cameraPreviewSizes
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     cameraProductName = dev.productName
                     cameraManufacturerName = dev.manufacturerName
@@ -246,70 +249,90 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             mCameraInfoMap[dev.deviceId] = cameraInfo
         }
         if (Utils.debugCamera) {
-            Logger.i(TAG, "loadCameraInfo success, camera = $mCameraInfoMap")
+            Logger.i(TAG, "loadCameraInfo: load success, camera = $mCameraInfoMap")
         }
     }
 
     override fun startPreviewInternal() {
         try {
-            postCameraStatus(CameraStatus(CameraStatus.STOP))
-            createCamera()
-            realStartPreview()
-            mDevSettableFuture.get().apply {
+            createCamera() ?: return
+            realStartPreview() ?: return
+            val dev = mDevSettableFuture?.get().apply {
                 mDevConnectCallBack?.onConnectDev(this)
-            }?.also {
-                mCameraInfoMap[it.deviceId]?.let { cameraInfo ->
-                    cameraInfo.cameraPreviewSizes?.clear()
-                    getAllPreviewSizes()?.apply {
-                        cameraInfo.cameraPreviewSizes?.addAll(this)
-                    }
-                }
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "start preview success!!!, id(${it.deviceId})$it")
-                }
+            }
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "startPreviewInternal: start preview success!!!, id(${dev?.deviceId})$dev")
             }
         } catch (e: Exception) {
             stopPreview()
-            Logger.e(TAG, "createCamera failed, err = ${e.localizedMessage}", e)
+            Logger.e(TAG, "startPreviewInternal: preview failed, err = ${e.localizedMessage}", e)
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
         }
     }
 
-    private fun createCamera() {
-        val ctrlBlock = mCtrlBlockSettableFuture.get()
-        val device = mDevSettableFuture.get()
-        Logger.i(TAG, "createCamera device = (${device?.deviceId})$device")
+    private fun createCamera(): Boolean? {
+        val ctrlBlock = mCtrlBlockSettableFuture?.get()
+        val device = mDevSettableFuture?.get()
+        device ?: return null
+        ctrlBlock ?: return null
         getRequest()?.let { request ->
-            val camera = UVCCamera().apply {
+            val previewWidth = request.previewWidth
+            val previewHeight = request.previewHeight
+            request.cameraId = device.deviceId.toString()
+            mUVCCamera = UVCCamera().apply {
                 open(ctrlBlock)
             }
-            mUVCCamera = camera
-            val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
-            request.cameraId = device?.deviceId.toString()
-            mUVCCamera?.setPreviewSize(
-                previewSize.width,
-                previewSize.height,
-                MIN_FS,
-                MAX_FS,
-                UVCCamera.FRAME_FORMAT_YUYV,
-                UVCCamera.DEFAULT_BANDWIDTH
-            )
+            if (! isPreviewSizeSupported(previewWidth, previewHeight)) {
+                postCameraStatus(CameraStatus(CameraStatus.ERROR_PREVIEW_SIZE, "unsupported preview size(${request.previewWidth}, ${request.previewHeight})"))
+                Logger.e(TAG, "startPreviewInternal: unsupported preview size(${request.previewWidth}, ${request.previewHeight})")
+                return null
+            }
+            try {
+                mUVCCamera?.setPreviewSize(
+                    request.previewWidth,
+                    request.previewHeight,
+                    MIN_FS,
+                    MAX_FS,
+                    UVCCamera.FRAME_FORMAT_MJPEG,
+                    UVCCamera.DEFAULT_BANDWIDTH
+                )
+            } catch (e: Exception) {
+                try {
+                    Logger.w(TAG, "startPreviewInternal: setPreviewSize failed ${e.localizedMessage}, try yuv format...")
+                    mUVCCamera?.setPreviewSize(
+                        request.previewWidth,
+                        request.previewHeight,
+                        MIN_FS,
+                        MAX_FS,
+                        UVCCamera.FRAME_FORMAT_YUYV,
+                        UVCCamera.DEFAULT_BANDWIDTH
+                    )
+                } catch (e: Exception) {
+                    postCameraStatus(CameraStatus(CameraStatus.ERROR, "setPreviewSize failed, err = ${e.localizedMessage}"))
+                    Logger.e(TAG, "startPreviewInternal: setPreviewSize failed", e)
+                    return null
+                }
+            }
             mUVCCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
-            Logger.i(TAG, "createCamera request = $request")
+            Logger.i(TAG, "startPreviewInternal: createCamera success! request = $request")
         }
+        return true
     }
 
-    private fun realStartPreview() {
+    private fun isPreviewSizeSupported(previewWidth: Int, previewHeight: Int): Boolean {
+        return getAllPreviewSizes()?.find {
+            it.width == previewWidth && it.height == previewHeight
+        } != null
+    }
+
+    private fun realStartPreview(): Boolean? {
         try {
             val st = getSurfaceTexture()
             val holder = getSurfaceHolder()
             if (st == null && holder == null) {
                 postCameraStatus(CameraStatus(CameraStatus.ERROR, "surface is null"))
-                Logger.e(
-                    TAG,
-                    "realStartPreview failed, SurfaceTexture or SurfaceHolder cannot be null."
-                )
-                return
+                Logger.e(TAG, "startPreviewInternal: SurfaceTexture or SurfaceHolder cannot be null.")
+                return null
             }
             if (st != null) {
                 mUVCCamera?.setPreviewTexture(st)
@@ -327,13 +350,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     )
                 )
             }
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "realStartPreview...")
-            }
         } catch (e: Exception) {
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
-            Logger.e(TAG, "realStartPreview, err = ${e.localizedMessage}", e)
+            Logger.e(TAG, "startPreviewInternal: startPreview failed. err = ${e.localizedMessage}", e)
+            return null
         }
+        return true
     }
 
     override fun stopPreviewInternal() {
@@ -455,28 +477,31 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize>? {
         getRequest()?.let { request ->
-            val list = mutableListOf<PreviewSize>()
             val cameraInfo = mCameraInfoMap.values.find {
                 request.cameraId == it.cameraId
             }
             val previewSizeList = cameraInfo?.cameraPreviewSizes ?: mutableListOf()
             if (previewSizeList.isEmpty()) {
+                Logger.i(TAG, "getAllPreviewSizes = ${mUVCCamera?.supportedSizeList}")
                 mUVCCamera?.supportedSizeList?.forEach { size ->
-                    list.add(PreviewSize(size.width, size.height))
+                    previewSizeList.add(PreviewSize(size.width, size.height))
                 }
-                previewSizeList.addAll(list)
+                cameraInfo?.cameraPreviewSizes = previewSizeList
             }
-            list.clear()
-            previewSizeList.forEach { size ->
+            aspectRatio ?: return previewSizeList
+            // aspect ratio list or all
+            val aspectList = mutableListOf<PreviewSize>()
+            aspectList.clear()
+            cameraInfo?.cameraPreviewSizes?.forEach { size ->
                 val width = size.width
                 val height = size.height
                 val ratio = width.toDouble() / height
-                if (aspectRatio == null || ratio == aspectRatio) {
-                    list.add(size)
+                if (ratio == aspectRatio) {
+                    aspectList.add(size)
                 }
             }
-            Logger.i(TAG, "getAllPreviewSizes aspect ratio = $aspectRatio, list= $list")
-            return list
+            Logger.i(TAG, "getAllPreviewSizes aspectRatio = $aspectRatio, size = $aspectList")
+            return aspectList
         }
         return null
     }
@@ -554,7 +579,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
      */
     fun getCurrentDevice(): UsbDevice? {
         return try {
-            mDevSettableFuture.get(1, TimeUnit.SECONDS)
+            mDevSettableFuture?.get(1, TimeUnit.SECONDS)
         } catch (e: Exception) {
             Logger.w(TAG, "get current usb device times out")
             null
@@ -563,7 +588,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
 
     private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
         return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
-            Logger.i(TAG, "find some device list, = $devList")
+            Logger.i(TAG, "loadCameraInfo: find some device list, = $devList")
             mCacheDeviceList.clear()
             devList.forEach {
                 // check is camera or need device
@@ -588,27 +613,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
             mRequestPermission.set(true)
             mUsbMonitor?.requestPermission(dev)
-        }
-    }
-
-    private fun getSuitableSize(
-        maxWidth: Int,
-        maxHeight: Int
-    ): PreviewSize {
-        val aspectRatio = maxWidth.toFloat() / maxHeight
-        val sizeList = getAllPreviewSizes(aspectRatio.toDouble())
-        sizeList?.forEach { size ->
-            val w = size.width
-            val h = size.height
-            val ratio = w.toFloat() / h
-            if (ratio == aspectRatio && w <= maxWidth && h <= maxHeight) {
-                return PreviewSize(w, h)
-            }
-        }
-        return if (sizeList.isNullOrEmpty()) {
-            PreviewSize(maxWidth, maxHeight)
-        } else {
-            PreviewSize(sizeList[0].width, sizeList[0].height)
         }
     }
 

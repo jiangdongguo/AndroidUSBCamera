@@ -30,6 +30,7 @@ import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
 import com.jiangdg.media.camera.*
 import com.jiangdg.media.camera.bean.CameraRequest
+import com.jiangdg.media.camera.bean.CameraStatus
 import com.jiangdg.media.camera.bean.PreviewSize
 import com.jiangdg.media.encode.AACEncodeProcessor
 import com.jiangdg.media.encode.AbstractProcessor
@@ -41,11 +42,13 @@ import com.jiangdg.media.render.env.RotateType
 import com.jiangdg.media.render.effect.AbstractEffect
 import com.jiangdg.media.utils.Logger
 import com.jiangdg.media.utils.Utils
+import com.jiangdg.media.utils.bus.BusKey
+import com.jiangdg.media.utils.bus.EventBus
 import com.jiangdg.media.widget.AspectRatioSurfaceView
 import com.jiangdg.media.widget.AspectRatioTextureView
 import com.jiangdg.media.widget.IAspectRatio
 import com.jiangdg.natives.YUVUtils
-import java.lang.IllegalArgumentException
+import kotlin.math.abs
 
 /**
  * Camera client
@@ -74,7 +77,31 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     init {
         mRequest = mRequest ?: CameraRequest.CameraRequestBuilder().create()
         mCtx?.let { context ->
+            if (context !is LifecycleOwner) {
+                throw IllegalArgumentException("context should be subclass of LifecycleOwner!")
+            }
             addLifecycleObserver(context)
+            // listener camera status
+            EventBus.with<CameraStatus>(BusKey.KEY_CAMERA_STATUS).observe(context, { status ->
+                when(status.code) {
+                    CameraStatus.ERROR -> {
+                        closeCamera()
+                    }
+                    CameraStatus.ERROR_PREVIEW_SIZE -> {
+                        mRequest?.let { request ->
+                            val oldPreviewWidth = request.previewWidth
+                            val oldPreviewHeight = request.previewHeight
+                            getSuitableSize(oldPreviewWidth, oldPreviewHeight).let {
+                                it ?: return@observe
+                            }.also {
+                                Logger.i(TAG, "Automatically select the appropriate resolution (${it.width}x${it.height})")
+                                updateResolution(it.width, it.height)
+                            }
+                        }
+                    }
+                    else -> { }
+                }
+            })
         }
         if (Utils.debugCamera) {
             Logger.i(TAG, "init camera client, camera = $mCamera")
@@ -88,9 +115,6 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             when(format) {
                 IPreviewDataCallBack.DataFormat.NV21 -> {
                     YUVUtils.nv21ToYuv420sp(data, width, height)
-                }
-                else -> {
-                    throw IllegalArgumentException("Unsupported format")
                 }
             }
             mVideoProcess?.putRawData(RawData(it, it.size))
@@ -109,23 +133,23 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         val previewHeight = mRequest!!.previewHeight
         when (cameraView) {
             is AspectRatioSurfaceView -> {
-                cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
                         mCamera?.startPreview(mRequest!!, cameraView.holder)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
+                cameraView.setAspectRatio(previewWidth, previewHeight)
                 cameraView
             }
             is AspectRatioTextureView -> {
-                cameraView.setAspectRatio(previewWidth, previewHeight)
                 if (! isEnableGLEs) {
                     cameraView.postUITask {
                         mCamera?.startPreview(mRequest!!, cameraView.surfaceTexture)
                         mCamera?.addPreviewDataCallBack(this)
                     }
                 }
+                cameraView.setAspectRatio(previewWidth, previewHeight)
                 cameraView
             }
             else -> {
@@ -144,6 +168,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
                     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                         surfaceTexture?.let {
                             mCamera?.startPreview(mRequest!!, it)
+                            mCamera?.addPreviewDataCallBack(this@CameraClient)
                         }
                     }
                 }
@@ -183,7 +208,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun closeCamera() {
         if (Utils.debugCamera) {
-            Logger.i(TAG, "closeCamera")
+            Logger.i(TAG, "closeCamera...")
         }
         releaseEncodeProcessor()
         if (isEnableGLEs) {
@@ -354,15 +379,11 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     /**
-     * Add preview data call back
+     * Add preview raw data call back
      *
      * @param callBack camera preview data call back, see [IPreviewDataCallBack]
      */
     fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
-        if (isEnableGLEs) {
-            mRenderManager?.addPreviewDataCallBack(callBack)
-            return
-        }
         mCamera?.addPreviewDataCallBack(callBack)
     }
 
@@ -448,11 +469,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @return [PreviewSize] list of camera
      */
     fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize>? {
-        return mCamera?.getAllPreviewSizes(aspectRatio).apply {
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "getAllPreviewSizes size = $this")
-            }
-        }
+        return mCamera?.getAllPreviewSizes(aspectRatio)
     }
 
     /**
@@ -501,17 +518,52 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     private fun addLifecycleObserver(context: Context) {
-        if (context !is LifecycleOwner) return
-        context.lifecycle.addObserver(object : LifecycleEventObserver {
+        (context as LifecycleOwner).lifecycle.addObserver(object : LifecycleEventObserver {
             override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                 when (event) {
                     Lifecycle.Event.ON_DESTROY -> {
                         captureVideoStop()
+                        closeCamera()
                     }
                     else -> {}
                 }
             }
         })
+    }
+
+    private fun getSuitableSize(
+        maxWidth: Int,
+        maxHeight: Int
+    ): PreviewSize? {
+        val sizeList = getAllPreviewSizes()
+        // find it
+        sizeList?.find {
+            it.width == maxWidth && it.height == maxHeight
+        }.also { size ->
+            size ?: return@also
+            return size
+        }
+        // find the same aspectRatio
+        val aspectRatio = maxWidth.toFloat() / maxHeight
+        sizeList?.find {
+            val w = it.width
+            val h = it.height
+            val ratio = w.toFloat() / h
+            ratio == aspectRatio && w <= maxWidth && h <= maxHeight
+        }.also { size ->
+            size ?: return@also
+            return size
+        }
+        // find the closest aspectRatio
+        var minDistance: Int = maxWidth
+        var closetSize: PreviewSize? = null
+        sizeList?.forEach { size ->
+            if (minDistance >= abs((maxWidth - size.width))) {
+                minDistance = abs(maxWidth - size.width)
+                closetSize = size
+            }
+        }
+        return closetSize
     }
 
     companion object {
@@ -587,6 +639,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
          * @param bitRate bit rate for h264 encoding
          * @return [CameraClient.Builder]
          */
+        @Deprecated("Not realized")
         fun setVideoEncodeBitRate(bitRate: Int): Builder {
             this.videoEncodeBitRate = bitRate
             return this
@@ -598,6 +651,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
          * @param frameRate frame rate for h264 encoding
          * @return [CameraClient.Builder]
          */
+        @Deprecated("Not realized")
         fun setVideoEncodeFrameRate(frameRate: Int): Builder {
             this.videoEncodeFrameRate = frameRate
             return this

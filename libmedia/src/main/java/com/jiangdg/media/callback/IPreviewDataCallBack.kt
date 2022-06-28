@@ -23,6 +23,6 @@ interface IPreviewDataCallBack {
     fun onPreviewData(data: ByteArray?, format: DataFormat)
 
     enum class DataFormat {
-        NV21, ARGB
+        NV21
     }
 }

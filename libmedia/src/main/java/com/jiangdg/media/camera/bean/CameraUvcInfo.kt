@@ -19,7 +19,7 @@ package com.jiangdg.media.camera.bean
  *
  * @author Created by jiangdg on 2022/1/27
  */
-data class CameraUvcInfo(override val cameraId: String) : CameraInfo(cameraId) {
+class CameraUvcInfo(override val cameraId: String) : CameraInfo(cameraId) {
     var cameraName: String = ""
     var cameraProductName: String? = null
     var cameraManufacturerName: String? = null
@@ -34,8 +34,10 @@ data class CameraUvcInfo(override val cameraId: String) : CameraInfo(cameraId) {
                 "cameraManufacturerName='$cameraManufacturerName', " +
                 "cameraProtocol=$cameraProtocol, " +
                 "cameraClass=$cameraClass, " +
-                "cameraSubClass=$cameraSubClass)"
+                "cameraSubClass=$cameraSubClass, " +
+                "cameraVid=$cameraVid, " +
+                "cameraPid=$cameraPid, " +
+                "cameraPreviewSizes=$cameraPreviewSizes)"
+
     }
-
-
 }

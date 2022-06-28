@@ -25,7 +25,6 @@ import com.jiangdg.media.callback.ICaptureCallBack
 import com.jiangdg.media.callback.IEncodeDataCallBack
 import com.jiangdg.media.callback.IPlayCallBack
 import com.jiangdg.media.callback.IPreviewDataCallBack
-import com.jiangdg.media.camera.Camera1Strategy
 import com.jiangdg.media.camera.CameraUvcStrategy
 import com.jiangdg.media.camera.ICameraStrategy
 import com.jiangdg.media.camera.bean.CameraRequest
@@ -46,6 +45,7 @@ abstract class CameraFragment : BaseFragment() {
     private var mCameraClient: CameraClient? = null
 
     override fun initData() {
+        mCameraClient = getCameraClient() ?: getDefault()
         when (val cameraView = getCameraView()) {
             is AspectRatioTextureView -> {
                 handleTextureView(cameraView)
@@ -64,7 +64,6 @@ abstract class CameraFragment : BaseFragment() {
                 addView(view, getViewLayoutParams(this))
             }
         }
-        mCameraClient = getCameraClient() ?: getDefault()
     }
 
     private fun handleTextureView(textureView: AspectRatioTextureView) {
@@ -329,16 +328,16 @@ abstract class CameraFragment : BaseFragment() {
             }
             is LinearLayout -> {
                 LinearLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT
                 ).apply {
                     gravity = getGravity()
                 }
             }
             is RelativeLayout -> {
                 RelativeLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT
+                    RelativeLayout.LayoutParams.MATCH_PARENT,
+                    RelativeLayout.LayoutParams.MATCH_PARENT
                 ).apply{
                     when(getGravity()) {
                         Gravity.TOP -> {
@@ -401,8 +400,6 @@ abstract class CameraFragment : BaseFragment() {
     private fun getCameraRequest(): CameraRequest {
         return CameraRequest.CameraRequestBuilder()
             .setFrontCamera(false)
-            .setContinuousAFModel(true)
-            .setContinuousAutoModel(true)
             .setPreviewWidth(640)
             .setPreviewHeight(480)
             .create()
