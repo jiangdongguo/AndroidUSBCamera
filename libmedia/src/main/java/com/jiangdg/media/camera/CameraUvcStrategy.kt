@@ -224,7 +224,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
             loadCameraInfoInternal(devList)
         } catch (e: Exception) {
-            Logger.e(TAG, "loadCameraInfo: Find no uvc devices, err = ${e.localizedMessage}", e)
+            Logger.e(TAG, " Find no uvc devices, err = ${e.localizedMessage}", e)
         }
     }
 
@@ -249,7 +249,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             mCameraInfoMap[dev.deviceId] = cameraInfo
         }
         if (Utils.debugCamera) {
-            Logger.i(TAG, "loadCameraInfo: load success, camera = $mCameraInfoMap")
+            Logger.i(TAG, " load success, camera = $mCameraInfoMap")
         }
     }
 
@@ -261,11 +261,11 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 mDevConnectCallBack?.onConnectDev(this)
             }
             if (Utils.debugCamera) {
-                Logger.i(TAG, "startPreviewInternal: start preview success!!!, id(${dev?.deviceId})$dev")
+                Logger.i(TAG, " start preview success!!!, id(${dev?.deviceId})$dev")
             }
         } catch (e: Exception) {
             stopPreview()
-            Logger.e(TAG, "startPreviewInternal: preview failed, err = ${e.localizedMessage}", e)
+            Logger.e(TAG, " preview failed, err = ${e.localizedMessage}", e)
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
         }
     }
@@ -284,7 +284,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
             if (! isPreviewSizeSupported(previewWidth, previewHeight)) {
                 postCameraStatus(CameraStatus(CameraStatus.ERROR_PREVIEW_SIZE, "unsupported preview size(${request.previewWidth}, ${request.previewHeight})"))
-                Logger.e(TAG, "startPreviewInternal: unsupported preview size(${request.previewWidth}, ${request.previewHeight})")
+                Logger.e(TAG, " unsupported preview size(${request.previewWidth}, ${request.previewHeight})")
                 return null
             }
             try {
@@ -298,7 +298,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 )
             } catch (e: Exception) {
                 try {
-                    Logger.w(TAG, "startPreviewInternal: setPreviewSize failed ${e.localizedMessage}, try yuv format...")
+                    Logger.w(TAG, " setPreviewSize failed ${e.localizedMessage}, try yuv format...")
                     mUVCCamera?.setPreviewSize(
                         request.previewWidth,
                         request.previewHeight,
@@ -309,12 +309,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     )
                 } catch (e: Exception) {
                     postCameraStatus(CameraStatus(CameraStatus.ERROR, "setPreviewSize failed, err = ${e.localizedMessage}"))
-                    Logger.e(TAG, "startPreviewInternal: setPreviewSize failed", e)
+                    Logger.e(TAG, " setPreviewSize failed", e)
                     return null
                 }
             }
             mUVCCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
-            Logger.i(TAG, "startPreviewInternal: createCamera success! request = $request")
+            Logger.i(TAG, " createCamera success! request = $request")
         }
         return true
     }
@@ -331,7 +331,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             val holder = getSurfaceHolder()
             if (st == null && holder == null) {
                 postCameraStatus(CameraStatus(CameraStatus.ERROR, "surface is null"))
-                Logger.e(TAG, "startPreviewInternal: SurfaceTexture or SurfaceHolder cannot be null.")
+                Logger.e(TAG, " SurfaceTexture or SurfaceHolder cannot be null.")
                 return null
             }
             if (st != null) {
@@ -352,7 +352,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             }
         } catch (e: Exception) {
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
-            Logger.e(TAG, "startPreviewInternal: startPreview failed. err = ${e.localizedMessage}", e)
+            Logger.e(TAG, " startPreview failed. err = ${e.localizedMessage}", e)
             return null
         }
         return true
@@ -588,7 +588,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
 
     private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
         return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
-            Logger.i(TAG, "loadCameraInfo: find some device list, = $devList")
+            Logger.i(TAG, " find some device list, = $devList")
             mCacheDeviceList.clear()
             devList.forEach {
                 // check is camera or need device

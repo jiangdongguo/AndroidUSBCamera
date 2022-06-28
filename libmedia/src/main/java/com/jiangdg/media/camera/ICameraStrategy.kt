@@ -335,13 +335,11 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
         context.lifecycle.addObserver(object : LifecycleEventObserver {
             override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                 when (event) {
-                    Lifecycle.Event.ON_START -> {
+                    Lifecycle.Event.ON_CREATE -> {
                         register()
                     }
-                    Lifecycle.Event.ON_STOP -> {
-                        unRegister()
-                    }
                     Lifecycle.Event.ON_DESTROY -> {
+                        unRegister()
                         stopPreview()
                         release()
                     }
