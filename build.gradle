@@ -30,11 +30,10 @@ task clean(type: Delete) {
 ext {
     androidXVersion = '1.3.1'
     versionCompiler = 29
-    // when target=27, 9.0 is ok
-    versionTarget = 27
+    versionTarget = 30
     minSdkVersion = 19
-    versionCode = 110
-    versionNameString = '3.0.20220315'
+    versionCode = 111
+    versionNameString = '3.1.20220629'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
     ndkVersion = '21.0.6113669'
