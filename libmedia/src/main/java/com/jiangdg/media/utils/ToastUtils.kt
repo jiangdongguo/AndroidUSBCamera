@@ -38,14 +38,14 @@ object ToastUtils {
     @JvmStatic
     fun show(msg: String) {
         applicationCtx?.let { ctx ->
-            Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
         }
     }
 
     @JvmStatic
     fun show(resId: Int) {
         applicationCtx?.let { ctx ->
-            Toast.makeText(ctx, ctx.getString(resId), Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, ctx.getString(resId), Toast.LENGTH_LONG).show()
         }
     }
 

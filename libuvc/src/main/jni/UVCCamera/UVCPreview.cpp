@@ -370,6 +370,7 @@ int UVCPreview::stopPreview() {
 		}
 		clearDisplay();
 	}
+	mHasCapturing = false;
 	clearPreviewFrame();
 	clearCaptureFrame();
 	pthread_mutex_lock(&preview_mutex);
