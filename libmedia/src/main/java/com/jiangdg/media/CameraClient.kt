@@ -112,6 +112,10 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         data?.let {
             val width = mRequest!!.previewWidth
             val height = mRequest!!.previewHeight
+            // avoid preview size changed
+            if (data.size != width * height * 3 /2) {
+                return
+            }
             when(format) {
                 IPreviewDataCallBack.DataFormat.NV21 -> {
                     YUVUtils.nv21ToYuv420sp(data, width, height)
