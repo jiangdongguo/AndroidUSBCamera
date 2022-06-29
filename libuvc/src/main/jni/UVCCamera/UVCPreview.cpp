@@ -361,16 +361,15 @@ int UVCPreview::stopPreview() {
         // because of capture_thread may null when called do_preview()
 		if (mHasCapturing) {
             pthread_cond_signal(&capture_sync);
-            if (pthread_join(capture_thread, NULL) != EXIT_SUCCESS) {
+            if (capture_thread && pthread_join(capture_thread, NULL) != EXIT_SUCCESS) {
                 LOGW("UVCPreview::terminate capture thread: pthread_join failed");
             }
 		}
-		if (pthread_join(preview_thread, NULL) != EXIT_SUCCESS) {
+		if (preview_thread && pthread_join(preview_thread, NULL) != EXIT_SUCCESS) {
 			LOGW("UVCPreview::terminate preview thread: pthread_join failed");
 		}
 		clearDisplay();
 	}
-	mHasCapturing = false;
 	clearPreviewFrame();
 	clearCaptureFrame();
 	pthread_mutex_lock(&preview_mutex);
