@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public final class USBMonitor {
 
@@ -462,16 +463,22 @@ public final class USBMonitor {
 	 * @return hasPermission
 	 */
 	private boolean updatePermission(final UsbDevice device, final boolean hasPermission) {
-		final int deviceKey = getDeviceKey(device, true);
-		synchronized (mHasPermissions) {
-			if (hasPermission) {
-				if (mHasPermissions.get(deviceKey) == null) {
-					mHasPermissions.put(deviceKey, new WeakReference<UsbDevice>(device));
+		// fix api >= 29, permission SecurityException
+		try {
+			final int deviceKey = getDeviceKey(device, true);
+			synchronized (mHasPermissions) {
+				if (hasPermission) {
+					if (mHasPermissions.get(deviceKey) == null) {
+						mHasPermissions.put(deviceKey, new WeakReference<UsbDevice>(device));
+					}
+				} else {
+					mHasPermissions.remove(deviceKey);
 				}
-			} else {
-				mHasPermissions.remove(deviceKey);
 			}
+		} catch (SecurityException e) {
+			Log.w("jiangdg", e.getLocalizedMessage());
 		}
+
 		return hasPermission;
 	}
 
