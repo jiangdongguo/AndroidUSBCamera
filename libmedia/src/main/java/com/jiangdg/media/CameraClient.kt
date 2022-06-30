@@ -85,7 +85,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             EventBus.with<CameraStatus>(BusKey.KEY_CAMERA_STATUS).observe(context, { status ->
                 when(status.code) {
                     CameraStatus.ERROR -> {
-                        closeCamera()
+                        mCamera?.stopPreview()
                     }
                     CameraStatus.ERROR_PREVIEW_SIZE -> {
                         mRequest?.let { request ->

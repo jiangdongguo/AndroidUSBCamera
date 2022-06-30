@@ -80,6 +80,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     }
                     mDevConnectCallBack?.onAttachDev(device)
                 }
+                loadCameraInfoInternal(device)
                 requestCameraPermission(device)
             }
 
@@ -222,35 +223,31 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 Logger.e(TAG, emptyTip)
                 return
             }
-            loadCameraInfoInternal(devList)
+            devList.forEach { dev ->
+                loadCameraInfoInternal(dev)
+            }
         } catch (e: Exception) {
             Logger.e(TAG, " Find no uvc devices, err = ${e.localizedMessage}", e)
         }
     }
 
-    private fun loadCameraInfoInternal(devList: MutableList<UsbDevice>) {
-        mCameraInfoMap.clear()
-        devList.forEach { dev ->
-            if (mCameraInfoMap.containsKey(dev.deviceId)) {
-                return
-            }
-            val cameraInfo = CameraUvcInfo(dev.deviceId.toString()).apply {
-                cameraVid = dev.vendorId
-                cameraPid = dev.productId
-                cameraName = dev.deviceName
-                cameraProtocol = dev.deviceProtocol
-                cameraClass = dev.deviceClass
-                cameraSubClass = dev.deviceSubclass
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    cameraProductName = dev.productName
-                    cameraManufacturerName = dev.manufacturerName
-                }
-            }
-            mCameraInfoMap[dev.deviceId] = cameraInfo
+    private fun loadCameraInfoInternal(dev: UsbDevice) {
+        if (mCameraInfoMap.containsKey(dev.deviceId)) {
+            return
         }
-        if (Utils.debugCamera) {
-            Logger.i(TAG, " load success, camera = $mCameraInfoMap")
+        val cameraInfo = CameraUvcInfo(dev.deviceId.toString()).apply {
+            cameraVid = dev.vendorId
+            cameraPid = dev.productId
+            cameraName = dev.deviceName
+            cameraProtocol = dev.deviceProtocol
+            cameraClass = dev.deviceClass
+            cameraSubClass = dev.deviceSubclass
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                cameraProductName = dev.productName
+                cameraManufacturerName = dev.manufacturerName
+            }
         }
+        mCameraInfoMap[dev.deviceId] = cameraInfo
     }
 
     override fun startPreviewInternal() {
