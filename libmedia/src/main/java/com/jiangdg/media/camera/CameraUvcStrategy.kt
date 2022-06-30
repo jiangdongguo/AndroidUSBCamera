@@ -484,7 +484,14 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             if (previewSizeList.isEmpty()) {
                 Logger.i(TAG, "getAllPreviewSizes = ${mUVCCamera?.supportedSizeList}")
                 mUVCCamera?.supportedSizeList?.forEach { size ->
-                    previewSizeList.add(PreviewSize(size.width, size.height))
+                    previewSizeList.find {
+                        it.width == size.width && it.height == size.height
+                    }.also {
+                        if (it != null) {
+                            return@also
+                        }
+                        previewSizeList.add(PreviewSize(size.width, size.height))
+                    }
                 }
                 cameraInfo?.cameraPreviewSizes = previewSizeList
             }
