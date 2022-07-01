@@ -6,9 +6,9 @@ AUSBC
 
 &emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcom to use **AUSBC3.0** and welcom to **star** & **fork** & **issues**!
 
-- example showing
+&emsp;[@ Example showing](https://live.csdn.net/v/220915?spm=1001.2014.3001.5501)
 
-  <iframe height=498 width=510 src="https://live.csdn.net/v/220915">  
+
 
 Feature
 -------
