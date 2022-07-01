@@ -58,6 +58,7 @@ import kotlin.math.abs
 class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack {
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
+    private val rawImage: Boolean = builder.rawImage
     private val mCamera: ICameraStrategy? = builder.camera
     private var mCameraView: IAspectRatio? = null
     private var mRequest: CameraRequest? = builder.cameraRequest
@@ -304,7 +305,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         if (Utils.debugCamera) {
             Logger.i(TAG, "captureImage...")
         }
-        if (isEnableGLEs) {
+        if (isEnableGLEs && ! rawImage) {
             mRenderManager?.saveImage(callBack, path)
             return
         }
@@ -581,6 +582,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         internal var context: Context? = null
         internal var cameraRequest: CameraRequest? = null
         internal var enableGLEs: Boolean = true
+        internal var rawImage: Boolean = true
         internal var camera: ICameraStrategy? = null
         internal var defaultEffect: AbstractEffect? = null
         internal var videoEncodeBitRate: Int? = null
@@ -622,6 +624,17 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
          */
         fun setEnableGLES(enable: Boolean): Builder {
             this.enableGLEs = enable
+            return this
+        }
+
+        /**
+         * Need opengl es image when capture image
+         *
+         * @param rawImage default is true
+         * @return [CameraClient.Builder]
+         */
+        fun setRawImage(rawImage: Boolean): Builder {
+            this.rawImage = rawImage
             return this
         }
 
