@@ -26,7 +26,7 @@ Feature
 
 
 
-Uages
+Usages
 -------
 
 &emsp;`AUSBC 3.0`  is a little different  from previous versions  which can not  be directly dependenced by gradle so far.The only thing you should do is that downing the project and add it as a module of your own project. Of course, it will definitely support the way of dependencies in the future.  As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
@@ -157,6 +157,8 @@ mCameraClient?.removeRenderEffect(effect)
 mCameraClient?.updateRenderEffect(classifyId, effect)
 ```
 
+[中文文档](https://juejin.cn/post/7115229806844706847/)
+
 Demo
 -------
 
@@ -217,6 +219,8 @@ Version
 8. Fix open some device failed, resolution or not uvc device as usual；
 9. Fix acquire  common library failed, see `libuvc/libusbcommon_v4.1.1.aar`;
 10. Merge NDK project into main project, see `libuvc` module.
+
+
 
 Homepage & Help
 -------
