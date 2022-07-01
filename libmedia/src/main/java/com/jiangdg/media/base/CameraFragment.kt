@@ -389,6 +389,7 @@ abstract class CameraFragment : BaseFragment() {
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
+            .setRawImage(true)
             .setDefaultEffect(EffectBlackWhite(requireContext()))
             .setCameraStrategy(CameraUvcStrategy(requireContext()))
             .setCameraRequest(getCameraRequest())
