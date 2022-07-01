@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.20'
     }
 }
 
@@ -14,9 +15,10 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://jitpack.io" }
 
-        flatDir {
-            dirs 'libs', '../libusbcamera/libs'
+        flatDir{
+            dirs project(':libuvc').file('libs')
         }
     }
 }
@@ -26,15 +28,25 @@ task clean(type: Delete) {
 }
 
 ext {
-    androidXVersion = '1.1.0'
-    versionCompiler = 28
-    // when target=27, 9.0 is ok
-    versionTarget = 27
-    // if hope supporting 4.4
-    // please modify it to 16
-    minSdkVersion = 16
-    versionCode = 101
-    versionNameString = '2.3.6.20211117'
+    androidXVersion = '1.3.1'
+    versionCompiler = 29
+    versionTarget = 30
+    minSdkVersion = 19
+    versionCode = 111
+    versionNameString = '3.1.20220629'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
+    ndkVersion = '21.0.6113669'
+
+    supportLibVersion = '27.1.1'
+    versionBuildTool = '27.0.3'
+    kotlinCoreVersion = '1.3.2'
+    kotlinCoroutines = '1.3.9'
+    materialVersion = '1.3.0'
+    constraintlayoutVersion = '2.0.4'
+    lifecycle_version = '2.2.0'
+    quick_version= '2.9.50'
+    dialog_version= '3.2.1'
+    bugly_version = '3.4.4'
+    bugly_native_version = '3.9.0'
 }

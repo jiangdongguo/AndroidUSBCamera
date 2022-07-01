@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">USBCamera</string>
+    <string name="app_name" translatable="false">JJCamera3.0</string>
+    <string name="permission_tip" translatable="false">You have already denied permission access. Go to the Settings page to turn on permissions</string>
+    <string name="dialog_contact_title" translatable="false">Contact me:</string>
+    <string name="dialog_contact_message" translatable="false">765067602@qq.com</string>
 </resources>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="12dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
+    tools:ignore="ResourceName">
+
+    <View
+        android:id="@+id/background"
+        android:layout_width="match_parent"
+        android:layout_height="82dp"
+        android:background="@drawable/camera_shape_more_alpha_bg"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ImageView
+        android:id="@+id/multiplex"
+        style="@style/Camera2MoreSettingsImageStyle"
+        android:src="@mipmap/camera_more_multiplex"
+        app:layout_constraintEnd_toStartOf="@id/contract"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/background" />
+
+    <TextView
+        android:id="@+id/multiplex_text"
+        style="@style/Camera2MoreSettingsTextStyle"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="multiplex"
+        app:layout_constraintEnd_toEndOf="@+id/multiplex"
+        app:layout_constraintStart_toStartOf="@+id/multiplex"
+        app:layout_constraintTop_toBottomOf="@+id/multiplex" />
+
+    <ImageView
+        android:id="@+id/contract"
+        style="@style/Camera2MoreSettingsImageStyle"
+        android:src="@mipmap/camera_contrast"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@id/resolution"
+        app:layout_constraintStart_toEndOf="@id/multiplex"
+        app:layout_constraintTop_toTopOf="@id/background" />
+
+    <TextView
+        android:id="@+id/contract_text"
+        style="@style/Camera2MoreSettingsTextStyle"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Contract"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/contract"
+        app:layout_constraintStart_toStartOf="@+id/contract"
+        app:layout_constraintTop_toBottomOf="@+id/contract" />
+
+    <ImageView
+        android:id="@+id/resolution"
+        android:visibility="gone"
+        style="@style/Camera2MoreSettingsImageStyle"
+        android:src="@mipmap/camera_resolution"
+        app:layout_constraintEnd_toStartOf="@id/contact"
+        app:layout_constraintStart_toEndOf="@id/contract"
+        app:layout_constraintTop_toTopOf="@id/background" />
+
+    <TextView
+        android:id="@+id/resolution_text"
+        style="@style/Camera2MoreSettingsTextStyle"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Resolution"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/resolution"
+        app:layout_constraintStart_toStartOf="@+id/resolution"
+        app:layout_constraintTop_toBottomOf="@+id/resolution" />
+
+    <ImageView
+        android:id="@+id/contact"
+        style="@style/Camera2MoreSettingsImageStyle"
+        android:src="@mipmap/camera_more_contact"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/resolution"
+        app:layout_constraintTop_toTopOf="@id/background" />
+
+    <TextView
+        android:id="@+id/contact_text"
+        style="@style/Camera2MoreSettingsTextStyle"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Contact"
+        app:layout_constraintEnd_toEndOf="@+id/contact"
+        app:layout_constraintStart_toStartOf="@+id/contact"
+        app:layout_constraintTop_toBottomOf="@+id/contact" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.jiangdg.media.widget.TipView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/takePictureTipView"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:background="#fff"
+    android:shadowColor="#40000000"
+    android:shadowDx="0"
+    android:shadowDy="0"
+    android:shadowRadius="2"
+    android:visibility="gone"
+    app:layout_constraintBottom_toTopOf="@+id/controlPanelLayout"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="@id/toolbarBg"/>

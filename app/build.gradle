@@ -1,14 +1,22 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
 
 android {
     compileSdkVersion rootProject.ext.versionCompiler
     defaultConfig {
-        applicationId "com.jiangdg.usbcamera"
+        applicationId "com.jiangdg.jjcamera"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.versionTarget
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionNameString
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        multiDexEnabled true
+
+        ndk{
+            abiFilters 'armeabi-v7a','arm64-v8a'
+        }
     }
     buildTypes {
         release {
@@ -16,20 +24,40 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    // solving com.android.tools.r8.CompilationFailedException: Compilation failed to complete
+
     compileOptions {
         sourceCompatibility rootProject.ext.javaSourceCompatibility
         targetCompatibility rootProject.ext.javaTargetCompatibility
     }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    // libuvc module should need set local.properties
+    // eg: ndk.dir=D\:\\Developer\\Environment\\AndroidSdks\\ndk\\21.0.6113669
+    ndkVersion rootProject.ext.ndkVersion
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
+    implementation "androidx.core:core-ktx:${kotlinCoreVersion}"
+    implementation "com.google.android.material:material:${materialVersion}"
+    implementation "androidx.constraintlayout:constraintlayout:${constraintlayoutVersion}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    implementation "com.github.CymChad:BaseRecyclerViewAdapterHelper:$quick_version"
+    implementation "com.afollestad.material-dialogs:core:$dialog_version"
 
-    implementation 'com.jakewharton:butterknife:10.2.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
+    implementation "com.tencent.bugly:crashreport:$bugly_version"
+    implementation "com.tencent.bugly:nativecrashreport:$bugly_native_version"
 
-    implementation project(':libusbcamera')
+    implementation project(':libmedia')
 }
