@@ -28,7 +28,7 @@ Feature
 Usages
 -------
 
-&emsp;`AUSBC 3.0`  is a little different  from previous versions  which can not  be directly dependenced by gradle so far.The only thing you should do is that downing the project and add it as a module of your own project. Of course, it will definitely support the way of dependencies in the future.  As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
+&emsp;`AUSBC 3.0`  is a little different  from previous versions  which can not  be directly dependenced by gradle so far.The only thing you should do is that downloading the project and add it as a module of your own project. Of course, it will definitely support the way of dependencies in the future.  As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
 
 - **Simply usage**
 

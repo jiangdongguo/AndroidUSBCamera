@@ -498,6 +498,20 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      */
     fun getDefaultEffect() = mDefaultEffect
 
+    /**
+     * Send camera command
+     *
+     * Only effect on uvc camera
+     *
+     * This method cannot be verified, please use it with caution
+     */
+    fun sendCameraCommand(command: Int): Int? {
+        if (mCamera !is CameraUvcStrategy) {
+            return null
+        }
+        return mCamera.sendCameraCommand(command)
+    }
+
     private fun initEncodeProcessor() {
         releaseEncodeProcessor()
         val  encodeWidth = if (isEnableGLEs) {

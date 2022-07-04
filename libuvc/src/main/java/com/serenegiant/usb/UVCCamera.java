@@ -919,6 +919,20 @@ public class UVCCamera {
     }
 
 //================================================================================
+
+	/** Command camera
+	 *
+	 * @param command hex value
+	 * @return control result
+	 */
+	public synchronized int sendCommand(int command) {
+		if (mNativePtr != 0) {
+			return nativeSendCommand(mNativePtr, command);
+		}
+		return (int) mNativePtr;
+	}
+
+//================================================================================
 	public synchronized void updateCameraParams() {
     	if (mNativePtr != 0) {
     		if ((mControlSupports == 0) || (mProcSupports == 0)) {
@@ -1210,6 +1224,8 @@ public class UVCCamera {
 	private final native int nativeUpdatePowerlineFrequencyLimit(final long id_camera);
     private static final native int nativeSetPowerlineFrequency(final long id_camera, final int frequency);
     private static final native int nativeGetPowerlineFrequency(final long id_camera);
+
+	private static final native int nativeSendCommand(final long id_camera, final int command);
 
     private final native int nativeUpdateZoomLimit(final long id_camera);
     private static final native int nativeSetZoom(final long id_camera, final int zoom);

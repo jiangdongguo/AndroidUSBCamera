@@ -676,6 +676,16 @@ static uvc_error_t update_ctrl_values(uvc_device_handle_t *devh, control_value_t
 		MARK("failed to UPDATE_CTRL_VALUES"); \
 	} \
 
+/** Control UVC Camera with value check
+ *
+ * @param value
+ * @return control result
+ */
+int UVCCamera::internalSetCtrlValue(int32_t value, paramset_func_u16 set_func) {
+	int ret = set_func(mDeviceHandle, value);
+	RETURN(ret, int);
+}
+
 /**
  * カメラコントロール設定の下請け
  */
@@ -2094,6 +2104,15 @@ int UVCCamera::getZoom() {
 		}
 	}
 	RETURN(0, int);
+}
+
+//======================================================================
+// Control UVC Camera
+int UVCCamera::sendCommand(int command) {
+	ENTER();
+	int ret = UVC_ERROR_IO;
+	ret = internalSetCtrlValue(command, uvc_set_zoom_abs);
+	RETURN(ret, int);
 }
 
 //======================================================================

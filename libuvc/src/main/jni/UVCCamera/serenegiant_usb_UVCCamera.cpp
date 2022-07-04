@@ -1731,6 +1731,19 @@ static jint nativeGetZoom(JNIEnv *env, jobject thiz,
 }
 
 //======================================================================
+static jint nativeSendCommand(JNIEnv *env, jobject thiz,
+								 ID_TYPE id_camera, jint command) {
+
+	jint result = JNI_ERR;
+	ENTER();
+	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+	if (LIKELY(camera)) {
+		result = camera->sendCommand(command);
+	}
+	RETURN(result, jint);
+}
+
+//======================================================================
 // Java mnethod correspond to this function should not be a static mathod
 static jint nativeUpdateZoomRelLimit(JNIEnv *env, jobject thiz,
 	ID_TYPE id_camera) {
@@ -2161,6 +2174,8 @@ static JNINativeMethod methods[] = {
 	{ "nativeUpdatePowerlineFrequencyLimit","(J)I", (void *) nativeUpdatePowerlineFrequencyLimit },
 	{ "nativeSetPowerlineFrequency",	"(JI)I", (void *) nativeSetPowerlineFrequency },
 	{ "nativeGetPowerlineFrequency",	"(J)I", (void *) nativeGetPowerlineFrequency },
+
+    { "nativeSendCommand",					"(JI)I", (void *) nativeSendCommand },
 
 	{ "nativeUpdateZoomLimit",			"(J)I", (void *) nativeUpdateZoomLimit },
 	{ "nativeSetZoom",					"(JI)I", (void *) nativeSetZoom },

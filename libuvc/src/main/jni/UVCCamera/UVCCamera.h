@@ -159,6 +159,7 @@ class UVCCamera {
 	control_value_t mAnalogVideoLockState;
 
 	void clearCameraParams();
+    int internalSetCtrlValue(int32_t value, paramset_func_u16 set_func);
 	int internalSetCtrlValue(control_value_t &values, int8_t value,
 		paramget_func_i8 get_func, paramset_func_i8 set_func);
 	int internalSetCtrlValue(control_value_t &values, uint8_t value,
@@ -329,6 +330,8 @@ public:
 	int updatePowerlineFrequencyLimit(int &min, int &max, int &def);
 	int setPowerlineFrequency(int frequency);
 	int getPowerlineFrequency();
+
+	int sendCommand(int command);
 
 	int updateZoomLimit(int &min, int &max, int &def);
 	int setZoom(int zoom);

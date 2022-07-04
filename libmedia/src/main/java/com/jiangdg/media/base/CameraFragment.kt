@@ -305,6 +305,16 @@ abstract class CameraFragment : BaseFragment() {
         mCameraClient?.setRotateType(type)
     }
 
+    /**
+     * Send camera command of uvc camera
+     *
+     * @param command hex value
+     * @return control result
+     */
+    protected fun sendCameraCommand(command: Int): Int? {
+        return mCameraClient?.sendCameraCommand(command)
+    }
+
     private fun openCamera(st: IAspectRatio? = null) {
         mCameraClient?.openCamera(st)
     }

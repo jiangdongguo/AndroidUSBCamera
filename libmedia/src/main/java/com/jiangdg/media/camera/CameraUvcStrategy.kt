@@ -590,6 +590,18 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         }
     }
 
+    /**
+     * Send camera command
+     *
+     * @param command hex value
+     * @return control result
+     */
+    fun sendCameraCommand(command: Int): Int? {
+        return mUVCCamera?.sendCommand(command).apply {
+            Logger.i(TAG, "send command ret = $this")
+        }
+    }
+
     private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
         return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
             Logger.i(TAG, " find some device list, = $devList")
