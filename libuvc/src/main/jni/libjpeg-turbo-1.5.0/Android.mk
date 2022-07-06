@@ -46,6 +46,7 @@ LOCAL_EXPORT_C_INCLUDES := \
 #コンパイラのオプションフラグを指定
 LOCAL_CFLAGS := $(LOCAL_C_INCLUDES:%=-I%)
 LOCAL_CFLAGS += -DANDROID_NDK
+LOCAL_CFLAGS += -fPIC
 
 #リンクするライブラリを指定(静的モジュールにする時は不要)
 #LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
