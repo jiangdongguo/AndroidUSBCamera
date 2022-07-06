@@ -36,7 +36,6 @@ ext {
     versionNameString = '3.1.20220629'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
-    ndkVersion = '21.0.6113669'
 
     supportLibVersion = '27.1.1'
     versionBuildTool = '27.0.3'
