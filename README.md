@@ -156,7 +156,71 @@ mCameraClient?.removeRenderEffect(effect)
 mCameraClient?.updateRenderEffect(classifyId, effect)
 ```
 
-[中文文档](https://juejin.cn/post/7115229806844706847/)
+- Debug online
+
+&emsp;If you want to debug the project online or modify something, those steps you should do:
+
+&emsp;**First**, modifying the **Settings.gradle** file and making those to module. 
+
+```groovy
+include ':app'
+include ':libmedia'
+
+// For debug online
+include ':libuvc'
+include ':libpush'
+include ':libnative'
+```
+
+&emsp;**Second**,let **media module** dependenced on those modules instead of aar.
+
+```groovy
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:${androidXVersion}"
+    implementation "androidx.core:core-ktx:${kotlinCoreVersion}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
+    implementation 'com.elvishew:xlog:1.11.0'
+    api 'com.gyf.immersionbar:immersionbar:3.0.0'
+    implementation "com.github.bumptech.glide:glide:4.10.0"
+    implementation "com.github.bumptech.glide:okhttp3-integration:4.10.0"
+    implementation "com.zlc.glide:webpdecoder:1.6.4.9.0"
+    implementation 'com.tencent:mmkv:1.2.12'
+
+    // aar
+    //implementation(fileTree("libs"))
+
+    // For debug online
+    implementation project(path: ':libuvc')
+    implementation project(path: ':libnative')
+    implementation project(path: ':libpush')
+}
+```
+
+&emsp;**Third**，set **flatDir** in the project **build.gradle**.
+
+```groovy
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url "https://jitpack.io" }
+
+        // For debug online
+        flatDir{
+            dirs project(':libuvc').file('libs')
+        }
+    }
+}
+```
+
+**In the end**, build your modify module to aar and replace it in the media module.
+
+
+
+[@ 中文文档](https://juejin.cn/post/7115229806844706847/)
+
+
 
 Demo
 -------

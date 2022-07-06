@@ -16,6 +16,15 @@ android {
 		targetSdkVersion rootProject.ext.versionTarget
     }
 
+	lintOptions {
+		checkReleaseBuilds false
+		// Or, if you prefer, you can continue to check for errors in release builds,
+		// but continue the build even when errors are found:
+		abortOnError false
+		// The demo app does not have translations.
+		disable 'MissingTranslation'
+	}
+
     buildTypes {
         release {
             minifyEnabled false
@@ -26,6 +35,11 @@ android {
 		main {
 			jniLibs.srcDir 'src/main/libs'
 			jni.srcDirs = []
+		}
+	}
+	repositories {
+		flatDir {
+			dir 'libs'
 		}
 	}
 }

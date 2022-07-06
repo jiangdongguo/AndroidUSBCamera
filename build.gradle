@@ -17,9 +17,10 @@ allprojects {
         jcenter()
         maven { url "https://jitpack.io" }
 
-        flatDir{
-            dirs project(':libuvc').file('libs')
-        }
+        // For debug online
+//        flatDir{
+//            dirs project(':libuvc').file('libs')
+//        }
     }
 }
 

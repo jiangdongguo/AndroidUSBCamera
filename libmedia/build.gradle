@@ -32,6 +32,7 @@ android {
 }
 
 dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
     implementation "androidx.core:core-ktx:${kotlinCoreVersion}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
@@ -41,6 +42,12 @@ dependencies {
     implementation "com.github.bumptech.glide:okhttp3-integration:4.10.0"
     implementation "com.zlc.glide:webpdecoder:1.6.4.9.0"
     implementation 'com.tencent:mmkv:1.2.12'
-    implementation project(path: ':libuvc')
-    implementation project(path: ':libnative')
+
+    // aar
+    implementation(fileTree("libs"))
+
+    // For debug online
+//    implementation project(path: ':libuvc')
+//    implementation project(path: ':libnative')
+//    implementation project(path: ':libpush')
 }
