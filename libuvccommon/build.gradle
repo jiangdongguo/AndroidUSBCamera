@@ -1,0 +1,50 @@
+apply plugin: 'com.android.library'
+/*
+ * libcommon
+ * utility/helper classes for myself
+ *
+ * Copyright (c) 2014-2018 saki t_saki@serenegiant.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+*/
+
+android {
+    compileSdkVersion rootProject.ext.versionCompiler
+    buildToolsVersion rootProject.ext.versionBuildTool
+
+    compileOptions {
+        sourceCompatibility rootProject.ext.javaSourceCompatibility
+        targetCompatibility rootProject.ext.javaTargetCompatibility
+    }
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.versionTarget
+        versionCode 222
+        versionName '4.1.1'
+        buildConfigField "String", "STL_NAME", "\"${project.property("STL_NAME")}\""
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    api fileTree(dir: 'libs', include: ['*.jar'])
+	implementation "androidx.legacy:legacy-support-v4:1.0.0"
+	implementation "androidx.appcompat:appcompat:1.0.2"
+	implementation "androidx.recyclerview:recyclerview:1.0.0"
+	implementation "androidx.preference:preference:1.0.0"
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<dimen name="dialog_dont_show_again_checkbox_left_margin">16dp</dimen>
+	<dimen name="dialog_dont_show_again_checkbox_top_margin">16dp</dimen>
+	<dimen name="dialog_dont_show_again_checkbox_right_margin">16dp</dimen>
+	<dimen name="dialog_dont_show_again_checkbox_bottom_margin">0dp</dimen>
+</resources>

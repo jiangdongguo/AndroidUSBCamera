@@ -1,8 +1,9 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file where you can add configuration options libuvccommon to all sub-projects/modules.
 buildscript {
     repositories {
         google()
         jcenter()
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
@@ -16,11 +17,6 @@ allprojects {
         google()
         jcenter()
         maven { url "https://jitpack.io" }
-
-        // For debug online
-//        flatDir{
-//            dirs project(':libuvc').file('libs')
-//        }
     }
 }
 
@@ -37,7 +33,6 @@ ext {
     versionNameString = '3.1.1'
     javaSourceCompatibility = JavaVersion.VERSION_1_8
     javaTargetCompatibility = JavaVersion.VERSION_1_8
-    ndkVersion = '21.0.6113669'
 
     supportLibVersion = '27.1.1'
     versionBuildTool = '27.0.3'
