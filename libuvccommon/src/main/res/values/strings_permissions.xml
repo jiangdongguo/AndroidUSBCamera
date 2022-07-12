@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="permission_title">Regarding permission</string>
+	<!-- 録音のパーミッション RECORD_AUDIO -->
+	<string name="permission_audio">No audio recording permission. \nAll audio function is disabled</string>
+	<string name="permission_audio_recording_reason">Audio recording permission is necessary for movie capture with audio.</string>
+	<string name="permission_audio_recording_request">Audio recording permission is necessary for movie capture with audio.</string>
+	<string name="permission_audio_streaming_reason">Audio recording permission is necessary for streaming with audio.</string>
+	<string name="permission_audio_streaming_request">Audio recording permission is necessary for streaming with audio.</string>
+	<!-- 外部ストレージへの書き込みパーミッション WRITE_EXTERNAL_STORAGE -->
+	<string name="permission_ext_storage">No permission of writing external storage. \nMovie/still image capturing are disabled.</string>
+	<string name="permission_ext_storage_reason">Permission of writing external storage is necessary for movie/still image capturing.</string>
+	<string name="permission_ext_storage_request">Permission of writing external storage is necessary for movie/still image capturing.</string>
+	<string name="permission_ext_storage_finish">No writing external storage permission. \nApp will finish soon</string>
+	<!-- ネットワークアクセスのパーミッション INTERNET -->
+	<string name="permission_network">No network access permission.</string>
+	<string name="permission_network_reason">Network access permission is necessary for streaming.</string>
+	<string name="permission_network_request">Network access permission is necessary for streaming.</string>
+	<string name="permission_network_finish">No network access permission. \nApp will finish soon</string>
+	<!-- 位置情報のパーミッション -->
+	<string name="permission_location">No location access permission</string>
+	<string name="permission_location_reason">Location access permission is necessary for %s</string>
+	<string name="permission_location_request">Location access permission is necessary for %s</string>
+	<string name="permission_location_finish">No location access permission. \nApp will finish soon</string>
+	<!-- カメラアクセスのパーミッション -->
+	<string name="permission_camera">No camera access permission</string>
+	<string name="permission_camera_finish">No camera access permission. \nApp will finish soon</string>
+	<string name="permission_camera_reason">Camera access permission is necessary for fallback to built in camera.</string>
+	<string name="permission_camera_request">Camera access permission is necessary for fallback to built in camera.</string>
+	<!-- ハードウエアID・通話状態へのアクセスパーミッション -->
+	<string name="permission_hardware_id_request">Permission to access phone state/hardware id necessary for calling.</string>
+</resources>

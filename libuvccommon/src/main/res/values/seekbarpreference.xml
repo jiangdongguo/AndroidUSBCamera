@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+ * libcommon
+ * utility/helper classes for myself
+ *
+ * Copyright (c) 2014-2018 saki t_saki@serenegiant.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+*/
+-->
+<resources xmlns:android="http://schemas.android.com/apk/res/android" >
+	<style name="SeekBarPreference_title" parent="@android:style/TextAppearance.Large"/>
+	<style name="SeekBarPreference_summary" parent="@android:style/TextAppearance.Small">
+		<!-- <item name="android:textColor">#ffa500</item> -->
+	</style>
+	<!-- レイアウトファイルのIDの予約 -->
+	<item type="id" name="seekbar" />
+	<item type="id" name="seekbar_value_label" />
+
+	<!-- レイアウト属性 -->
+	<declare-styleable name="SeekBarPreference">
+		<!-- 最小値 -->
+		<attr name="min_value" format="integer|reference" default="0" />
+		<!-- 最大値 -->
+		<attr name="max_value" format="integer|reference" default="100" />
+		<!-- デフォルト値 -->
+		<attr name="default_value" format="integer|reference" default="0" />
+		<!-- レイアウトリソースID -->
+		<attr name="seekbar_layout" format="reference" default="0" />
+		<!-- シークバーのID -->
+		<attr name="seekbar_id" format="reference" default="@id/seekbar"/>
+		<!-- 値表示用TextViewのID -->
+		<attr name="seekbar_label_id" format="reference" default="@id/seekbar_value_label"/>
+		<!-- 値を表示する際のスケール -->
+		<attr name="scale_value" format="float" default="1" />
+		<!-- 値を表示する際のフォーマット, プレファレンスに保存されるのは最大値〜最小値の整数 -->
+		<attr name="value_format" format="string|reference" default="1" />
+	</declare-styleable>
+</resources>

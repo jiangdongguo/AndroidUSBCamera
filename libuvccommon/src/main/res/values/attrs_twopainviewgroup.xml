@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="TwoPainViewGroup">
+		<attr name="orientation" default="horizontal" format="enum|integer">
+			<enum name="horizontal" value="0"/>
+			<enum name="vertical" value="1"/>
+		</attr>
+		<attr name="displayMode" default="split" format="enum|integer">
+			<enum name="split" value="0"/>
+			<enum name="select1" value="1"/>
+			<enum name="select2" value="2"/>
+			<enum name="single1" value="3"/>
+			<enum name="single2" value="4"/>
+		</attr>
+		<attr name="enableSubWindow" default="true" format="boolean">
+		</attr>
+		<attr name="flipChildPos" default="false" format="boolean">
+		</attr>
+		<attr name="subWindowScale" default="0.2" format="float">
+		</attr>
+	</declare-styleable>
+</resources>

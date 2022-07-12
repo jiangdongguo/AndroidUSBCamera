@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+ * libcommon
+ * utility/helper classes for myself
+ *
+ * Copyright (c) 2014-2018 saki t_saki@serenegiant.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+*/
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:orientation="vertical"
+	android:background="@color/QUARTER_CLEAR_WHITE"
+	android:layout_width="380dp"
+	android:layout_height="match_parent">
+
+	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="60dp"
+		android:padding="3dp">
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_frame_button"
+			android:background="@null"
+			android:src="@mipmap/ic_frame_frame"
+			android:scaleType="fitCenter"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_cross_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_cross"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_cross_quarter_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_cross_quarter"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_circle_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_circle"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_circle2_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_circle_2"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_cross_circle_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_cross_circle"
+			android:layout_weight="1"/>
+
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/frame_cross_circle2_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_frame_cross_circle2"
+			android:layout_weight="1"/>
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="3dp">
+
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color1_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/RED"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color2_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/ORANGE"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color3_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/YELLOW"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color4_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/GREEN"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color5_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/BLUE"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color6_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/WHITE"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color7_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/GRAY"/>
+		<ImageButton
+			android:layout_width="0dp"
+			android:layout_height="60dp"
+			android:id="@+id/color8_button"
+			android:layout_weight="1"
+			android:scaleType="fitCenter"
+			android:background="@color/BLACK"/>
+		<ImageButton
+			android:layout_width="wrap_content"
+			android:layout_height="60dp"
+			android:id="@+id/color_select_button"
+			android:background="@null"
+			android:scaleType="fitCenter"
+			android:src="@mipmap/ic_color_circle"/>
+	</LinearLayout>
+	<RadioGroup
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/scale_type_radiogroup"
+		android:orientation="horizontal"
+		android:gravity="center"
+		android:padding="@dimen/scale_type_padding">
+
+		<RadioButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/scale_type_none"
+			android:id="@+id/scale_type_non_radiobutton"
+			android:textSize="@dimen/text_sz_scale_type"
+			/>
+
+		<RadioButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/scale_type_inch"
+			android:id="@+id/scale_type_inch_radiobutton"
+			android:textSize="@dimen/text_sz_scale_type"
+			/>
+
+		<RadioButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/scale_type_mm"
+			android:id="@+id/scale_type_mm_radiobutton"
+			android:textSize="@dimen/text_sz_scale_type"
+			/>
+		<RadioButton
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="@string/scale_type_mm"
+			android:id="@+id/dummy_radiobutton"
+			android:visibility="gone"
+			android:textSize="@dimen/text_sz_scale_type"
+			/>
+	</RadioGroup>
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/line_width_textview"
+		android:text="6px"
+		/>
+	<SeekBar
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/line_width_seekbar"
+		android:max="100"
+		android:progress="60"/>
+</merge>

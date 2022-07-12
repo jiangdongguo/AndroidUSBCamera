@@ -12,7 +12,7 @@ android {
 	}
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion rootProject.ext.minSdkVersion
 		targetSdkVersion rootProject.ext.versionTarget
     }
 
@@ -67,6 +67,5 @@ clean.dependsOn 'ndkClean'
 dependencies {
     implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 	implementation "androidx.appcompat:appcompat:${androidXVersion}"
-
-	api(name: 'libusbcommon_v4.1.1', ext: 'aar')
+	implementation project(path: ':libuvccommon')
 }

@@ -1,8 +1,9 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file where you can add configuration options libuvccommon to all sub-projects/modules.
 buildscript {
     repositories {
         google()
         jcenter()
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
@@ -16,10 +17,6 @@ allprojects {
         google()
         jcenter()
         maven { url "https://jitpack.io" }
-
-        flatDir{
-            dirs project(':libuvc').file('libs')
-        }
     }
 }
 

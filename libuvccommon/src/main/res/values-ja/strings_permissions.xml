@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="permission_title">アクセス許可について</string>
+	<!-- 録音のパーミッション RECORD_AUDIO -->
+	<string name="permission_audio">録音許可がありません。\n音声機能を使用できません。</string>
+	<string name="permission_audio_recording_reason">音声付きで録画するには録音許可が必要です。</string>
+	<string name="permission_audio_recording_request">音声付きで録画するには録音許可が必要です。</string>
+	<string name="permission_audio_streaming_reason">音声付きで配信するには録音許可が必要です。</string>
+	<string name="permission_audio_streaming_request">音声付きで配信するには録音許可が必要です。</string>
+	<!-- 外部ストレージへの書き込みパーミッション WRITE_EXTERNAL_STORAGE -->
+	<string name="permission_ext_storage">外部ストレージへの書き込み許可がありません。静止画・動画保存できません。</string>
+	<string name="permission_ext_storage_reason">静止画・動画を保存するには外部ストレージへの書き込み許可が必要です。</string>
+	<string name="permission_ext_storage_request">静止画・動画を保存するには外部ストレージへの書き込み許可が必要です。</string>
+	<string name="permission_ext_storage_finish">外部ストレージへの書き込みパーミッションがありません。\n終了します。</string>
+	<!-- ネットワークアクセスのパーミッション INTERNET -->
+	<string name="permission_network">ネットワークへのアクセス許可がありません。</string>
+	<string name="permission_network_reason">ストリーミングを行うにははネットワークへのアクセス許可が必要です。</string>
+	<string name="permission_network_request">ストリーミングを行うにはネットワークへのアクセス許可が必要です。</string>
+	<string name="permission_network_finish">ネットワークアクセス許可がありません。\n終了します。</string>
+	<!-- 位置情報のパーミッション -->
+	<string name="permission_location">位置情報へのアクセス許可がありません。</string>
+	<string name="permission_location_reason">位置情報へのアクセス許可が必要です。</string>
+	<string name="permission_location_request">位置情報へのアクセス許可が必要です。</string>
+	<string name="permission_location_finish">位置情報へのアクセス許可がありません。\n終了します。</string>
+	<!-- カメラアクセスのパーミッション -->
+	<string name="permission_camera">内蔵カメラへのアクセス許可がありません。</string>
+	<string name="permission_camera_finish">内蔵カメラへのアクセス許可がありません。\n終了します</string>
+	<string name="permission_camera_reason">内蔵カメラへフォールバックするには内蔵カメラへのアクセス許可が必要です。</string>
+	<string name="permission_camera_request">内蔵カメラへのアクセス許可が必要です</string>
+	<!-- ハードウエアID・通話状態へのアクセスパーミッション -->
+	<string name="permission_hardware_id_request">通話するにはハードウエアID/通話状態へのアクセス許可が必要です。</string>
+</resources>
