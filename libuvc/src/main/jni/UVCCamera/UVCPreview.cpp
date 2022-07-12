@@ -92,8 +92,10 @@ UVCPreview::~UVCPreview() {
 	clearPreviewFrame();
 	clearCaptureFrame();
 	clear_pool();
+	pthread_mutex_lock(&preview_mutex);
 	pthread_mutex_destroy(&preview_mutex);
 	pthread_cond_destroy(&preview_sync);
+	pthread_mutex_lock(&capture_mutex);
 	pthread_mutex_destroy(&capture_mutex);
 	pthread_cond_destroy(&capture_sync);
 	pthread_mutex_destroy(&pool_mutex);
@@ -373,18 +375,21 @@ int UVCPreview::stopPreview() {
 	mHasCapturing = false;
 	clearPreviewFrame();
 	clearCaptureFrame();
-	pthread_mutex_lock(&preview_mutex);
-	if (mPreviewWindow) {
-		ANativeWindow_release(mPreviewWindow);
-		mPreviewWindow = NULL;
+	// check preview mutex available
+	if (pthread_mutex_lock(&preview_mutex) == 0) {
+		if (mPreviewWindow) {
+			ANativeWindow_release(mPreviewWindow);
+			mPreviewWindow = NULL;
+		}
+		pthread_mutex_unlock(&preview_mutex);
 	}
-	pthread_mutex_unlock(&preview_mutex);
-	pthread_mutex_lock(&capture_mutex);
-	if (mCaptureWindow) {
-		ANativeWindow_release(mCaptureWindow);
-		mCaptureWindow = NULL;
+	if (pthread_mutex_lock(&capture_mutex) == 0) {
+		if (mCaptureWindow) {
+			ANativeWindow_release(mCaptureWindow);
+			mCaptureWindow = NULL;
+		}
+		pthread_mutex_unlock(&capture_mutex);
 	}
-	pthread_mutex_unlock(&capture_mutex);
 	RETURN(0, int);
 }
 
