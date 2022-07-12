@@ -170,25 +170,16 @@ include ':libmedia'
 include ':libuvc'
 include ':libpush'
 include ':libnative'
+include ':libuvccommon'
 ```
 
 &emsp;**Second**,let **media module** dependenced on those modules instead of aar.
 
 ```groovy
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "androidx.appcompat:appcompat:${androidXVersion}"
-    implementation "androidx.core:core-ktx:${kotlinCoreVersion}"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
-    implementation 'com.elvishew:xlog:1.11.0'
-    api 'com.gyf.immersionbar:immersionbar:3.0.0'
-    implementation "com.github.bumptech.glide:glide:4.10.0"
-    implementation "com.github.bumptech.glide:okhttp3-integration:4.10.0"
-    implementation "com.zlc.glide:webpdecoder:1.6.4.9.0"
-    implementation 'com.tencent:mmkv:1.2.12'
-
+	...
     // aar
-    //implementation(fileTree("libs"))
+    // implementation(fileTree("libs"))
 
     // For debug online
     implementation project(path: ':libuvc')
@@ -197,24 +188,7 @@ dependencies {
 }
 ```
 
-&emsp;**Third**，set **flatDir** in the project **build.gradle**.
-
-```groovy
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        maven { url "https://jitpack.io" }
-
-        // For debug online
-        flatDir{
-            dirs project(':libuvc').file('libs')
-        }
-    }
-}
-```
-
-**In the end**, build your modify module to aar and replace it in the media module.
+&emsp;**Last**, build your modify module to aar and replace it in the media module.
 
 
 
@@ -232,7 +206,7 @@ Demo
 
 - download by opening url
 
-&emsp;[JJCamera3.0_3.1.20220629.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/release_3.0_alpha/JJCamera3.0_3.1.20220629.apk)
+&emsp;[AUSBC3.1.2.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/AUSBC3.1.2.apk)
 
 
 
@@ -283,6 +257,12 @@ Version
 9. Fix acquire  common library failed, see `libuvc/libusbcommon_v4.1.1.aar`;
 10. Merge NDK project into main project, see `libuvc` module.
 
+#### 2022.07.12  version 3.1.2
+
+1. Import usb common library instead of aar;
+2. Fix “pthread_mutex_lock called on a destroyed mutex” when call stop preview
+3. Fix jitpack.io build error.
+
 
 
 Homepage & Help
@@ -294,7 +274,10 @@ Homepage & Help
 
 
 
-&emsp;If you have any question or fun ideas, please issues to me. Of course, you can also send a email to me , and my email is **765067602@qq.com**. So, do not forget send logs at location **Android/data/com.jiangdg.jjcamera/files** together!
+&emsp;If you have any question or fun ideas, please issues to me.  
+&emsp;Of course, you can also send a email to me , and my email is **765067602@qq.com**.  
+
+&emsp;So, do not forget send logs at location **Android/data/com.jiangdg.jjcamera/files** together!
 
 
 

@@ -1,6 +1,8 @@
 include ':app'
 include ':libmedia'
-include ':libuvc'
-include ':libpush'
-include ':libnative'
-include ':libuvccommon'
+
+// For debug online
+//include ':libuvc'
+//include ':libpush'
+//include ':libnative'
+//include ':libuvccommon'
