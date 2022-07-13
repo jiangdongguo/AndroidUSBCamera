@@ -1,7 +1,7 @@
 ![logo.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/906db02b1dbc49669c38f870b6df2e96~tplv-k3u1fbpfcp-watermark.image?)
 
 
-# AUSBC&ensp;[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)[![API](https://img.shields.io/badge/API-19%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=19)
+# AUSBC&ensp;[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera) [![API](https://img.shields.io/badge/API-19%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=19)
 
 
 &emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcom to use **AUSBC3.0** and welcom to **star** & **fork** & **issues**!
@@ -197,7 +197,7 @@ include ':libnative'
 include ':libuvccommon'
 ```
 
-&emsp;**Second**, let **media module** dependenced on those modules instead of aar.
+&emsp;**Second**, let **app.gradle** dependenced on `':libausbc'` .
 
 ```groovy
 dependencies {
