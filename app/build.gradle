@@ -59,5 +59,9 @@ dependencies {
     implementation "com.tencent.bugly:crashreport:$bugly_version"
     implementation "com.tencent.bugly:nativecrashreport:$bugly_native_version"
 
-    implementation project(':libausbc')
+    // For debug online
+//    implementation project(':libausbc')
+
+    // demo
+    implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.1.7'
 }

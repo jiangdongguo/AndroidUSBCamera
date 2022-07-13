@@ -1,8 +1,8 @@
-
 ![logo.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/906db02b1dbc49669c38f870b6df2e96~tplv-k3u1fbpfcp-watermark.image?)
 
-AUSBC
--------  
+
+# AUSBC&ensp;[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera)[![API](https://img.shields.io/badge/API-19%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=19)
+
 
 &emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcom to use **AUSBC3.0** and welcom to **star** & **fork** & **issues**!
 
@@ -28,9 +28,33 @@ Feature
 Usages
 -------
 
-&emsp;`AUSBC 3.0`  is a little different  from previous versions  which can not  be directly dependenced by gradle so far.The only thing you should do is that downloading the project and add it as a module of your own project. Of course, it will definitely support the way of dependencies in the future.  As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
+&emsp;`AUSBC 3.0`  was refactored by kotlin and It is simpler to use and more feature-rich. So, I highly recommend you to use the current version and let's build it together.
+
+- **Get AUSBC**
+
+&emsp;First,  add it in your root **build.gradle** or **settings.gradle** at the end of repositories: 
+
+```groovy
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url "https://jitpack.io" }
+    }
+}
+```
+
+&emsp;Second, add the dependency in your **app.gradle** ,or else:
+
+```groovy
+dependencies {
+    implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.1.7'
+}
+```
 
 - **Simply usage**
+
+&emsp; As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
 
 ```kotlin
 class DemoFragment : CameraFragment() {
@@ -164,9 +188,9 @@ mCameraClient?.updateRenderEffect(classifyId, effect)
 
 ```groovy
 include ':app'
-include ':libausbc'
 
 // For debug online
+include ':libausbc'
 include ':libuvc'
 include ':libpush'
 include ':libnative'
@@ -177,18 +201,14 @@ include ':libuvccommon'
 
 ```groovy
 dependencies {
-	...
-    // aar
-    // implementation(fileTree("libs"))
 
     // For debug online
-    implementation project(path: ':libuvc')
-    implementation project(path: ':libnative')
-    implementation project(path: ':libpush')
+    implementation project(':libausbc')
+
+    // demo
+    //implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.1.7'
 }
 ```
-
-&emsp;**At last**, build your modify module to aar and replace it in the media module.
 
 
 
@@ -262,6 +282,11 @@ Version
 1. Import usb common library instead of aar;
 2. Fix “pthread_mutex_lock called on a destroyed mutex” when call stop preview
 3. Fix jitpack.io build error.
+
+#### 2022.07.13  version 3.1.7
+
+1. Cancel supporting x86 & x86_64, If you need it, please downloading the project and build it;
+2. Release version 3.1.7 and support depend on it directly.
 
 
 

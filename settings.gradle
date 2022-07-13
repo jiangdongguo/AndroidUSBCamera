@@ -1,8 +1,8 @@
 include ':app'
-include ':libausbc'
 
 // For debug online
-include ':libuvc'
-include ':libpush'
-include ':libnative'
-include ':libuvccommon'
+//include ':libausbc'
+//include ':libuvc'
+//include ':libpush'
+//include ':libnative'
+//include ':libuvccommon'
