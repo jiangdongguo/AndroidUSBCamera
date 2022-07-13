@@ -164,7 +164,7 @@ mCameraClient?.updateRenderEffect(classifyId, effect)
 
 ```groovy
 include ':app'
-include ':libmedia'
+include ':libausbc'
 
 // For debug online
 include ':libuvc'
@@ -277,7 +277,7 @@ Homepage & Help
 &emsp;If you have any question or fun ideas, please issues to me.  
 &emsp;Of course, you can also send me a email[ **765067602@qq.com** ].  
 
-&emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.jjcamera/files** together!
+&emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.ausbc/files** together!
 
 
 
