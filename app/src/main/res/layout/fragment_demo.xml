@@ -104,7 +104,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.jiangdg.media.widget.CaptureMediaView
+    <com.jiangdg.ausbc.widget.CaptureMediaView
         android:id="@+id/captureBtn"
         android:layout_width="76dp"
         android:layout_height="76dp"
@@ -113,7 +113,7 @@
         app:layout_constraintStart_toStartOf="@id/controlPanelLayout"
         app:layout_constraintTop_toBottomOf="@+id/modeSwitchLayout" />
 
-    <com.jiangdg.media.widget.PreviewImageView
+    <com.jiangdg.ausbc.widget.PreviewImageView
         android:id="@+id/albumPreviewIv"
         android:layout_width="38dp"
         android:layout_height="38dp"

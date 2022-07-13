@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircleProgressView">
+        <!--外部圆形颜色-->
+        <attr name="outsideCircleBgColor" format="color|reference"/>
+        <!--弧形进度条颜色-->
+        <attr name="progressArcBgColor" format="color|reference"/>
+        <!--内部圆形颜色-->
+        <attr name="insideCircleBgColor" format="color|reference"/>
+        <attr name="insideCircleTouchedBgColor" format="color|reference"/>
+        <!--内部正方形颜色-->
+        <attr name="insideRectangleBgColor" format="color|reference"/>
+
+        <!--文本提示字体颜色-->
+        <attr name="tipTextColor" format="color|reference"/>
+        <!--文本提示字体大小-->
+        <attr name="tipTextSize" format="dimension"/>
+    </declare-styleable>
+</resources>

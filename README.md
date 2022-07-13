@@ -173,7 +173,7 @@ include ':libnative'
 include ':libuvccommon'
 ```
 
-&emsp;**Second**,let **media module** dependenced on those modules instead of aar.
+&emsp;**Second**, let **media module** dependenced on those modules instead of aar.
 
 ```groovy
 dependencies {
@@ -188,7 +188,7 @@ dependencies {
 }
 ```
 
-&emsp;**Last**, build your modify module to aar and replace it in the media module.
+&emsp;**At last**, build your modify module to aar and replace it in the media module.
 
 
 
@@ -275,9 +275,9 @@ Homepage & Help
 
 
 &emsp;If you have any question or fun ideas, please issues to me.  
-&emsp;Of course, you can also send a email to me , and my email is **765067602@qq.com**.  
+&emsp;Of course, you can also send me a email[ **765067602@qq.com** ].  
 
-&emsp;So, do not forget send logs at location **Android/data/com.jiangdg.jjcamera/files** together!
+&emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.jjcamera/files** together!
 
 
 
