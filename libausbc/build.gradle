@@ -44,10 +44,10 @@ dependencies {
     implementation 'com.tencent:mmkv:1.2.12'
 
     // aar
-    implementation(fileTree("libs"))
+//    implementation(fileTree("libs"))
 
     // For debug online
-//    implementation project(path: ':libuvc')
-//    implementation project(path: ':libnative')
-//    implementation project(path: ':libpush')
+    implementation project(path: ':libuvc')
+    implementation project(path: ':libnative')
+    implementation project(path: ':libpush')
 }
