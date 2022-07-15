@@ -288,7 +288,9 @@ Version
 1. Cancel supporting x86 & x86_64, If you need it, please downloading the project and build it;
 2. Release version 3.1.7 and support depend on it directly.
 
+#### 2022.07.15  version 3.1.8
 
+1. fix a native memory leak when repeat open close camera
 
 Homepage & Help
 -------
