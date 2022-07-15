@@ -44,11 +44,11 @@ allprojects {
 }
 ```
 
-&emsp;Second, add the dependency in your **app.gradle** ,or else:
+&emsp;Second, add the dependency in your **app.gradle** , latest tag is [![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera):
 
 ```groovy
 dependencies {
-    implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.1.7'
+    implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:latest_tag'
 }
 ```
 
