@@ -400,7 +400,6 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
             .setRawImage(true)
-            .setDefaultEffect(EffectBlackWhite(requireContext()))
             .setCameraStrategy(CameraUvcStrategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .setDefaultRotateType(RotateType.ANGLE_0)
