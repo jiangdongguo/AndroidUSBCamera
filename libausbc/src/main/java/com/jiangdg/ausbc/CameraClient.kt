@@ -48,6 +48,8 @@ import com.jiangdg.ausbc.widget.AspectRatioSurfaceView
 import com.jiangdg.ausbc.widget.AspectRatioTextureView
 import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.natives.YUVUtils
+import com.serenegiant.usb.USBMonitor
+import com.serenegiant.usb.UVCCamera
 import kotlin.math.abs
 
 /**
@@ -695,6 +697,8 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
          * @return [CameraClient.Builder]
          */
         fun openDebug(debug: Boolean): Builder {
+            UVCCamera.DEBUG = debug
+            USBMonitor.DEBUG = debug
             Utils.debugCamera = debug
             return this
         }

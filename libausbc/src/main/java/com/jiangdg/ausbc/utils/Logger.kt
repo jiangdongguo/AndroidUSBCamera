@@ -16,16 +16,7 @@
 package com.jiangdg.ausbc.utils
 
 import android.app.Application
-import android.util.Log
-import com.elvishew.xlog.LogConfiguration
-import com.elvishew.xlog.LogLevel
-import com.elvishew.xlog.XLog
-import com.elvishew.xlog.flattener.PatternFlattener
-import com.elvishew.xlog.printer.AndroidPrinter
-import com.elvishew.xlog.printer.file.FilePrinter
-import com.elvishew.xlog.printer.file.naming.FileNameGenerator
-import java.text.SimpleDateFormat
-import java.util.*
+import com.serenegiant.utils.XLogWrapper
 
 /** Logger utils
  *
@@ -35,84 +26,35 @@ import java.util.*
  * @author Created by jiangdg on 2022/1/24
  */
 object Logger {
-    private var mHasInit: Boolean = false
-    private const val TAG = "JJCamera"
-
     fun init(application: Application, folderPath: String? = null) {
-        val androidPrinter = AndroidPrinter(true)
-        val config = LogConfiguration.Builder().apply {
-            logLevel(LogLevel.ALL)
-            tag(TAG)
-            enableThreadInfo()
-            disableStackTrace()
-        }.build()
-        val filePrinter = folderPath.let {
-            FilePrinter.Builder(
-                folderPath ?: application.getExternalFilesDir(null)?.path
-                ?: application.filesDir.path
-            ).apply {
-                fileNameGenerator(MyFileNameGenerator())
-                flattener(MyFlatterer())
-            }.build()
-        }
-        XLog.init(config,androidPrinter , filePrinter)
-        mHasInit = true
+        XLogWrapper.init(application, folderPath)
     }
 
     fun i(flag: String, msg: String) {
-        if (mHasInit) {
-            XLog.i("++++++++Info->$flag###$msg")
-            return
-        }
-        Log.i(TAG,"++++++++Info->$flag###$msg")
+        XLogWrapper.i(flag, msg)
     }
 
     fun d(flag: String, msg: String) {
-        if (mHasInit) {
-            XLog.d("++++++++Info->$flag###$msg")
-            return
-        }
-        Log.d(TAG,"++++++++Info->$flag###$msg")
+        XLogWrapper.d(flag, msg)
     }
 
     fun w(flag: String, msg: String) {
-        if (mHasInit) {
-            XLog.w("++++++++Info->$flag###$msg")
-            return
-        }
-        Log.w(TAG,"++++++++Info->$flag###$msg")
+        XLogWrapper.w(flag, msg)
     }
 
-    fun e(flag: String, msg: String, throwable: Throwable? = null) {
-        if (mHasInit) {
-            XLog.e("++++++++Info->$flag###$msg")
-            return
-        }
-        Log.e(TAG,"++++++++Info->$flag###$msg")
+    fun w(flag: String, throwable: Throwable?) {
+        XLogWrapper.w(flag, throwable)
     }
 
-    class MyFileNameGenerator : FileNameGenerator {
-        private val mLocalDateFormat: ThreadLocal<SimpleDateFormat?> =
-            object : ThreadLocal<SimpleDateFormat?>() {
-                override fun initialValue(): SimpleDateFormat {
-                    return SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                }
-            }
-
-        override fun isFileNameChangeable(): Boolean = true
-
-        override fun generateFileName(logLevel: Int, timestamp: Long): String {
-            val dateStr = mLocalDateFormat.get()!!.let { sdf ->
-                sdf.timeZone = TimeZone.getDefault()
-                sdf.format(Date(timestamp))
-            }
-            return "JJCamera-$dateStr.log"
-        }
+    fun w(flag: String, msg: String, throwable: Throwable?) {
+        XLogWrapper.w(flag, msg, throwable)
     }
 
-    class MyFlatterer : PatternFlattener(FLATTERER) {
-        companion object {
-            private const val FLATTERER = "{d yyyy-MM-dd HH:mm:ss.SSS} {l}/{t}: {m}"
-        }
+    fun e(flag: String, msg: String) {
+        XLogWrapper.e(flag, msg)
+    }
+
+    fun e(flag: String, msg: String, throwable: Throwable?) {
+        XLogWrapper.e(flag, msg, throwable)
     }
 }
