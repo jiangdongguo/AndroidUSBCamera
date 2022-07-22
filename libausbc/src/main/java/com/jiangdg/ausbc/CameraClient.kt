@@ -40,6 +40,7 @@ import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
 import com.jiangdg.ausbc.render.RenderManager
 import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.render.effect.AbstractEffect
+import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.ausbc.utils.bus.BusKey
@@ -78,7 +79,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     init {
-        mRequest = mRequest ?: CameraRequest.CameraRequestBuilder().create()
+        mRequest = mRequest ?: CameraRequest.Builder().create()
         mCtx?.let { context ->
             if (context !is LifecycleOwner) {
                 throw IllegalArgumentException("context should be subclass of LifecycleOwner!")
@@ -134,6 +135,10 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param cameraView camera render view, null means offscreen render
      */
     fun openCamera(cameraView: IAspectRatio?, isReboot: Boolean = false) {
+        if (mCtx != null && Utils.isTargetSdkOverP(mCtx) && !CameraUtils.hasCameraPermission(mCtx)) {
+            Logger.e(TAG,"open camera failed, need Manifest.permission.CAMERA permission")
+            return
+        }
         Logger.i(TAG, "start open camera request = $mRequest, gl = $isEnableGLEs")
         initEncodeProcessor()
         val previewWidth = mRequest!!.previewWidth

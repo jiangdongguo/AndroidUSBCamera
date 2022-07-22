@@ -136,7 +136,7 @@ public class XLogWrapper {
             SimpleDateFormat sdf = mLocalDateFormat.get();
             sdf.setTimeZone(TimeZone.getDefault());
             String dateStr = sdf.format(new Date(timestamp));
-            return "AUSBC_v" + getVerName() + "_" + dateStr + ".log";
+            return "AUSBC_v" + getVerName() + "_" + dateStr + ".txt";
         }
 
         private String getVerName() {

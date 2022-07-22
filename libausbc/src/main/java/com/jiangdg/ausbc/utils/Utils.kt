@@ -18,11 +18,13 @@ package com.jiangdg.ausbc.utils
 import android.Manifest
 import android.app.ActivityManager
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RawRes
 import androidx.core.content.ContextCompat
@@ -35,6 +37,16 @@ import java.io.InputStream
 object Utils  {
 
     internal var debugCamera = false
+
+    fun isTargetSdkOverP(context: Context): Boolean {
+        val targetSdkVersion = try {
+            val aInfo = context.packageManager.getApplicationInfo(context.packageName, 0)
+            aInfo.targetSdkVersion
+        } catch (e: PackageManager.NameNotFoundException) {
+            return false
+        }
+        return targetSdkVersion >= Build.VERSION_CODES.P
+    }
 
     fun getGpsLocation(context: Context?): Location? {
         context?.let { ctx->

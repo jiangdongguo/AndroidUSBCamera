@@ -432,25 +432,31 @@ public final class USBMonitor {
 		boolean result = false;
 		if (isRegistered()) {
 			if (device != null) {
+				if (DEBUG) XLogWrapper.i(TAG,"request permission, has permission: " + mUsbManager.hasPermission(device));
 				if (mUsbManager.hasPermission(device)) {
 					// call onConnect if app already has permission
 					processConnect(device);
 				} else {
 					try {
 						// パーミッションがなければ要求する
+						if (DEBUG) XLogWrapper.i(TAG, "start request permission...");
 						mUsbManager.requestPermission(device, mPermissionIntent);
 					} catch (final Exception e) {
 						// Android5.1.xのGALAXY系でandroid.permission.sec.MDM_APP_MGMTという意味不明の例外生成するみたい
-						XLogWrapper.w(TAG, e);
+						XLogWrapper.w(TAG,"request permission failed, e = " + e.getLocalizedMessage() ,e);
 						processCancel(device);
 						result = true;
 					}
 				}
 			} else {
+				if (DEBUG)
+					XLogWrapper.w(TAG,"request permission failed, device is null?");
 				processCancel(device);
 				result = true;
 			}
 		} else {
+			if (DEBUG)
+				XLogWrapper.w(TAG,"request permission failed, not registered?");
 			processCancel(device);
 			result = true;
 		}
@@ -492,10 +498,14 @@ public final class USBMonitor {
 					if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
 						if (device != null) {
 							// get permission, call onConnect
+							if (DEBUG)
+								XLogWrapper.w(TAG, "get permission success in mUsbReceiver");
 							processConnect(device);
 						}
 					} else {
 						// failed to get permission
+						if (DEBUG)
+							XLogWrapper.w(TAG, "get permission failed in mUsbReceiver");
 						processCancel(device);
 					}
 				}

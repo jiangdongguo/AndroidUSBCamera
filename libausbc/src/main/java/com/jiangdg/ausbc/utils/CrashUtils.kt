@@ -93,8 +93,8 @@ object CrashUtils : Thread.UncaughtExceptionHandler {
         var printWriter: PrintWriter? = null
         try {
             mApplication?.apply {
-                val time = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(Date())
-                val crashPath = "${getExternalFilesDir(null)?.path}${File.separator}JJCamera-crash-${time}.log"
+                val time = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS").format(Date())
+                val crashPath = "${getExternalFilesDir(null)?.path}${File.separator}AUSBC-crash-${time}.log"
                 logFile = File(crashPath)
                 logFile ?: return null
                 fw = FileWriter(logFile, true)
@@ -104,7 +104,7 @@ object CrashUtils : Thread.UncaughtExceptionHandler {
                 val pi: PackageInfo = pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
                 printWriter?.let { pw ->
                     pw.println()
-                    pw.println("Time：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}")
+                    pw.println("Time：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS").format(Date())}")
                     pw.println("VersionInfo：versionCode=${pi.versionCode} versionName：${pi.versionName}")
                     // 通过反射获取手机参数
                     pw.println("PhoneInfo  ：manufacture=${Build.MANUFACTURER.toString()} model=${Build.MODEL}")
