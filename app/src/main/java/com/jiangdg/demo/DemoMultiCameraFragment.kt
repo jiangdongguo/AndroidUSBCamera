@@ -28,28 +28,28 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
     }
 
     override fun onCameraAttached(camera: MultiCameraClient.Camera) {
-        mCameraList.add(camera)
-        mAdapter.notifyItemChanged(mCameraList.size - 1)
+        mAdapter.data.add(camera)
+        mAdapter.notifyItemInserted(mAdapter.data.size - 1)
         mViewBinding.multiCameraTip.visibility = View.GONE
     }
 
     override fun onCameraDetached(camera: MultiCameraClient.Camera) {
-        for ((position, cam) in mCameraList.withIndex()) {
-            if (cam.getUsbDevice().deviceId == cam.getUsbDevice().deviceId) {
+        for ((position, cam) in mAdapter.data.withIndex()) {
+            if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 camera.closeCamera()
-                mCameraList.removeAt(position)
-                mAdapter.notifyItemChanged(position)
+                mAdapter.data.removeAt(position)
+                mAdapter.notifyItemRemoved(position)
                 break
             }
         }
-        if (mCameraList.isEmpty()) {
+        if (mAdapter.data.isEmpty()) {
             mViewBinding.multiCameraTip.visibility = View.VISIBLE
         }
     }
 
     override fun onCameraConnected(camera: MultiCameraClient.Camera) {
         for ((position, cam) in mAdapter.data.withIndex()) {
-            if (cam.getUsbDevice().deviceId == cam.getUsbDevice().deviceId) {
+            if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 mAdapter.notifyItemChanged(position, "switch")
                 break
             }
@@ -58,7 +58,7 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
 
     override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
         for ((position, cam) in mAdapter.data.withIndex()) {
-            if (cam.getUsbDevice().deviceId == cam.getUsbDevice().deviceId) {
+            if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 mAdapter.notifyItemChanged(position, "switch")
                 break
             }
@@ -76,25 +76,6 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
         mAdapter.setOnItemChildClickListener { adapter, view, position ->
             val camera = adapter.data[position] as MultiCameraClient.Camera
             when(view.id) {
-//                R.id.multi_camera_switch -> {
-//                    if (camera.isCameraOpened()) {
-//                        camera.closeCamera()
-//                        return@setOnItemChildClickListener
-//                    }
-//                    if (! hasPermission(camera.getUsbDevice())) {
-//                        requestPermission(camera.getUsbDevice())
-//                        return@setOnItemChildClickListener
-//                    }
-//                    val textureView = mAdapter.getViewByPosition(position, R.id.multi_camera_texture_view)
-//                    camera.openCamera(textureView, getCameraRequest(), object : ICameraStateCallBack {
-//                        override fun onState(code: ICameraStateCallBack.State, msg: String?) {
-//                            if (code == ICameraStateCallBack.State.ERROR) {
-//                                ToastUtils.show(msg ?: "open camera failed.")
-//                            }
-//                            mAdapter.notifyItemChanged(position, "switch")
-//                        }
-//                    })
-//                }
                 R.id.multi_camera_capture_image -> {
                     camera.captureImage(object : ICaptureCallBack {
                         override fun onBegin() {}
