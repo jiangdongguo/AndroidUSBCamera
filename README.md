@@ -3,8 +3,9 @@
 
 # AUSBC&ensp;[![](https://jitpack.io/v/jiangdongguo/AndroidUSBCamera.svg)](https://jitpack.io/#jiangdongguo/AndroidUSBCamera) [![API](https://img.shields.io/badge/API-19%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=19)
 
+&emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera (supporting multi-road cameras) without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcom to use **AUSBC3.0** and welcom to **star** & **fork** & **issues**!
 
-&emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcom to use **AUSBC3.0** and welcom to **star** & **fork** & **issues**!
+![微信图片_20220724130902.jpg](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a99f15350c8e41f5b9cf233afef9df6a~tplv-k3u1fbpfcp-watermark.image?)
 
 &emsp;[@ Example showing](https://live.csdn.net/v/220915?spm=1001.2014.3001.5501)
 
@@ -12,6 +13,8 @@
 
 Feature
 -------
+
+- Support opening multi-road camera;
 
 - Support opening camera1、camera2 and uvc camera on Android 4.4 ~ 11;
 - Support previewing 480p、720p、1080p，etc;
@@ -180,6 +183,48 @@ mCameraClient?.removeRenderEffect(effect)
 mCameraClient?.updateRenderEffect(classifyId, effect)
 ```
 
+- open multi-road camera
+
+&emsp;If you want to open multi-road camera, you can make your Fragment or Activity extend **MultiCameraFragment** or **MultiCameraActivity**.Just do like this and more details please look up **DemoMultiCameraFragment**：
+
+```kotlin
+class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
+
+    override fun onCameraAttached(camera: MultiCameraClient.Camera) {
+ 		// a camera be attached
+    }
+
+    override fun onCameraDetached(camera: MultiCameraClient.Camera) {
+		// a camera be detached
+    }
+
+    override fun onCameraConnected(camera: MultiCameraClient.Camera) {
+        // a camera be connected
+  		camera.openCamera(textureView, getCameraRequest())
+        camera.setCameraStateCallBack(this)
+    }
+
+    override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
+     // a camera be disconnected
+    }
+
+
+    override fun onCameraState(
+        self: MultiCameraClient.Camera,
+        code: ICameraStateCallBack.State,
+        msg: String?
+    ) {
+		// a camera be opened or closed or error
+    }
+
+    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {
+        return rootView
+    }
+}
+```
+
+
+
 - Debug online
 
 &emsp;If you want to debug the project online or modify something, those steps you should do:
@@ -281,16 +326,22 @@ Version
 
 1. Import usb common library instead of aar;
 2. Fix “pthread_mutex_lock called on a destroyed mutex” when call stop preview
-3. Fix jitpack.io build error.
+3. Fix jitpack.io build error;
 
 #### 2022.07.13  version 3.1.7
 
 1. Cancel supporting x86 & x86_64, If you need it, please downloading the project and build it;
-2. Release version 3.1.7 and support depend on it directly.
+2. Release version 3.1.7 and support depend on it directly;
 
 #### 2022.07.15  version 3.1.8
 
-1. fix a native memory leak when repeat open close camera
+1. fix a native memory leak when repeat open close camera;
+
+#### 2022.07.24  version 3.2.0
+
+1. fix part equipment recording image flower;
+2. Support opening multi-road camera;
+
 
 
 
@@ -329,16 +380,18 @@ Thanks
 License
 -------
 
-    Copyright 2017-2022 Jiangdongguo
-    
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    
-       http://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+```c
+Copyright 2017-2022 Jiangdongguo
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
