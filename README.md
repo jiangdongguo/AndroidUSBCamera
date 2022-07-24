@@ -7,7 +7,7 @@
 
 ![微信图片_20220724130902.jpg](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a99f15350c8e41f5b9cf233afef9df6a~tplv-k3u1fbpfcp-watermark.image?)
 
-&emsp;[@ Example showing](https://live.csdn.net/v/220915?spm=1001.2014.3001.5501)
+&emsp;[@ Example showing](https://live.csdn.net/v/226993)
 
 
 
@@ -267,11 +267,11 @@ Demo
 - download by Scanning code
 
 
-![apk.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dc8984f3ae2844e48ca69aac5eca636d~tplv-k3u1fbpfcp-watermark.image?)
+![apk.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a99f15350c8e41f5b9cf233afef9df6a~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
 
 - download by opening url
 
-&emsp;[AUSBC3.1.2.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/AUSBC3.1.2.apk)
+&emsp;[AUSBC3.2.0.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/AUSBC3.2.0.apk)
 
 
 
