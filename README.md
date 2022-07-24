@@ -267,7 +267,7 @@ Demo
 - download by Scanning code
 
 
-![apk.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a99f15350c8e41f5b9cf233afef9df6a~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+![apk.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fdc8e416780b44039eff446f15389d58~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
 
 - download by opening url
 
