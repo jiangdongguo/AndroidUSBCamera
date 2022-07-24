@@ -252,19 +252,14 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     }
 
     /**
-     * Release uvc camera, see [CameraUvcStrategy]
-     */
-    protected open fun release() {}
-
-    /**
      * Register uvc camera monitor, see [CameraUvcStrategy]
      */
-    protected open fun register() {}
+    open fun register() {}
 
     /**
      * Un register uvc camera monitor, see [CameraUvcStrategy]
      */
-    protected open fun unRegister() {}
+    open fun unRegister() {}
 
     /**
      * Load camera info,
@@ -337,9 +332,8 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
                         register()
                     }
                     Lifecycle.Event.ON_DESTROY -> {
-                        unRegister()
                         stopPreview()
-                        release()
+                        unRegister()
                     }
                     else -> {}
                 }

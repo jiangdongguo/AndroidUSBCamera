@@ -237,13 +237,12 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
      * Create a uvc camera
      *
      * @property device see [UsbDevice]
-     * @property ctrlBlock see [USBMonitor.UsbControlBlock]]
      * @constructor Create camera
      */
     class Camera(private val ctx: Context, private val device: UsbDevice) : Handler.Callback {
         private var mCameraStateCallback: ICameraStateCallBack? = null
         private var mMediaMuxer: Mp4Muxer? = null
-        private lateinit var mCameraView: Any
+        private var mCameraView: Any? = null
         private var mCameraRequest: CameraRequest? = null
         private var mPreviewSize: PreviewSize? = null
         private var isPreviewed: Boolean = false
@@ -296,8 +295,8 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         override fun handleMessage(msg: Message): Boolean {
             when (msg.what) {
                 MSG_START_PREVIEW -> {
-                    (msg.obj as Triple<*, *, *>).apply {
-                        openCameraInternal(first, second as CameraRequest, third as? ICameraStateCallBack)
+                    (msg.obj as Pair<*, *>).apply {
+                        openCameraInternal(first, second as CameraRequest)
                     }
                 }
                 MSG_STOP_PREVIEW -> {
@@ -323,18 +322,51 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             return true
         }
 
-        private fun <T> openCameraInternal(cameraView: T, request: CameraRequest, callback: ICameraStateCallBack? = null) {
-            mCameraStateCallback = callback
-            // 2. set preview size and register preview data callback
+        private fun <T> openCameraInternal(cameraView: T, request: CameraRequest) {
+            if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
+                closeCamera()
+                mCameraStateCallback?.onCameraState(
+                    this,
+                    ICameraStateCallBack.State.ERROR,
+                    "Has no CAMERA permission."
+                )
+                Logger.e(TAG ,"open camera failed, need Manifest.permission.CAMERA permission when targetSdk>=28")
+                return
+            }
+            if (mCtrlBlock == null) {
+                closeCamera()
+                mCameraStateCallback?.onCameraState(
+                    this,
+                    ICameraStateCallBack.State.ERROR,
+                    "Usb control block can not be null "
+                )
+                return
+            }
+            // 1. create a UVCCamera
             try {
-                // 1. create a UVCCamera
                 mUvcCamera = UVCCamera().apply {
                     open(mCtrlBlock)
                 }
+            } catch (e: Exception) {
+                mCameraStateCallback?.onCameraState(
+                    this,
+                    ICameraStateCallBack.State.ERROR,
+                    "open camera failed ${e.localizedMessage}"
+                )
+                Logger.e(TAG, "open camera failed.", e)
+                closeCamera()
+            }
+
+            // 2. set preview size and register preview callback
+            try {
                 val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
                 if (! isPreviewSizeSupported(previewSize)) {
                     mMainHandler.post {
-                        mCameraStateCallback?.onState(ICameraStateCallBack.State.ERROR, "unsupported preview size")
+                        mCameraStateCallback?.onCameraState(
+                            this,
+                            ICameraStateCallBack.State.ERROR,
+                            "unsupported preview size"
+                        )
                     }
                     closeCamera()
                     Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
@@ -363,7 +395,11 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     )
                 } catch (e: Exception) {
                     mMainHandler.post {
-                        mCameraStateCallback?.onState(ICameraStateCallBack.State.ERROR, e.localizedMessage)
+                        mCameraStateCallback?.onCameraState(
+                            this,
+                            ICameraStateCallBack.State.ERROR,
+                            e.localizedMessage
+                        )
                     }
                     closeCamera()
                     Logger.e(TAG, " setPreviewSize failed, even using yuv format", e)
@@ -395,7 +431,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             mUvcCamera?.updateCameraParams()
             isPreviewed = true
             mMainHandler.post {
-                mCameraStateCallback?.onState(ICameraStateCallBack.State.OPENED)
+                mCameraStateCallback?.onCameraState(this, ICameraStateCallBack.State.OPENED)
             }
             if (Utils.debugCamera) {
                 Logger.i(TAG, " start preview, name = ${device.deviceName}, preview=$mPreviewSize")
@@ -403,13 +439,12 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         private fun closeCameraInternal() {
-            val deviceId = mUvcCamera?.device?.deviceId
             isPreviewed = false
             releaseEncodeProcessor()
             mUvcCamera?.destroy()
             mUvcCamera = null
             mMainHandler.post {
-                mCameraStateCallback?.onState(ICameraStateCallBack.State.CLOSED)
+                mCameraStateCallback?.onCameraState(this, ICameraStateCallBack.State.CLOSED)
             }
             if (Utils.debugCamera) {
                 Logger.i(TAG, " stop preview, name = ${device.deviceName}, preview=$mPreviewSize")
@@ -506,27 +541,29 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         /**
+         * Set camera state call back
+         *
+         * @param callback camera be opened or closed
+         */
+        fun setCameraStateCallBack(callback: ICameraStateCallBack) {
+            mCameraStateCallback = callback
+        }
+
+        /**
          * Open camera
          *
          * @param cameraView render surface view，support Surface or SurfaceTexture
          *                      or SurfaceView or TextureView or GLSurfaceView
          * @param cameraRequest camera request
          */
-        fun <T> openCamera(cameraView: T, cameraRequest: CameraRequest, callback: ICameraStateCallBack? = null) {
-            if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
-                Logger.e(TAG ,"open camera failed, need Manifest.permission.CAMERA permission when targetSdk>=28")
-                return
-            }
-            if (mCtrlBlock == null) {
-                return
-            }
-            mCameraView = cameraView!!
-            mCameraRequest = cameraRequest
+        fun openCamera(cameraView: Any? = null, cameraRequest: CameraRequest? = null) {
+            mCameraView = cameraView ?: mCameraView
+            mCameraRequest = cameraRequest ?: mCameraRequest ?: getDefaultCameraRequest()
             val thread = HandlerThread("${device.deviceName}-${device.deviceId}").apply {
                 start()
             }.also {
                 mCameraHandler = Handler(it.looper, this)
-                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, Triple(cameraView, cameraRequest, callback))?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, Pair(cameraView, cameraRequest))?.sendToTarget()
             }
             this.mCameraThread = thread
         }
@@ -547,6 +584,13 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          * @return camera open status, true or false
          */
         fun isCameraOpened() = isPreviewed
+
+        /**
+         * Get current camera request
+         *
+         * @return see [CameraRequest], can be null
+         */
+        fun getCameraRequest() = mCameraRequest
 
         /**
          * Capture image
@@ -605,11 +649,11 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 Logger.e(TAG, "updateResolution failed, video recording...")
                 return
             }
-            closeCameraInternal()
+            closeCamera()
             mMainHandler.postDelayed({
                 mCameraRequest!!.previewWidth = width
                 mCameraRequest!!.previewHeight = height
-                openCamera(mCameraView, mCameraRequest!!)
+                openCamera()
             }, 100)
         }
 
@@ -717,6 +761,14 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             return getAllPreviewSizes().find {
                 it.width == previewSize.width && it.height == previewSize.height
             } != null
+        }
+
+
+        private fun getDefaultCameraRequest(): CameraRequest {
+            return CameraRequest.Builder()
+                .setPreviewWidth(640)
+                .setPreviewHeight(480)
+                .create()
         }
     }
 

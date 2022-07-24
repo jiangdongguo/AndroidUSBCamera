@@ -12,19 +12,22 @@ import com.jiangdg.ausbc.base.MultiCameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.camera.bean.CameraRequest
+import com.jiangdg.ausbc.utils.SpaceItemDecoration
 import com.jiangdg.ausbc.utils.ToastUtils
-import com.jiangdg.ausbc.widget.AspectRatioTextureView
 import com.jiangdg.demo.databinding.FragmentMultiCameraBinding
 
 /** Multi-road camera demo
  *
  * @author Created by jiangdg on 2022/7/20
  */
-class DemoMultiCameraFragment: MultiCameraFragment() {
+class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     private lateinit var mAdapter: CameraAdapter
     private lateinit var mViewBinding: FragmentMultiCameraBinding
     private val mCameraList by lazy {
-        ArrayList<MultiCameraClient.Camera> ()
+        ArrayList<MultiCameraClient.Camera>()
+    }
+    private val mHasRequestPermissionList by lazy {
+        ArrayList<MultiCameraClient.Camera>()
     }
 
     override fun onCameraAttached(camera: MultiCameraClient.Camera) {
@@ -34,6 +37,7 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
     }
 
     override fun onCameraDetached(camera: MultiCameraClient.Camera) {
+        mHasRequestPermissionList.remove(camera)
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 camera.closeCamera()
@@ -50,20 +54,51 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
     override fun onCameraConnected(camera: MultiCameraClient.Camera) {
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
+                val textureView = mAdapter.getViewByPosition(position, R.id.multi_camera_texture_view)
+                cam.openCamera(textureView, getCameraRequest())
+                cam.setCameraStateCallBack(this)
+                break
+            }
+        }
+        // request permission for other camera
+        // until all be granted or requested once
+        if (!mHasRequestPermissionList.contains(camera)) {
+            mHasRequestPermissionList.add(camera)
+        }
+        if (mHasRequestPermissionList.size == mAdapter.data.size) {
+            return
+        }
+        mAdapter.data.forEach { cam ->
+            val device = cam.getUsbDevice()
+            if (! hasPermission(device)) {
+                mHasRequestPermissionList.add(cam)
+                requestPermission(device)
+                return@forEach
+            }
+        }
+    }
+
+    override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
+        camera.closeCamera()
+    }
+
+
+    override fun onCameraState(
+        self: MultiCameraClient.Camera,
+        code: ICameraStateCallBack.State,
+        msg: String?
+    ) {
+        if (code == ICameraStateCallBack.State.ERROR) {
+            ToastUtils.show(msg ?: "open camera failed.")
+        }
+        for ((position, cam) in mAdapter.data.withIndex()) {
+            if (cam.getUsbDevice().deviceId == self.getUsbDevice().deviceId) {
                 mAdapter.notifyItemChanged(position, "switch")
                 break
             }
         }
     }
 
-    override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
-        for ((position, cam) in mAdapter.data.withIndex()) {
-            if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
-                mAdapter.notifyItemChanged(position, "switch")
-                break
-            }
-        }
-    }
 
     override fun initView() {
         super.initView()
@@ -75,7 +110,14 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
         mViewBinding.multiCameraRv.layoutManager = GridLayoutManager(requireContext(), 2)
         mAdapter.setOnItemChildClickListener { adapter, view, position ->
             val camera = adapter.data[position] as MultiCameraClient.Camera
-            when(view.id) {
+            when (view.id) {
+                R.id.multi_camera_switch -> {
+                    if (camera.isCameraOpened()) {
+                        camera.closeCamera()
+                    } else {
+                        camera.openCamera()
+                    }
+                }
                 R.id.multi_camera_capture_image -> {
                     camera.captureImage(object : ICaptureCallBack {
                         override fun onBegin() {}
@@ -110,7 +152,8 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
                         }
                     })
                 }
-                else -> {}
+                else -> {
+                }
             }
         }
     }
@@ -127,7 +170,8 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
             .create()
     }
 
-    inner class CameraAdapter: BaseQuickAdapter<MultiCameraClient.Camera, BaseViewHolder>(R.layout.layout_item_camera) {
+    inner class CameraAdapter :
+        BaseQuickAdapter<MultiCameraClient.Camera, BaseViewHolder>(R.layout.layout_item_camera) {
         override fun convert(helper: BaseViewHolder, camera: MultiCameraClient.Camera?) {}
 
         override fun convertPayloads(
@@ -136,40 +180,24 @@ class DemoMultiCameraFragment: MultiCameraFragment() {
             payloads: MutableList<Any>
         ) {
             camera ?: return
-            helper.setText(R.id.multi_camera_name, camera.getUsbDevice().deviceName)
-            helper.addOnClickListener(R.id.multi_camera_switch)
-            helper.addOnClickListener(R.id.multi_camera_capture_video)
-            helper.addOnClickListener(R.id.multi_camera_capture_image)
             if (payloads.isEmpty()) {
+                helper.setText(R.id.multi_camera_name, camera.getUsbDevice().deviceName)
+                helper.addOnClickListener(R.id.multi_camera_switch)
+                helper.addOnClickListener(R.id.multi_camera_capture_video)
+                helper.addOnClickListener(R.id.multi_camera_capture_image)
                 return
             }
             // local update
             val switchIv = helper.getView<ImageView>(R.id.multi_camera_switch)
             val captureVideoIv = helper.getView<ImageView>(R.id.multi_camera_capture_video)
-            val textureView = helper.getView<AspectRatioTextureView>(R.id.multi_camera_texture_view)
-            if (payloads.find { "switch" == it }!=null) {
+            if (payloads.find { "switch" == it } != null) {
                 if (camera.isCameraOpened()) {
-                    camera.closeCamera()
+                    switchIv.setImageResource(R.mipmap.ic_switch_on)
                 } else {
-                    camera.openCamera(textureView, getCameraRequest(), object : ICameraStateCallBack {
-                        override fun onState(code: ICameraStateCallBack.State, msg: String?) {
-                            when (code) {
-                                ICameraStateCallBack.State.OPENED -> {
-                                    switchIv.setImageResource(R.mipmap.ic_switch_on)
-                                }
-                                ICameraStateCallBack.State.CLOSED -> {
-                                    switchIv.setImageResource(R.mipmap.ic_switch_off)
-                                }
-                                else -> {
-                                    ToastUtils.show(msg ?: "open camera failed.")
-                                    switchIv.setImageResource(R.mipmap.ic_switch_off)
-                                }
-                            }
-                        }
-                    })
+                    switchIv.setImageResource(R.mipmap.ic_switch_off)
                 }
             }
-            if (payloads.find { "video" == it }!=null) {
+            if (payloads.find { "video" == it } != null) {
                 if (camera.isRecordVideo()) {
                     captureVideoIv.setImageResource(R.mipmap.ic_capture_video_on)
                 } else {

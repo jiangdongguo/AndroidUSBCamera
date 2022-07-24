@@ -314,11 +314,11 @@ abstract class CameraFragment : BaseFragment() {
         return mCameraClient?.sendCameraCommand(command)
     }
 
-    private fun openCamera(st: IAspectRatio? = null) {
+    protected fun openCamera(st: IAspectRatio? = null) {
         mCameraClient?.openCamera(st)
     }
 
-    private fun closeCamera() {
+    protected fun closeCamera() {
         mCameraClient?.closeCamera()
     }
 

@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="260dp">
+    android:layout_height="300dp">
 
     <View
         android:id="@+id/multi_camera_texture_bg"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="10dp"
-        android:background="@color/GRAY"
+        android:background="@drawable/bg_multi_camera_item"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,7 +20,7 @@
         android:id="@+id/multi_camera_texture_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="4dp"
+        android:layout_margin="5dp"
         app:layout_constraintBottom_toBottomOf="@+id/multi_camera_texture_bg"
         app:layout_constraintEnd_toEndOf="@+id/multi_camera_texture_bg"
         app:layout_constraintStart_toStartOf="@+id/multi_camera_texture_bg"
@@ -32,8 +32,8 @@
         android:layout_height="32dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
-        app:layout_constraintEnd_toEndOf="@+id/multi_camera_texture_bg"
-        app:layout_constraintTop_toTopOf="@+id/multi_camera_texture_bg"
+        app:layout_constraintEnd_toEndOf="@+id/multi_camera_texture_view"
+        app:layout_constraintTop_toTopOf="@+id/multi_camera_texture_view"
         app:srcCompat="@mipmap/ic_switch_off" />
 
     <ImageView
@@ -42,8 +42,8 @@
         android:layout_height="22dp"
         android:layout_marginStart="20dp"
         android:layout_marginBottom="10dp"
-        app:layout_constraintBottom_toBottomOf="@+id/multi_camera_texture_bg"
-        app:layout_constraintStart_toStartOf="@+id/multi_camera_texture_bg"
+        app:layout_constraintBottom_toBottomOf="@+id/multi_camera_texture_view"
+        app:layout_constraintStart_toStartOf="@+id/multi_camera_texture_view"
         app:srcCompat="@mipmap/ic_capture_image" />
 
     <ImageView
@@ -64,8 +64,8 @@
         android:layout_marginTop="10dp"
         android:textSize="12sp"
         android:textColor="@color/white"
-        app:layout_constraintStart_toStartOf="@+id/multi_camera_texture_bg"
-        app:layout_constraintTop_toTopOf="@+id/multi_camera_texture_bg" />
+        app:layout_constraintStart_toStartOf="@+id/multi_camera_texture_view"
+        app:layout_constraintTop_toTopOf="@+id/multi_camera_texture_view" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
