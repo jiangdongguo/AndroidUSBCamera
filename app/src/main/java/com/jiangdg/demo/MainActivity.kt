@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         setStatusBar()
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+//        replaceDemoFragment(DemoMultiCameraFragment())
         replaceDemoFragment(DemoFragment())
 //        replaceDemoFragment(GlSurfaceFragment())
     }
@@ -91,6 +92,7 @@ class MainActivity : AppCompatActivity() {
                     ToastUtils.show(R.string.permission_tip)
                     return
                 }
+//                replaceDemoFragment(DemoMultiCameraFragment())
                 replaceDemoFragment(DemoFragment())
 //                replaceDemoFragment(GlSurfaceFragment())
             }

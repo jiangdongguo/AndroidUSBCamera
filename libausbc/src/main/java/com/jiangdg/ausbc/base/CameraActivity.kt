@@ -181,7 +181,7 @@ abstract class CameraActivity : BaseActivity(){
     }
 
     private fun getCameraRequest(): CameraRequest {
-        return CameraRequest.CameraRequestBuilder()
+        return CameraRequest.Builder()
             .setFrontCamera(false)
             .setContinuousAFModel(true)
             .setContinuousAFModel(true)

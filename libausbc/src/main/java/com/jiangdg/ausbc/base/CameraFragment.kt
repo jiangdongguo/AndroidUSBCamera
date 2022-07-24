@@ -31,7 +31,6 @@ import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.render.effect.AbstractEffect
-import com.jiangdg.ausbc.render.effect.EffectBlackWhite
 import com.jiangdg.ausbc.widget.AspectRatioSurfaceView
 import com.jiangdg.ausbc.widget.AspectRatioTextureView
 import com.jiangdg.ausbc.widget.IAspectRatio
@@ -315,11 +314,11 @@ abstract class CameraFragment : BaseFragment() {
         return mCameraClient?.sendCameraCommand(command)
     }
 
-    private fun openCamera(st: IAspectRatio? = null) {
+    protected fun openCamera(st: IAspectRatio? = null) {
         mCameraClient?.openCamera(st)
     }
 
-    private fun closeCamera() {
+    protected fun closeCamera() {
         mCameraClient?.closeCamera()
     }
 
@@ -400,7 +399,6 @@ abstract class CameraFragment : BaseFragment() {
         return CameraClient.newBuilder(requireContext())
             .setEnableGLES(true)
             .setRawImage(true)
-            .setDefaultEffect(EffectBlackWhite(requireContext()))
             .setCameraStrategy(CameraUvcStrategy(requireContext()))
             .setCameraRequest(getCameraRequest())
             .setDefaultRotateType(RotateType.ANGLE_0)
@@ -409,7 +407,7 @@ abstract class CameraFragment : BaseFragment() {
     }
 
     private fun getCameraRequest(): CameraRequest {
-        return CameraRequest.CameraRequestBuilder()
+        return CameraRequest.Builder()
             .setFrontCamera(false)
             .setPreviewWidth(640)
             .setPreviewHeight(480)

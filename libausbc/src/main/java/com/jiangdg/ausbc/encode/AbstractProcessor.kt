@@ -87,7 +87,7 @@ abstract class AbstractProcessor {
      *
      * @param callBack aac or h264 data call back, see [IEncodeDataCallBack]
      */
-    fun addEncodeDataCallBack(callBack: IEncodeDataCallBack) {
+    fun addEncodeDataCallBack(callBack: IEncodeDataCallBack?) {
         this.mEncodeDataCb = callBack
     }
 

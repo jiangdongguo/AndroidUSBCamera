@@ -40,6 +40,7 @@ import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.lifecycleScope
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.list.listItemsSingleChoice
+import com.jiangdg.ausbc.base.BaseBottomDialog
 import com.jiangdg.ausbc.base.CameraFragment
 import com.jiangdg.demo.databinding.FragmentDemoBinding
 import com.jiangdg.ausbc.callback.ICaptureCallBack
@@ -70,6 +71,7 @@ import java.util.*
  * @author Created by jiangdg on 2022/1/28
  */
 class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.OnViewClickListener {
+    private var mMultiCameraDialog: MultiCameraDialog? = null
     private lateinit var mMoreBindingView: DialogMoreBinding
     private var mMoreMenu: PopupWindow? = null
     private var isCapturingVideoOrAudio: Boolean = false
@@ -410,11 +412,16 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         })
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mMultiCameraDialog?.hide()
+    }
+
     override fun onClick(v: View?) {
-        if (! isCameraOpened()) {
-            ToastUtils.show("camera not worked!")
-            return
-        }
+//        if (! isCameraOpened()) {
+//            ToastUtils.show("camera not worked!")
+//            return
+//        }
         clickAnimation(v!!, object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator?) {
                 when (v) {
@@ -586,7 +593,21 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
     private fun goToMultiplexActivity() {
         mMoreMenu?.dismiss()
-        ToastUtils.show("developing")
+        mMultiCameraDialog = MultiCameraDialog()
+        mMultiCameraDialog?.setOnDismissListener(object : BaseBottomDialog.OnDismissListener {
+            override fun onDismiss() {
+                val currentCamera = getCurrentCameraStrategy()
+                if (currentCamera is CameraUvcStrategy) {
+                    currentCamera.register()
+                }
+            }
+        })
+        mMultiCameraDialog?.show(childFragmentManager, "")
+        val currentCamera = getCurrentCameraStrategy()
+        if (currentCamera is CameraUvcStrategy) {
+            closeCamera()
+            currentCamera.unRegister()
+        }
     }
 
     private fun showContactDialog() {

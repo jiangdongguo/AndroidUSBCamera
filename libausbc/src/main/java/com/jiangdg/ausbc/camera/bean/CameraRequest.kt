@@ -44,7 +44,7 @@ class CameraRequest private constructor() {
      *
      * @constructor Create empty Camera request builder
      */
-    class CameraRequestBuilder {
+    class Builder {
         private val mRequest by lazy {
             CameraRequest()
         }
@@ -53,9 +53,9 @@ class CameraRequest private constructor() {
          * Set preview width
          *
          * @param width camera preview width
-         * @return see [CameraRequestBuilder]
+         * @return see [Builder]
          */
-        fun setPreviewWidth(width: Int): CameraRequestBuilder {
+        fun setPreviewWidth(width: Int): Builder {
             mRequest.previewWidth = width
             return this
         }
@@ -64,9 +64,9 @@ class CameraRequest private constructor() {
          * Set preview height
          *
          * @param height camera preview height
-         * @return [CameraRequestBuilder]
+         * @return [Builder]
          */
-        fun setPreviewHeight(height: Int): CameraRequestBuilder {
+        fun setPreviewHeight(height: Int): Builder {
             mRequest.previewHeight = height
             return this
         }
@@ -75,9 +75,9 @@ class CameraRequest private constructor() {
          * Set camera id
          *
          * @param cameraId camera id
-         * @return [CameraRequestBuilder]
+         * @return [Builder]
          */
-        fun setCameraId(cameraId: String): CameraRequestBuilder {
+        fun setCameraId(cameraId: String): Builder {
             mRequest.cameraId = cameraId
             return this
         }
@@ -86,9 +86,9 @@ class CameraRequest private constructor() {
          * Set front camera
          *
          * @param isFrontCamera front camera flag
-         * @return [CameraRequestBuilder]
+         * @return [Builder]
          */
-        fun setFrontCamera(isFrontCamera: Boolean): CameraRequestBuilder {
+        fun setFrontCamera(isFrontCamera: Boolean): Builder {
             mRequest.isFrontCamera = isFrontCamera
             return this
         }
@@ -97,9 +97,9 @@ class CameraRequest private constructor() {
          * Set continuous a f model
          *
          * @param isContinuousAF
-         * @return [CameraRequestBuilder]
+         * @return [Builder]
          */
-        fun setContinuousAFModel(isContinuousAF: Boolean): CameraRequestBuilder {
+        fun setContinuousAFModel(isContinuousAF: Boolean): Builder {
             mRequest.isContinuousAFModel = isContinuousAF
             return this
         }
@@ -108,9 +108,9 @@ class CameraRequest private constructor() {
          * Set continuous auto model
          *
          * @param isContinuousAuto
-         * @return [CameraRequestBuilder]
+         * @return [Builder]
          */
-        fun setContinuousAutoModel(isContinuousAuto: Boolean): CameraRequestBuilder {
+        fun setContinuousAutoModel(isContinuousAuto: Boolean): Builder {
             mRequest.isContinuousAEModel = isContinuousAuto
             return this
         }

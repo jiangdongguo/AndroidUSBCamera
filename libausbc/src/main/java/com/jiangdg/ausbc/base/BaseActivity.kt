@@ -34,7 +34,13 @@ abstract class BaseActivity: AppCompatActivity() {
         initData()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        clear()
+    }
+
     protected abstract fun getRootView(layoutInflater: LayoutInflater): View?
     protected open fun initView() {}
     protected open fun initData() {}
+    protected open fun clear() {}
 }

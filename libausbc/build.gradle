@@ -36,7 +36,8 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
     implementation "androidx.core:core-ktx:${kotlinCoreVersion}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${kotlinCoroutines}"
-    implementation 'com.elvishew:xlog:1.11.0'
+    implementation "androidx.constraintlayout:constraintlayout:${constraintlayoutVersion}"
+    implementation "com.google.android.material:material:${materialVersion}"
     api 'com.gyf.immersionbar:immersionbar:3.0.0'
     implementation "com.github.bumptech.glide:glide:4.10.0"
     implementation "com.github.bumptech.glide:okhttp3-integration:4.10.0"

@@ -47,6 +47,7 @@ abstract class BaseFragment: Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        clear()
         mRootView = null
     }
 
@@ -55,4 +56,5 @@ abstract class BaseFragment: Fragment() {
     protected abstract fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View?
     protected open fun initView() {}
     protected open fun initData() {}
+    protected open fun clear() {}
 }

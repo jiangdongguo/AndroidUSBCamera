@@ -97,10 +97,7 @@ class H264EncodeProcessor(
         if (gLESRender) {
             return MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
         }
-        if (isLowerLollipop()) {
-            return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
-        }
-        return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible
+        return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
     }
 
     private fun getEncodeBitrate(width: Int, height: Int): Int {
