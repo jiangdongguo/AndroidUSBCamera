@@ -251,7 +251,7 @@ dependencies {
     implementation project(':libausbc')
 
     // demo
-    //implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.1.7'
+    //implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:latest_tag'
 }
 ```
 
@@ -271,7 +271,7 @@ Demo
 
 - download by opening url
 
-&emsp;[AUSBC3.2.0.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/AUSBC3.2.0.apk)
+&emsp;[AUSBC.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/AUSBC.apk)
 
 
 
@@ -337,7 +337,7 @@ Version
 
 1. fix a native memory leak when repeat open close camera;
 
-#### 2022.07.24  version 3.2.0
+#### 2022.07.25  version 3.2.2
 
 1. fix part equipment recording image flower;
 2. Support opening multi-road camera;
