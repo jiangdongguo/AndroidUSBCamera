@@ -58,6 +58,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     }
     private var mUsbMonitor: USBMonitor? = null
     private var mUVCCamera: UVCCamera? = null
+    private var mPreviewFrameFormat: Int = UVCCamera.FRAME_FORMAT_MJPEG
     private var mDevConnectCallBack: IDeviceConnectCallBack? = null
     private var mCacheDeviceList: MutableList<UsbDevice> = arrayListOf()
 
@@ -137,6 +138,11 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             mUVCCamera = UVCCamera().apply {
                 open(ctrlBlock)
             }
+            mPreviewFrameFormat = if (mUVCCamera?.isMJPEGFormatSupported == true) {
+                UVCCamera.FRAME_FORMAT_MJPEG
+            } else {
+                UVCCamera.FRAME_FORMAT_YUYV
+            }
             if (! isPreviewSizeSupported(previewWidth, previewHeight)) {
                 postCameraStatus(CameraStatus(CameraStatus.ERROR_PREVIEW_SIZE, "unsupported preview size(${request.previewWidth}, ${request.previewHeight})"))
                 Logger.e(TAG, " unsupported preview size(${request.previewWidth}, ${request.previewHeight})")
@@ -148,18 +154,24 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                     request.previewHeight,
                     MIN_FS,
                     MAX_FS,
-                    UVCCamera.FRAME_FORMAT_MJPEG,
+                    mPreviewFrameFormat,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
             } catch (e: Exception) {
                 try {
                     Logger.w(TAG, " setPreviewSize failed ${e.localizedMessage}, try yuv format...")
+                    mPreviewFrameFormat = UVCCamera.FRAME_FORMAT_YUYV
+                    if (! isPreviewSizeSupported(previewWidth, previewHeight)) {
+                        postCameraStatus(CameraStatus(CameraStatus.ERROR_PREVIEW_SIZE, "unsupported preview size(${request.previewWidth}, ${request.previewHeight})"))
+                        Logger.e(TAG, " unsupported preview size(${request.previewWidth}, ${request.previewHeight})")
+                        return null
+                    }
                     mUVCCamera?.setPreviewSize(
                         request.previewWidth,
                         request.previewHeight,
                         MIN_FS,
                         MAX_FS,
-                        UVCCamera.FRAME_FORMAT_YUYV,
+                        mPreviewFrameFormat,
                         UVCCamera.DEFAULT_BANDWIDTH
                     )
                 } catch (e: Exception) {
@@ -340,14 +352,13 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             val previewSizeList = cameraInfo?.cameraPreviewSizes ?: mutableListOf()
             if (previewSizeList.isEmpty()) {
                 Logger.i(TAG, "getAllPreviewSizes = ${mUVCCamera?.supportedSizeList}")
-                mUVCCamera?.supportedSizeList?.forEach { size ->
+                mUVCCamera?.getSupportedSizeList(mPreviewFrameFormat)?.forEach { size ->
                     previewSizeList.find {
                         it.width == size.width && it.height == size.height
                     }.also {
-                        if (it != null) {
-                            return@also
+                        if (it == null) {
+                            previewSizeList.add(PreviewSize(size.width, size.height))
                         }
-                        previewSizeList.add(PreviewSize(size.width, size.height))
                     }
                 }
                 cameraInfo?.cameraPreviewSizes = previewSizeList
