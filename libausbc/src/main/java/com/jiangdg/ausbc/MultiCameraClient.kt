@@ -240,7 +240,6 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
      * @constructor Create camera
      */
     class Camera(private val ctx: Context, private val device: UsbDevice) : Handler.Callback {
-        private var mPreviewFrameFormat: Int = UVCCamera.FRAME_FORMAT_MJPEG
         private var mCameraStateCallback: ICameraStateCallBack? = null
         private var mMediaMuxer: Mp4Muxer? = null
         private var mCameraView: Any? = null
@@ -326,21 +325,26 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private fun <T> openCameraInternal(cameraView: T, request: CameraRequest) {
             if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
                 closeCamera()
-                mCameraStateCallback?.onCameraState(
-                    this,
-                    ICameraStateCallBack.State.ERROR,
-                    "Has no CAMERA permission."
-                )
+                mMainHandler.post {
+                    mCameraStateCallback?.onCameraState(
+                        this,
+                        ICameraStateCallBack.State.ERROR,
+                        "Has no CAMERA permission."
+                    )
+                }
+
                 Logger.e(TAG ,"open camera failed, need Manifest.permission.CAMERA permission when targetSdk>=28")
                 return
             }
             if (mCtrlBlock == null) {
                 closeCamera()
-                mCameraStateCallback?.onCameraState(
-                    this,
-                    ICameraStateCallBack.State.ERROR,
-                    "Usb control block can not be null "
-                )
+                mMainHandler.post {
+                    mCameraStateCallback?.onCameraState(
+                        this,
+                        ICameraStateCallBack.State.ERROR,
+                        "Usb control block can not be null "
+                    )
+                }
                 return
             }
             // 1. create a UVCCamera
@@ -349,21 +353,18 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     open(mCtrlBlock)
                 }
             } catch (e: Exception) {
-                mCameraStateCallback?.onCameraState(
-                    this,
-                    ICameraStateCallBack.State.ERROR,
-                    "open camera failed ${e.localizedMessage}"
-                )
+                mMainHandler.post {
+                    mCameraStateCallback?.onCameraState(
+                        this,
+                        ICameraStateCallBack.State.ERROR,
+                        "open camera failed ${e.localizedMessage}"
+                    )
+                }
                 Logger.e(TAG, "open camera failed.", e)
                 closeCamera()
             }
 
             // 2. set preview size and register preview callback
-            mPreviewFrameFormat = if (mUvcCamera?.isMJPEGFormatSupported == true) {
-                UVCCamera.FRAME_FORMAT_MJPEG
-            } else {
-                UVCCamera.FRAME_FORMAT_YUYV
-            }
             try {
                 val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
                 if (! isPreviewSizeSupported(previewSize)) {
@@ -385,12 +386,11 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     previewSize.height,
                     MIN_FS,
                     MAX_FS,
-                    mPreviewFrameFormat,
+                    UVCCamera.FRAME_FORMAT_MJPEG,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
             } catch (e: Exception) {
                 try {
-                    mPreviewFrameFormat = UVCCamera.FRAME_FORMAT_YUYV
                     val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
                     if (! isPreviewSizeSupported(previewSize)) {
                         mMainHandler.post {
@@ -404,13 +404,13 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                         Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
                         return
                     }
-                    Logger.e(TAG, " setPreviewSize failed, try to use yuv format...", e)
+                    Logger.e(TAG, " setPreviewSize failed, try to use yuv format...")
                     mUvcCamera?.setPreviewSize(
                         mPreviewSize!!.width,
                         mPreviewSize!!.height,
                         MIN_FS,
                         MAX_FS,
-                        mPreviewFrameFormat,
+                        UVCCamera.FRAME_FORMAT_YUYV,
                         UVCCamera.DEFAULT_BANDWIDTH
                     )
                 } catch (e: Exception) {
@@ -715,13 +715,19 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          */
         fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize> {
             val previewSizeList = arrayListOf<PreviewSize>()
-            Logger.i(TAG, "mUvcCamera?.supportedSizeList = ${mUvcCamera!!.supportedSizeList}")
-            mUvcCamera?.getSupportedSizeList(mPreviewFrameFormat)?.forEach { size ->
-                val width = size.width
-                val height = size.height
-                val ratio = width.toDouble() / height
-                if (aspectRatio == null || aspectRatio == ratio) {
-                    previewSizeList.add(PreviewSize(width, height))
+            if (mUvcCamera?.isMJPEGFormatSupported == true) {
+                mUvcCamera?.supportedSizeList
+            }  else {
+                mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
+            }.also { sizeList ->
+                Logger.i(TAG, "mUvcCamera?.supportedSizeList = $sizeList")
+                sizeList?.forEach { size ->
+                    val width = size.width
+                    val height = size.height
+                    val ratio = width.toDouble() / height
+                    if (aspectRatio == null || aspectRatio == ratio) {
+                        previewSizeList.add(PreviewSize(width, height))
+                    }
                 }
             }
             if (Utils.debugCamera)

@@ -36,7 +36,7 @@ import java.io.InputStream
  */
 object Utils  {
 
-    internal var debugCamera = false
+    var debugCamera = false
 
     fun isTargetSdkOverP(context: Context): Boolean {
         val targetSdkVersion = try {

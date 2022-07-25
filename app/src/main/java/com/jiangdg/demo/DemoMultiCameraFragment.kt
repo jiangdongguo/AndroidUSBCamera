@@ -61,13 +61,6 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
             }
         }
         // request permission for other camera
-        // until all be granted or requested once
-        if (!mHasRequestPermissionList.contains(camera)) {
-            mHasRequestPermissionList.add(camera)
-        }
-        if (mHasRequestPermissionList.size == mAdapter.data.size) {
-            return
-        }
         mAdapter.data.forEach { cam ->
             val device = cam.getUsbDevice()
             if (! hasPermission(device)) {
@@ -181,12 +174,11 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         ) {
             camera ?: return
             if (payloads.isEmpty()) {
-                helper.setText(R.id.multi_camera_name, camera.getUsbDevice().deviceName)
-                helper.addOnClickListener(R.id.multi_camera_switch)
-                helper.addOnClickListener(R.id.multi_camera_capture_video)
-                helper.addOnClickListener(R.id.multi_camera_capture_image)
                 return
             }
+            helper.setText(R.id.multi_camera_name, camera.getUsbDevice().deviceName)
+            helper.addOnClickListener(R.id.multi_camera_capture_video)
+            helper.addOnClickListener(R.id.multi_camera_capture_image)
             // local update
             val switchIv = helper.getView<ImageView>(R.id.multi_camera_switch)
             val captureVideoIv = helper.getView<ImageView>(R.id.multi_camera_capture_video)
