@@ -390,8 +390,8 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 )
             } catch (e: Exception) {
                 try {
-                    val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
                     mPreviewFrameFormat = UVCCamera.FRAME_FORMAT_YUYV
+                    val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
                     if (! isPreviewSizeSupported(previewSize)) {
                         mMainHandler.post {
                             mCameraStateCallback?.onCameraState(
