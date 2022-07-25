@@ -17,6 +17,7 @@ abstract class MultiCameraFragment: BaseFragment() {
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
+                context ?: return
                 if (mCameraMap.containsKey(device.deviceId)) {
                     return
                 }
