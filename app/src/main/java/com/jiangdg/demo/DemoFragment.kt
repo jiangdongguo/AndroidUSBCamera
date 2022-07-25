@@ -602,10 +602,9 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 }
             }
         })
-        mMultiCameraDialog?.show(childFragmentManager, "")
+        mMultiCameraDialog?.show(childFragmentManager, "multiRoadCameras")
         val currentCamera = getCurrentCameraStrategy()
         if (currentCamera is CameraUvcStrategy) {
-            closeCamera()
             currentCamera.unRegister()
         }
     }
