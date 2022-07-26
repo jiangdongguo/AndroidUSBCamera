@@ -715,12 +715,11 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          */
         fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize> {
             val previewSizeList = arrayListOf<PreviewSize>()
-            if (mUvcCamera?.isMJPEGFormatSupported == true) {
+            if (mUvcCamera?.supportedSizeList?.isNotEmpty() == true) {
                 mUvcCamera?.supportedSizeList
             }  else {
                 mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
             }.also { sizeList ->
-                Logger.i(TAG, "mUvcCamera?.supportedSizeList = $sizeList")
                 sizeList?.forEach { size ->
                     val width = size.width
                     val height = size.height

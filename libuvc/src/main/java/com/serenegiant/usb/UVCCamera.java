@@ -350,10 +350,6 @@ public class UVCCamera {
 		}
 	}
 
-	public boolean isMJPEGFormatSupported() {
-		return ! getSupportedSize(FRAME_FORMAT_MJPEG, mSupportedSize).isEmpty();
-	}
-
 	public List<Size> getSupportedSizeList() {
 		final int type = (mCurrentFrameFormat > 0) ? 6 : 4;
 		return getSupportedSize(type, mSupportedSize);
