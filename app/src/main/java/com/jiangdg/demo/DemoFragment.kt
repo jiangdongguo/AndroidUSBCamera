@@ -613,8 +613,20 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mMoreMenu?.dismiss()
         MaterialDialog(requireContext()).show {
             title(R.string.dialog_contact_title)
-            message(R.string.dialog_contact_message)
+            message(text = getString(R.string.dialog_contact_message, getVersionName()))
         }
+    }
+
+    private  fun getVersionName(): String? {
+        context ?: return null
+        val packageManager = requireContext().packageManager
+        try {
+            val packageInfo = packageManager?.getPackageInfo(requireContext().packageName, 0)
+            return packageInfo?.versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+        }
+        return null
     }
 
     private fun goToGalley() {
