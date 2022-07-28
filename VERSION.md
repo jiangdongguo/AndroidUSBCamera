@@ -60,7 +60,7 @@ Version
 
 1. fix a native memory leak when repeat open close camera;
 
-#### 2022.07.25  version 3.2.2
+#### 2022.07.25  version 3.2.0
 
 1. fix part equipment recording image flower;
 2. Support opening multi-road camera;
