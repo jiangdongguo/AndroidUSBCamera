@@ -17,15 +17,16 @@ abstract class MultiCameraFragment: BaseFragment() {
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
-                context ?: return
-                if (mCameraMap.containsKey(device.deviceId)) {
-                    return
+                context?.let {
+                    if (mCameraMap.containsKey(device.deviceId)) {
+                        return
+                    }
+                    MultiCameraClient.Camera(it, device).apply {
+                        mCameraMap[device.deviceId] = this
+                        onCameraAttached(this)
+                    }
+                    mCameraClient?.requestPermission(device)
                 }
-                MultiCameraClient.Camera(context!!, device).apply {
-                    mCameraMap[device.deviceId] = this
-                    onCameraAttached(this)
-                }
-                mCameraClient?.requestPermission(device)
             }
 
             override fun onDetachDec(device: UsbDevice?) {

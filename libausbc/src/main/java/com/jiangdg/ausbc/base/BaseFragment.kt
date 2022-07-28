@@ -51,6 +51,12 @@ abstract class BaseFragment: Fragment() {
         mRootView = null
     }
 
+    open fun isFragmentAttached(): Boolean {
+        return if (null == activity || activity!!.isDestroyed) {
+            false
+        } else isAdded && !isDetached
+    }
+
     protected fun getRootView() = mRootView
 
     protected abstract fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View?

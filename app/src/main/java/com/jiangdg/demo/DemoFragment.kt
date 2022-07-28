@@ -21,6 +21,7 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.hardware.usb.UsbDevice
@@ -664,28 +665,38 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private fun showRecentMedia(isImage: Boolean? = null) {
         lifecycleScope.launch(Dispatchers.IO) {
             context ?: return@launch
-            if (isImage != null) {
-                MediaUtils.findRecentMedia(requireContext(), isImage)
-            } else {
-                MediaUtils.findRecentMedia(requireContext())
-            }?.also { path ->
-                val size = Utils.dp2px(requireContext(), 38F)
-                ImageLoaders.of(this@DemoFragment)
-                    .loadAsBitmap(path, size, size, object : ILoader.OnLoadedResultListener {
-                        override fun onLoadedSuccess(bitmap: Bitmap?) {
-                            lifecycleScope.launch(Dispatchers.Main) {
-                                mViewBinding.albumPreviewIv.canShowImageBorder = true
-                                mViewBinding.albumPreviewIv.setImageBitmap(bitmap)
+            if (! isFragmentAttached()) {
+                return@launch
+            }
+            try {
+                if (isImage != null) {
+                    MediaUtils.findRecentMedia(requireContext(), isImage)
+                } else {
+                    MediaUtils.findRecentMedia(requireContext())
+                }?.also { path ->
+                    val size = Utils.dp2px(requireContext(), 38F)
+                    ImageLoaders.of(this@DemoFragment)
+                        .loadAsBitmap(path, size, size, object : ILoader.OnLoadedResultListener {
+                            override fun onLoadedSuccess(bitmap: Bitmap?) {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    mViewBinding.albumPreviewIv.canShowImageBorder = true
+                                    mViewBinding.albumPreviewIv.setImageBitmap(bitmap)
+                                }
                             }
-                        }
 
-                        override fun onLoadedFailed(error: Exception?) {
-                            lifecycleScope.launch(Dispatchers.Main) {
-                                ToastUtils.show("Capture image error.${error?.localizedMessage}")
-                                mViewBinding.albumPreviewIv.cancelAnimation()
+                            override fun onLoadedFailed(error: Exception?) {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    ToastUtils.show("Capture image error.${error?.localizedMessage}")
+                                    mViewBinding.albumPreviewIv.cancelAnimation()
+                                }
                             }
-                        }
-                    })
+                        })
+                }
+            } catch (e: Exception) {
+                activity?.runOnUiThread {
+                    ToastUtils.show("${e.localizedMessage}")
+                }
+                Logger.e(TAG, "showRecentMedia failed", e)
             }
         }
     }

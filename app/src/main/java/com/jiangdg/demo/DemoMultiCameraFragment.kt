@@ -104,13 +104,6 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         mAdapter.setOnItemChildClickListener { adapter, view, position ->
             val camera = adapter.data[position] as MultiCameraClient.Camera
             when (view.id) {
-                R.id.multi_camera_switch -> {
-                    if (camera.isCameraOpened()) {
-                        camera.closeCamera()
-                    } else {
-                        camera.openCamera()
-                    }
-                }
                 R.id.multi_camera_capture_image -> {
                     camera.captureImage(object : ICaptureCallBack {
                         override fun onBegin() {}

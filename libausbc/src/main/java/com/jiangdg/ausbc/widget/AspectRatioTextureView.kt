@@ -50,7 +50,13 @@ class AspectRatioTextureView: TextureView, IAspectRatio {
 
     override fun getSurfaceHeight(): Int  = height
 
-    override fun getSurface(): Surface = Surface(surfaceTexture)
+    override fun getSurface(): Surface? {
+        return try {
+            Surface(surfaceTexture)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     override fun postUITask(task: () -> Unit) {
         post {

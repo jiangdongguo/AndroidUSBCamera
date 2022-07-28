@@ -296,7 +296,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             when (msg.what) {
                 MSG_START_PREVIEW -> {
                     (msg.obj as Pair<*, *>).apply {
-                        openCameraInternal(first, second as CameraRequest)
+                        openCameraInternal(first, second as? CameraRequest ?: getDefaultCameraRequest())
                     }
                 }
                 MSG_STOP_PREVIEW -> {
@@ -332,7 +332,6 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                         "Has no CAMERA permission."
                     )
                 }
-
                 Logger.e(TAG ,"open camera failed, need Manifest.permission.CAMERA permission when targetSdk>=28")
                 return
             }
@@ -527,7 +526,9 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
 
         private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
             if (! CameraUtils.hasStoragePermission(ctx) || ! CameraUtils.hasAudioPermission(ctx)) {
-                callBack.onError("have no storage or audio permission")
+                mMainHandler.post {
+                    callBack.onError("have no storage or audio permission")
+                }
                 Logger.e(TAG ,"open camera failed, have no storage and audio permission")
                 return
             }

@@ -236,6 +236,8 @@ class Mp4Muxer(
         }
     }
 
+    fun getSavePath() = path
+
     private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
         context?.let { ctx ->
             if (videoPath.isNullOrEmpty()) {
