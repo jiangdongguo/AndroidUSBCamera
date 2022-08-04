@@ -113,6 +113,11 @@ abstract class MultiCameraFragment: BaseFragment() {
     protected fun getDeviceList() = mCameraClient?.getDeviceList()
 
     /**
+     * Get camera client
+     */
+    protected fun getCameraClient() = mCameraClient
+
+    /**
      * Request permission
      *
      * @param device see [UsbDevice]

@@ -101,4 +101,9 @@ abstract class MultiCameraActivity: BaseActivity() {
      * Get all usb device list
      */
     protected fun getDeviceList() = mCameraClient?.getDeviceList()
+
+    /**
+     * Get camera client
+     */
+    protected fun getCameraClient() = mCameraClient
 }

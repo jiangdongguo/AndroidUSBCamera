@@ -553,6 +553,143 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         /**
+         * Set auto focus
+         *
+         * @param enable true enable auto focus
+         */
+        fun setAutoFocus(enable: Boolean) {
+            mUvcCamera?.autoFocus = enable
+        }
+
+        /**
+         * Set auto white balance
+         *
+         * @param autoWhiteBalance true enable auto white balance
+         */
+        fun setAutoWhiteBalance(autoWhiteBalance: Boolean) {
+            mUvcCamera?.autoWhiteBlance = autoWhiteBalance
+        }
+
+        /**
+         * Set zoom
+         *
+         * @param zoom zoom value, 0 means reset
+         */
+        fun setZoom(zoom: Int) {
+            mUvcCamera?.zoom = zoom
+        }
+
+        /**
+         * Get zoom
+         */
+        fun getZoom() = mUvcCamera?.zoom
+
+        /**
+         * Set gain
+         *
+         * @param gain gain value, 0 means reset
+         */
+        fun setGain(gain: Int) {
+            mUvcCamera?.gain = gain
+        }
+
+        /**
+         * Get gain
+         */
+        fun getGain() = mUvcCamera?.gain
+
+        /**
+         * Set gamma
+         *
+         * @param gamma gamma value, 0 means reset
+         */
+        fun setGamma(gamma: Int) {
+           mUvcCamera?.gamma = gamma
+        }
+
+        /**
+         * Get gamma
+         */
+        fun getGamma() = mUvcCamera?.gamma
+
+        /**
+         * Set brightness
+         *
+         * @param brightness brightness value, 0 means reset
+         */
+        fun setBrightness(brightness: Int) {
+            mUvcCamera?.brightness = brightness
+        }
+
+        /**
+         * Get brightness
+         */
+        fun getBrightness() = mUvcCamera?.brightness
+
+        /**
+         * Set contrast
+         *
+         * @param contrast contrast value, 0 means reset
+         */
+        fun setContrast(contrast: Int) {
+            mUvcCamera?.contrast = contrast
+        }
+
+        /**
+         * Get contrast
+         */
+        fun getContrast() = mUvcCamera?.contrast
+
+        /**
+         * Set sharpness
+         *
+         * @param sharpness sharpness value, 0 means reset
+         */
+        fun setSharpness(sharpness: Int) {
+            mUvcCamera?.sharpness = sharpness
+        }
+
+        /**
+         * Get sharpness
+         */
+        fun getSharpness() = mUvcCamera?.sharpness
+
+        /**
+         * Set saturation
+         *
+         * @param saturation saturation value, 0 means reset
+         */
+        fun setSaturation(saturation: Int) {
+            mUvcCamera?.saturation = saturation
+        }
+
+        /**
+         * Get saturation
+         */
+        fun getSaturation() = mUvcCamera?.saturation
+
+        /**
+         * Set hue
+         *
+         * @param hue hue value, 0 means reset
+         */
+        fun setHue(hue: Int) {
+            mUvcCamera?.hue = hue
+        }
+
+        /**
+         * Get hue
+         */
+        fun getHue() = mUvcCamera?.hue
+
+        /**
+         * Get real preview size
+         *
+         * @return see [PreviewSize]
+         */
+        fun getPreviewSize() = mPreviewSize
+
+        /**
          * Set usb control block, when the uvc device was granted permission
          *
          * @param ctrlBlock see [USBMonitor.OnDeviceConnectListener]#onConnectedDev

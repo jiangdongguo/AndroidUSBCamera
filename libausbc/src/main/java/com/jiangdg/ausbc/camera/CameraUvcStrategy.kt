@@ -586,6 +586,136 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
         }
     }
 
+    /**
+     * Set auto focus
+     *
+     * @param enable true enable auto focus
+     */
+    fun setAutoFocus(enable: Boolean) {
+        mUVCCamera?.autoFocus = enable
+    }
+
+    /**
+     * Set auto white balance
+     *
+     * @param autoWhiteBalance true enable auto white balance
+     */
+    fun setAutoWhiteBalance(autoWhiteBalance: Boolean) {
+        mUVCCamera?.autoWhiteBlance = autoWhiteBalance
+    }
+
+    /**
+     * Set zoom
+     *
+     * @param zoom zoom value, 0 means reset
+     */
+    fun setZoom(zoom: Int) {
+        mUVCCamera?.zoom = zoom
+    }
+
+    /**
+     * Get zoom
+     */
+    fun getZoom() = mUVCCamera?.zoom
+
+    /**
+     * Set gain
+     *
+     * @param gain gain value, 0 means reset
+     */
+    fun setGain(gain: Int) {
+        mUVCCamera?.gain = gain
+    }
+
+    /**
+     * Get gain
+     */
+    fun getGain() = mUVCCamera?.gain
+
+    /**
+     * Set gamma
+     *
+     * @param gamma gamma value, 0 means reset
+     */
+    fun setGamma(gamma: Int) {
+        mUVCCamera?.gamma = gamma
+    }
+
+    /**
+     * Get gamma
+     */
+    fun getGamma() = mUVCCamera?.gamma
+
+    /**
+     * Set brightness
+     *
+     * @param brightness brightness value, 0 means reset
+     */
+    fun setBrightness(brightness: Int) {
+        mUVCCamera?.brightness = brightness
+    }
+
+    /**
+     * Get brightness
+     */
+    fun getBrightness() = mUVCCamera?.brightness
+
+    /**
+     * Set contrast
+     *
+     * @param contrast contrast value, 0 means reset
+     */
+    fun setContrast(contrast: Int) {
+        mUVCCamera?.contrast = contrast
+    }
+
+    /**
+     * Get contrast
+     */
+    fun getContrast() = mUVCCamera?.contrast
+
+    /**
+     * Set sharpness
+     *
+     * @param sharpness sharpness value, 0 means reset
+     */
+    fun setSharpness(sharpness: Int) {
+        mUVCCamera?.sharpness = sharpness
+    }
+
+    /**
+     * Get sharpness
+     */
+    fun getSharpness() = mUVCCamera?.sharpness
+
+    /**
+     * Set saturation
+     *
+     * @param saturation saturation value, 0 means reset
+     */
+    fun setSaturation(saturation: Int) {
+        mUVCCamera?.saturation = saturation
+    }
+
+    /**
+     * Get saturation
+     */
+    fun getSaturation() = mUVCCamera?.saturation
+
+    /**
+     * Set hue
+     *
+     * @param hue hue value, 0 means reset
+     */
+    fun setHue(hue: Int) {
+        mUVCCamera?.hue = hue
+    }
+
+    /**
+     * Get hue
+     */
+    fun getHue() = mUVCCamera?.hue
+
     private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
         return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
             Logger.i(TAG, " find some device list, = $devList")
