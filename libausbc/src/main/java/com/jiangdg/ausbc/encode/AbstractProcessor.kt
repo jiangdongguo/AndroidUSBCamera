@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * @author Created by jiangdg on 2022/2/10
  */
-abstract class AbstractProcessor {
+abstract class AbstractProcessor(private val gLESRender: Boolean = false) {
     private var mEncodeThread: HandlerThread? = null
     private var mEncodeHandler: Handler? = null
     protected var mMediaCodec: MediaCodec? = null
@@ -101,9 +101,6 @@ abstract class AbstractProcessor {
     fun setMp4Muxer(muxer: Mp4Muxer, isVideo: Boolean) {
         this.mMp4Muxer = muxer
         this.isVideo = isVideo
-        mMediaCodec?.outputFormat?.let { format->
-            mMp4Muxer?.addTracker(format, isVideo)
-        }
     }
 
     /**
@@ -212,6 +209,9 @@ abstract class AbstractProcessor {
             if (mRawDataQueue.isEmpty()) {
                 return@let
             }
+            if (gLESRender && isVideo) {
+                return@let
+            }
             val rawData = mRawDataQueue.poll() ?: return@let
             val inputIndex = codec.dequeueInputBuffer(TIMES_OUT_US)
             if (inputIndex < 0) {
@@ -225,6 +225,9 @@ abstract class AbstractProcessor {
             inputBuffer?.clear()
             inputBuffer?.put(rawData.data)
             codec.queueInputBuffer(inputIndex, 0, rawData.data.size, getPTSUs(rawData.data.size), 0)
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "queue mediacodec data, isVideo=$isVideo, len=${rawData.data.size}")
+            }
         }
     }
 
@@ -233,9 +236,9 @@ abstract class AbstractProcessor {
             return
         }
         if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-            Logger.i(TAG, "Key frame, len = $length")
+            Logger.i(TAG, "isVideo = $isVideo, Key frame, len = $length")
         } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
-            Logger.i(TAG, "Pps/sps frame, len = $length")
+            Logger.i(TAG, "isVideo = $isVideo, Pps/sps frame, len = $length")
         }
     }
 

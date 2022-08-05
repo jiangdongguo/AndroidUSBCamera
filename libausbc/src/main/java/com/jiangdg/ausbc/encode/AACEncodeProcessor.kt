@@ -259,6 +259,9 @@ class AACEncodeProcessor : AbstractProcessor() {
                 if (readBytes <= 0) {
                     continue
                 }
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "read pcm data, len = $readBytes")
+                }
                 // pcm encode queue
                 if (mRawDataQueue.size >= MAX_QUEUE_SIZE) {
                     mRawDataQueue.poll()
