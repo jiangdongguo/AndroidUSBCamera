@@ -150,6 +150,9 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         if (isMonitorRegistered()) {
             return
         }
+        if (Utils.debugCamera) {
+            Logger.i(TAG, "register...")
+        }
         mUsbMonitor?.register()
     }
 
@@ -159,6 +162,9 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
     fun unRegister() {
         if (!isMonitorRegistered()) {
             return
+        }
+        if (Utils.debugCamera) {
+            Logger.i(TAG, "unRegister...")
         }
         mUsbMonitor?.unregister()
     }
@@ -427,6 +433,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             }
             mUvcCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
             // 3. start preview
+            mCameraView = cameraView ?: mCameraView
             when(cameraView) {
                 is Surface -> {
                     mUvcCamera?.setPreviewDisplay(cameraView)
@@ -441,7 +448,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     mUvcCamera?.setPreviewTexture(cameraView.surfaceTexture)
                 }
                 else -> {
-                    throw IllegalStateException("Only support Surface or SurfaceTexture or SurfaceView or TextureView or GLSurfaceView")
+                    throw IllegalStateException("Only support Surface or SurfaceTexture or SurfaceView or TextureView or GLSurfaceView--$cameraView")
                 }
             }
             mUvcCamera?.autoFocus = true
@@ -604,7 +611,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          * @param gamma gamma value, 0 means reset
          */
         fun setGamma(gamma: Int) {
-           mUvcCamera?.gamma = gamma
+            mUvcCamera?.gamma = gamma
         }
 
         /**
@@ -715,13 +722,12 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          * @param cameraRequest camera request
          */
         fun openCamera(cameraView: Any? = null, cameraRequest: CameraRequest? = null) {
-            mCameraView = cameraView ?: mCameraView
-            mCameraRequest = cameraRequest ?: mCameraRequest ?: getDefaultCameraRequest()
+            mCameraRequest = cameraRequest ?: getDefaultCameraRequest()
             val thread = HandlerThread("${device.deviceName}-${device.deviceId}").apply {
                 start()
             }.also {
                 mCameraHandler = Handler(it.looper, this)
-                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, Pair(cameraView, cameraRequest))?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, Pair(cameraView, mCameraRequest))?.sendToTarget()
             }
             this.mCameraThread = thread
         }
@@ -811,7 +817,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             mMainHandler.postDelayed({
                 mCameraRequest!!.previewWidth = width
                 mCameraRequest!!.previewHeight = height
-                openCamera()
+                openCamera(mCameraView, mCameraRequest)
             }, 100)
         }
 
@@ -892,7 +898,8 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             }
             // find it
             sizeList.find {
-                it.width == maxWidth && it.height == maxHeight
+                (it.width == maxWidth && it.height == maxHeight)
+                        || (it.width == DEFAULT_PREVIEW_WIDTH || it.height == DEFAULT_PREVIEW_HEIGHT)
             }.also { size ->
                 size ?: return@also
                 return size
