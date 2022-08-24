@@ -72,10 +72,12 @@ UVCPreview::UVCPreview(uvc_device_handle_t *devh)
 	ENTER();
 	pthread_cond_init(&preview_sync, NULL);
 	pthread_mutex_init(&preview_mutex, NULL);
-//
+    // 初始化并关联 capture_clock_attr
+    pthread_condattr_init(&capture_clock_attr);
+    pthread_condattr_setclock(&capture_clock_attr, CLOCK_MONOTONIC);
 	pthread_cond_init(&capture_sync, NULL);
 	pthread_mutex_init(&capture_mutex, NULL);
-//	
+
 	pthread_mutex_init(&pool_mutex, NULL);
 	EXIT();
 }
@@ -98,6 +100,8 @@ UVCPreview::~UVCPreview() {
 	pthread_mutex_lock(&capture_mutex);
 	pthread_mutex_destroy(&capture_mutex);
 	pthread_cond_destroy(&capture_sync);
+	// 释放 capture_clock_aatr
+    pthread_condattr_destroy(&capture_clock_attr);
 	pthread_mutex_destroy(&pool_mutex);
 	EXIT();
 }
@@ -736,7 +740,12 @@ uvc_frame_t *UVCPreview::waitCaptureFrame() {
 	pthread_mutex_lock(&capture_mutex);
 	{
 		if (!captureQueu) {
-			pthread_cond_wait(&capture_sync, &capture_mutex);
+			 //  这里有阻塞的情况，替换成 pthread_cond_timedwait 方法，设置相对的超时时间为 1s
+             //  pthread_cond_wait(&capture_sync, &capture_mutex);
+            struct timespec tv;
+            clock_gettime(CLOCK_MONOTONIC, &tv);
+            tv.tv_sec += 1;
+            pthread_cond_timedwait(&capture_sync, &capture_mutex,&tv);
 		}
 		if (LIKELY(isRunning() && captureQueu)) {
 			frame = captureQueu;

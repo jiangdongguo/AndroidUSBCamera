@@ -35,7 +35,6 @@ public class XLogWrapper {
         AndroidPrinter androidPrinter = new AndroidPrinter(true);
         LogConfiguration config = new LogConfiguration.Builder().logLevel(LogLevel.ALL)
                 .tag(TAG)
-                .enableThreadInfo()
                 .disableStackTrace().build();
         String path = TextUtils.isEmpty(folderPath) ? application.getExternalFilesDir(null).getPath() : folderPath;
         path = TextUtils.isEmpty(path) ? application.getFilesDir().getPath(): path;
@@ -49,66 +48,66 @@ public class XLogWrapper {
 
     public static void v(String tag, String msg) {
         if (mHasInit) {
-            XLog.v("++++++++Info->" + tag + "###" +msg);
+            XLog.v( "[" + tag + "]  " +msg);
             return;
         }
-        Log.v(tag, "++++++++Info->" + "###" +msg);
+        Log.v(tag,  "" +msg);
     }
 
     public static void i(String tag, String msg) {
         if (mHasInit) {
-            XLog.i("++++++++Info->" + tag + "###" +msg);
+            XLog.i( "[" + tag + "]  " +msg);
             return;
         }
-        Log.i(tag, "++++++++Info->" + "###" +msg);
+        Log.i(tag,  "" +msg);
     }
 
     public static void d(String tag, String msg) {
         if (mHasInit) {
-            XLog.d("++++++++debug->" + tag + "###" +msg);
+            XLog.d( "[" + tag + "]  " +msg);
             return;
         }
-        Log.d(tag, "++++++++debug->" + "###" +msg);
+        Log.d(tag,  "" +msg);
     }
 
     public static void w(String tag, String msg) {
         if (mHasInit) {
-            XLog.w("++++++++warning->" + tag + "###" +msg);
+            XLog.w( "[" + tag + "]  " +msg);
             return;
         }
-        Log.w(tag, "++++++++warning->" + "###" +msg);
+        Log.w(tag,  "" +msg);
     }
 
     public static void w(String tag, String msg, Throwable throwable) {
         if (mHasInit) {
-            XLog.w("++++++++warning->" + tag + "###" +msg, throwable);
+            XLog.w( "[" + tag + "]  " +msg, throwable);
             return;
         }
-        Log.w(tag, "++++++++warning->" + "###" +msg, throwable);
+        Log.w(tag,  msg, throwable);
     }
 
     public static void w(String tag, Throwable throwable) {
         if (mHasInit) {
-            XLog.w("++++++++warning->" + tag, throwable);
+            XLog.w("[" + tag, throwable);
             return;
         }
-        Log.w(tag, "++++++++warning->", throwable);
+        Log.w(tag,"" , throwable);
     }
 
     public static void e(String tag, String msg) {
         if (mHasInit) {
-            XLog.e("++++++++error->" + tag + "###" +msg);
+            XLog.e("[" + tag + "]  " +msg);
             return;
         }
-        Log.e(tag, "++++++++error->" + "###" +msg);
+        Log.e(tag,  "" +msg);
     }
 
     public static void e(String tag, String msg, Throwable throwable) {
         if (mHasInit) {
-            XLog.e("++++++++error->" + tag + "###" +msg, throwable);
+            XLog.e("[" + tag + "]  " +msg, throwable);
             return;
         }
-        Log.e(tag, "++++++++error->" + "###" +msg, throwable);
+        Log.e(tag,  "" +msg, throwable);
     }
 
     static class MyFileNameGenerator implements FileNameGenerator {

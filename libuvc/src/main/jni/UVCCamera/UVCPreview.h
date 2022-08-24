@@ -77,6 +77,8 @@ private:
 	pthread_t capture_thread;
 	pthread_mutex_t capture_mutex;
 	pthread_cond_t capture_sync;
+	// 声明时间的 attr
+    pthread_condattr_t capture_clock_attr;
 	uvc_frame_t *captureQueu;			// keep latest frame
 	jobject mFrameCallbackObj;
 	convFunc_t mFrameCallbackFunc;
