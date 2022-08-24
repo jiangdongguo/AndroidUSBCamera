@@ -61,6 +61,7 @@
 
 #include "libuvc/libuvc.h"
 #include "libuvc/libuvc_internal.h"
+#include <errno.h>
 
 uvc_frame_desc_t *uvc_find_frame_desc_stream(uvc_stream_handle_t *strmh,
 		uint16_t format_id, uint16_t frame_id);
@@ -76,6 +77,9 @@ struct format_table_entry {
 	int children_count;
 	enum uvc_frame_format *children;
 };
+
+struct timespec ts;
+struct timeval tv;
 
 struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
 #define ABS_FMT(_fmt, ...) \
@@ -1824,6 +1828,11 @@ uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
 					libusb_free_transfer(strmh->transfers[i]);
 					strmh->transfers[i] = NULL; */
 				}
+				if (res == LIBUSB_ERROR_NOT_FOUND && strmh->transfers[i] != NULL) {
+                    free(strmh->transfers[i]->buffer);
+                    // libusb_free_transfer(strmh->transfers[i]);
+                    strmh->transfers[i] = NULL;
+                }
 			}
 		}
 
@@ -1835,7 +1844,22 @@ uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
 			}
 			if (i == LIBUVC_NUM_TRANSFER_BUFS)
 				break;
-			pthread_cond_wait(&strmh->cb_cond, &strmh->cb_mutex);
+
+             ts.tv_sec = 0;
+             ts.tv_nsec = 0;
+
+#if _POSIX_TIMERS > 0
+             clock_gettime(CLOCK_REALTIME, &ts);
+#else
+             gettimeofday(&tv, NULL);
+             ts.tv_sec = tv.tv_sec;
+             ts.tv_nsec = tv.tv_usec * 1000;
+#endif
+             ts.tv_sec += 1;
+             ts.tv_nsec += 0;
+			if (pthread_cond_timedwait(&strmh->cb_cond, &strmh->cb_mutex, &ts) == ETIMEDOUT) {
+                break;
+			}
 		}
 		// Kick the user thread awake
 		pthread_cond_broadcast(&strmh->cb_cond);
