@@ -65,3 +65,9 @@ Version
 1. fix part equipment recording image flower;
 2. Support opening multi-road camera;
 
+#### 2022.08.25  version 3.2.7
+
+1. fix some device open failed or anr when close-open camera or hot plug;
+2. fix multi-road camera update resolution failed;
+3. support camera configures, like zoom/sharpness etc.
+4. fix Android S+ crash;
