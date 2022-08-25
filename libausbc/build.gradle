@@ -46,6 +46,6 @@ dependencies {
 
     // For debug online
     implementation project(path: ':libuvc')
-    implementation project(path: ':libnative')
+    api project(path: ':libnative')
     implementation project(path: ':libpush')
 }

@@ -25,7 +25,9 @@ abstract class MultiCameraFragment: BaseFragment() {
                         mCameraMap[device.deviceId] = this
                         onCameraAttached(this)
                     }
-                    mCameraClient?.requestPermission(device)
+                    if (isAutoRequestPermission()) {
+                        mCameraClient?.requestPermission(device)
+                    }
                 }
             }
 
@@ -116,6 +118,12 @@ abstract class MultiCameraFragment: BaseFragment() {
      * Get camera client
      */
     protected fun getCameraClient() = mCameraClient
+
+    /**
+     * Is auto request permission
+     * default is true
+     */
+    protected fun isAutoRequestPermission() = true
 
     /**
      * Request permission
