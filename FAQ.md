@@ -11,7 +11,7 @@ If your uvc device can not be recognised, maybe you can try like this:
 
 **First**, create a flie named `default_device_filter.xml` in app xml directory(If not exist, please create it.).
 
-**then**, copying the fault value into it and adding your uvc device information.
+**then**, copying the default value into it and adding your uvc device information.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
