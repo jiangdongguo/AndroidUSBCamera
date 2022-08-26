@@ -61,6 +61,10 @@ abstract class MultiCameraActivity: BaseActivity() {
     }
 
     override fun clear() {
+        mCameraMap.values.forEach {
+            it.closeCamera()
+        }
+        mCameraMap.clear()
         mCameraClient?.unRegister()
         mCameraClient?.destroy()
         mCameraClient = null
