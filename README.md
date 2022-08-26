@@ -276,6 +276,8 @@ dependencies {
 Demo
 -------
 
+![](https://www.pgyer.com/app/qrcode/fVo5)
+
 &emsp;[AUSBC.apk](https://github.com/jiangdongguo/AndroidUSBCamera/blob/master/app/release/app-release.apk)
 
 
@@ -300,7 +302,7 @@ Homepage & Help
 
 
 &emsp;If you have any question or fun ideas, please issues to me.  
-&emsp;Of course, you can also send me a email[ **765067602@qq.com** ] or **WeiXin** [【laojiang299】]().   
+&emsp;Of course, you can also send me a email[ **765067602@qq.com** ] or **微信** [【laojiang299】]().   
 
 &emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.ausbc/files** and collect logcat information by executing command `adb shell logcat -v threadtime > usbcamera.log`
 
