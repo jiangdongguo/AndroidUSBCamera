@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 Jiangdg
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jiangdg.ausbc.base
 
 import android.hardware.usb.UsbDevice
@@ -14,15 +29,20 @@ abstract class MultiCameraActivity: BaseActivity() {
     private val mCameraMap = hashMapOf<Int, MultiCameraClient.Camera>()
 
     override fun initData() {
-        mCameraClient = MultiCameraClient(this, object : IDeviceConnectCallBack {
+        mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
-                MultiCameraClient.Camera(this@MultiCameraActivity, device).apply {
-                    mCameraMap[device.deviceId] = this
-                    onCameraAttached(this)
-                }
-                if (isAutoRequestPermission()) {
-                    mCameraClient?.requestPermission(device)
+                context?.let {
+                    if (mCameraMap.containsKey(device.deviceId)) {
+                        return
+                    }
+                    MultiCameraClient.Camera(it, device).apply {
+                        mCameraMap[device.deviceId] = this
+                        onCameraAttached(this)
+                    }
+                    if (isAutoRequestPermission()) {
+                        mCameraClient?.requestPermission(device)
+                    }
                 }
             }
 
@@ -36,9 +56,10 @@ abstract class MultiCameraActivity: BaseActivity() {
             override fun onConnectDev(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 device ?: return
                 ctrlBlock ?: return
+                context ?: return
                 mCameraMap[device.deviceId]?.apply {
                     setUsbControlBlock(ctrlBlock)
-                    onCameraDisConnected(this)
+                    onCameraConnected(this)
                 }
             }
 
@@ -109,13 +130,33 @@ abstract class MultiCameraActivity: BaseActivity() {
     protected fun getDeviceList() = mCameraClient?.getDeviceList()
 
     /**
+     * Get camera client
+     */
+    protected fun getCameraClient() = mCameraClient
+
+    /**
      * Is auto request permission
      * default is true
      */
     protected fun isAutoRequestPermission() = true
 
     /**
-     * Get camera client
+     * Request permission
+     *
+     * @param device see [UsbDevice]
      */
-    protected fun getCameraClient() = mCameraClient
+    protected fun requestPermission(device: UsbDevice?) {
+        mCameraClient?.requestPermission(device)
+    }
+
+    /**
+     * Has permission
+     *
+     * @param device see [UsbDevice]
+     */
+    protected fun hasPermission(device: UsbDevice?) = mCameraClient?.hasPermission(device) == true
+
+    protected fun openDebug(debug: Boolean) {
+        mCameraClient?.openDebug(debug)
+    }
 }
