@@ -478,19 +478,19 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         for (index in (0 until usbDeviceList.size)) {
             val dev = usbDeviceList[index]
             val devName = if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.LOLLIPOP && !dev.productName.isNullOrEmpty()) {
-                dev.productName
+                "${dev.productName}(${curDevice?.deviceId})"
             } else {
-                "${dev.deviceName}(${dev.deviceId})"
+                dev.deviceName
             }
             val curDevName = if (Build.VERSION.SDK_INT >=Build.VERSION_CODES.LOLLIPOP && !curDevice?.productName.isNullOrEmpty()) {
-                curDevice!!.productName
+                "${curDevice!!.productName}(${curDevice.deviceId})"
             } else {
-                "${curDevice?.deviceName}(${curDevice?.deviceId})"
+                curDevice?.deviceName
             }
             if (devName == curDevName) {
                 selectedIndex = index
             }
-            list.add(devName!!)
+            list.add(devName)
         }
         MaterialDialog(requireContext()).show {
             listItemsSingleChoice(
