@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.ausbc.utils.imageloader
+package com.jiangdg.utils.imageloader
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -38,8 +38,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.jiangdg.ausbc.R
-import com.jiangdg.ausbc.utils.Utils
+import com.jiangdg.utils.R
 import java.lang.IllegalArgumentException
 
 /**GlideImageLoader by glide
@@ -104,9 +103,9 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
     override fun loadRounded(imageView: ImageView, url: String?, placeHolder: Int, radius: Float) {
         RequestOptions().apply {
             if (radius >= 0) {
-                transform(CenterCrop(), RoundedCorners(Utils.dp2px(imageView.context, radius)))
+                transform(CenterCrop(), RoundedCorners(dp2px(imageView.context, radius)))
             } else {
-                transform(RoundedCorners(Utils.dp2px(imageView.context, radius)))
+                transform(RoundedCorners(dp2px(imageView.context, radius)))
             }
         }.also { options ->
             mRequestManager!!.load(url)
@@ -125,9 +124,9 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
     ) {
         RequestOptions().apply {
             if (radius >= 0) {
-                transform(CenterCrop(), RoundedCorners(Utils.dp2px(imageView.context, radius)))
+                transform(CenterCrop(), RoundedCorners(dp2px(imageView.context, radius)))
             } else {
-                transform(RoundedCorners(Utils.dp2px(imageView.context, radius)))
+                transform(RoundedCorners(dp2px(imageView.context, radius)))
             }
         }.also { options ->
             mRequestManager!!.load(url)
@@ -177,35 +176,45 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
         }
     }
 
-    override fun loadAsBitmap(url: String?, width: Int, height: Int, listener: ILoader.OnLoadedResultListener) {
+    override fun loadAsBitmap(
+        url: String?,
+        width: Int,
+        height: Int,
+        listener: ILoader.OnLoadedResultListener
+    ) {
         mRequestManager?.apply {
             this.asBitmap()
-            .centerCrop()
-            .load(url)
-            .listener(object : RequestListener<Bitmap> {
-                override fun onLoadFailed(
-                    e: GlideException?,
-                    model: Any?,
-                    target: Target<Bitmap>?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    listener.onLoadedFailed(e)
-                    return true
-                }
+                .centerCrop()
+                .load(url)
+                .listener(object : RequestListener<Bitmap> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Bitmap>?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        listener.onLoadedFailed(e)
+                        return true
+                    }
 
-                override fun onResourceReady(
-                    resource: Bitmap?,
-                    model: Any?,
-                    target: Target<Bitmap>?,
-                    dataSource: DataSource?,
-                    isFirstResource: Boolean
-                ): Boolean {
-                    listener.onLoadedSuccess(resource)
-                    return true
-                }
+                    override fun onResourceReady(
+                        resource: Bitmap?,
+                        model: Any?,
+                        target: Target<Bitmap>?,
+                        dataSource: DataSource?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        listener.onLoadedSuccess(resource)
+                        return true
+                    }
 
-            })
-            .submit(width, height)
+                })
+                .submit(width, height)
         }
+    }
+
+    private fun dp2px(context: Context, dpValue: Float): Int {
+        val scale: Float = context.resources.displayMetrics.density
+        return (dpValue * scale + 0.5f).toInt()
     }
 }

@@ -18,6 +18,7 @@ package com.jiangdg.demo
 import android.content.Context
 import androidx.multidex.MultiDex
 import com.jiangdg.ausbc.base.BaseApplication
+import com.jiangdg.utils.MMKVUtils
 import com.tencent.bugly.crashreport.CrashReport
 
 /**
@@ -35,5 +36,6 @@ class DemoApplication: BaseApplication() {
         super.onCreate()
         // init bugly library
         CrashReport.initCrashReport(this, "165c46d5b1", true)
+        MMKVUtils.init(this)
     }
 }

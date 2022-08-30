@@ -29,9 +29,9 @@ import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.jiangdg.ausbc.base.BaseDialog
 import com.jiangdg.ausbc.render.effect.bean.CameraEffect
-import com.jiangdg.ausbc.utils.MMKVUtils
+import com.jiangdg.utils.MMKVUtils
 import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.ausbc.utils.imageloader.ImageLoaders
+import com.jiangdg.utils.imageloader.ImageLoaders
 
 /** Effect list dialog
  *

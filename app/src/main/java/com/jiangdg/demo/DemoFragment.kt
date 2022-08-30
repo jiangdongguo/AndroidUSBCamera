@@ -57,12 +57,13 @@ import com.jiangdg.ausbc.render.effect.bean.CameraEffect
 import com.jiangdg.ausbc.utils.*
 import com.jiangdg.ausbc.utils.bus.BusKey
 import com.jiangdg.ausbc.utils.bus.EventBus
-import com.jiangdg.ausbc.utils.imageloader.ILoader
-import com.jiangdg.ausbc.utils.imageloader.ImageLoaders
+import com.jiangdg.utils.imageloader.ILoader
+import com.jiangdg.utils.imageloader.ImageLoaders
 import com.jiangdg.ausbc.widget.*
 import com.jiangdg.demo.EffectListDialog.Companion.KEY_ANIMATION
 import com.jiangdg.demo.EffectListDialog.Companion.KEY_FILTER
 import com.jiangdg.demo.databinding.DialogMoreBinding
+import com.jiangdg.utils.MMKVUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -631,11 +632,15 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     }
 
     private fun goToGalley() {
-        Intent(
-            Intent.ACTION_VIEW,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        ).apply {
-            startActivity(this)
+        try {
+            Intent(
+                Intent.ACTION_VIEW,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            ).apply {
+                startActivity(this)
+            }
+        } catch (e: Exception) {
+            ToastUtils.show("open error: ${e.localizedMessage}")
         }
     }
 

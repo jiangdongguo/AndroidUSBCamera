@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.ausbc.utils
+package com.jiangdg.utils
 
 import android.content.Context
 import android.os.Parcelable

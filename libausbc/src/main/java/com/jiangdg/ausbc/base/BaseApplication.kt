@@ -18,7 +18,6 @@ package com.jiangdg.ausbc.base
 import android.app.Application
 import com.jiangdg.ausbc.utils.CrashUtils
 import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.MMKVUtils
 import com.jiangdg.ausbc.utils.ToastUtils
 
 /** Base Application
@@ -32,6 +31,5 @@ open class BaseApplication: Application() {
         CrashUtils.init(this)
         Logger.init(this)
         ToastUtils.init(this)
-        MMKVUtils.init(this)
     }
 }
