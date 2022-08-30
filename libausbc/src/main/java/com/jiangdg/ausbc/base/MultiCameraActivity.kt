@@ -53,7 +53,7 @@ abstract class MultiCameraActivity: BaseActivity() {
                 ctrlBlock ?: return
                 mCameraMap[device.deviceId]?.apply {
                     setUsbControlBlock(ctrlBlock)
-                    onCameraDisConnected(this)
+                    onCameraConnected(this)
                 }
             }
 
