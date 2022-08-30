@@ -110,14 +110,8 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
 
     override fun startPreviewInternal() {
         try {
-            createCamera() ?: return
-            realStartPreview() ?: return
-            val dev = mDevSettableFuture?.get().apply {
-                mDevConnectCallBack?.onConnectDev(this)
-            }
-            if (Utils.debugCamera) {
-                Logger.i(TAG, " start preview success!!!, id(${dev?.deviceId})$dev")
-            }
+            createCamera()
+            realStartPreview()
         } catch (e: Exception) {
             stopPreview()
             Logger.e(TAG, " preview failed, err = ${e.localizedMessage}", e)
@@ -211,6 +205,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                         Pair(previewWidth, previewHeight).toString()
                     )
                 )
+            }
+            val dev = mDevSettableFuture?.get().apply {
+                mDevConnectCallBack?.onConnectDev(this)
+            }
+            if (Utils.debugCamera) {
+                Logger.i(TAG, " start preview success!!!, id(${dev?.deviceId})$dev")
             }
         } catch (e: Exception) {
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))

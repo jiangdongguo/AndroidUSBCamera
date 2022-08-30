@@ -29,20 +29,15 @@ abstract class MultiCameraActivity: BaseActivity() {
     private val mCameraMap = hashMapOf<Int, MultiCameraClient.Camera>()
 
     override fun initData() {
-        mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
+        mCameraClient = MultiCameraClient(this, object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 device ?: return
-                context?.let {
-                    if (mCameraMap.containsKey(device.deviceId)) {
-                        return
-                    }
-                    MultiCameraClient.Camera(it, device).apply {
-                        mCameraMap[device.deviceId] = this
-                        onCameraAttached(this)
-                    }
-                    if (isAutoRequestPermission()) {
-                        mCameraClient?.requestPermission(device)
-                    }
+                MultiCameraClient.Camera(this@MultiCameraActivity, device).apply {
+                    mCameraMap[device.deviceId] = this
+                    onCameraAttached(this)
+                }
+                if (isAutoRequestPermission()) {
+                    mCameraClient?.requestPermission(device)
                 }
             }
 
@@ -56,10 +51,9 @@ abstract class MultiCameraActivity: BaseActivity() {
             override fun onConnectDev(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 device ?: return
                 ctrlBlock ?: return
-                context ?: return
                 mCameraMap[device.deviceId]?.apply {
                     setUsbControlBlock(ctrlBlock)
-                    onCameraConnected(this)
+                    onCameraDisConnected(this)
                 }
             }
 
