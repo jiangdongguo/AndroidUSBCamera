@@ -210,7 +210,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 mDevConnectCallBack?.onConnectDev(this)
             }
             if (Utils.debugCamera) {
-                Logger.i(TAG, " start preview success!!!, id(${dev?.deviceId})$dev")
+                Logger.i(TAG, " start preview success!!!, id(${dev?.deviceName}")
             }
         } catch (e: Exception) {
             postCameraStatus(CameraStatus(CameraStatus.ERROR, e.localizedMessage))
@@ -718,14 +718,16 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
 
     private fun getUsbDeviceListInternal(): MutableList<UsbDevice>? {
         return mUsbMonitor?.getDeviceList(arrayListOf<DeviceFilter>())?.let { devList ->
-            Logger.i(TAG, " find some device list, = $devList")
             mCacheDeviceList.clear()
+            val devInfoList = ArrayList<String>();
             devList.forEach {
+                devInfoList.add(it.deviceName)
                 // check is camera or need device
                 if (isUsbCamera(it) || isFilterDevice(getContext(), it)) {
                     mCacheDeviceList.add(it)
                 }
             }
+            Logger.i(TAG, " find some device list, = $devInfoList")
             mCacheDeviceList
         }
     }

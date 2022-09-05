@@ -813,12 +813,18 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 Logger.e(TAG, "updateResolution failed, video recording...")
                 return
             }
-            closeCamera()
-            mMainHandler.postDelayed({
-                mCameraRequest!!.previewWidth = width
-                mCameraRequest!!.previewHeight = height
-                openCamera(mCameraView, mCameraRequest)
-            }, 100)
+            mCameraRequest?.apply {
+                if (previewWidth == width && previewHeight == height) {
+                    return@apply
+                }
+                Logger.i(TAG, "updateResolution: width = $width, height = $height")
+                closeCamera()
+                mMainHandler.postDelayed({
+                    previewWidth = width
+                    previewHeight = height
+                    openCamera(mCameraView, mCameraRequest)
+                }, 1000)
+            }
         }
 
         /**

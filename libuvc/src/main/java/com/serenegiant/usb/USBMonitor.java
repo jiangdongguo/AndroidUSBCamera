@@ -580,23 +580,20 @@ public final class USBMonitor {
 	private final void processConnect(final UsbDevice device) {
 		if (destroyed) return;
 		updatePermission(device, true);
-		mAsyncHandler.post(new Runnable() {
-			@Override
-			public void run() {
-				if (DEBUG) XLogWrapper.v(TAG, "processConnect:device=" + device);
-				UsbControlBlock ctrlBlock;
-				final boolean createNew;
-				ctrlBlock = mCtrlBlocks.get(device);
-				if (ctrlBlock == null) {
-					ctrlBlock = new UsbControlBlock(USBMonitor.this, device);
-					mCtrlBlocks.put(device, ctrlBlock);
-					createNew = true;
-				} else {
-					createNew = false;
-				}
-				if (mOnDeviceConnectListener != null) {
-					mOnDeviceConnectListener.onConnect(device, ctrlBlock, createNew);
-				}
+		mAsyncHandler.post(() -> {
+			if (DEBUG) XLogWrapper.v(TAG, "processConnect:device=" + device.getDeviceName());
+			UsbControlBlock ctrlBlock;
+			final boolean createNew;
+			ctrlBlock = mCtrlBlocks.get(device);
+			if (ctrlBlock == null) {
+				ctrlBlock = new UsbControlBlock(USBMonitor.this, device);
+				mCtrlBlocks.put(device, ctrlBlock);
+				createNew = true;
+			} else {
+				createNew = false;
+			}
+			if (mOnDeviceConnectListener != null) {
+				mOnDeviceConnectListener.onConnect(device, ctrlBlock, createNew);
 			}
 		});
 	}
