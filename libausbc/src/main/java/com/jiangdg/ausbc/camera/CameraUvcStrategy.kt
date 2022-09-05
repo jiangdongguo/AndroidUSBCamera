@@ -415,7 +415,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              */
             override fun onDetach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDetach device = ${device?.toString()}")
+                    Logger.i(TAG, "onDetach device = ${device?.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
@@ -443,7 +443,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 createNew: Boolean
             ) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onConnect device = ${device?.toString()}")
+                    Logger.i(TAG, "onConnect device = ${device?.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
@@ -468,7 +468,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              */
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
+                    Logger.i(TAG, "onDisconnect device = ${device?.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
@@ -488,7 +488,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              */
             override fun onCancel(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onCancel device = ${device?.toString()}")
+                    Logger.i(TAG, "onCancel device = ${device?.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
@@ -749,6 +749,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     private val frameCallBack = IFrameCallback { frame ->
         mPreviewDataCbList.forEach { cb ->
             frame?.apply {
+                frame.position(0)
                 val data = ByteArray(capacity())
                 get(data)
                 cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)

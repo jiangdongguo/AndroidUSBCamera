@@ -71,7 +71,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDetach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDetach device = ${device?.toString()}")
+                    Logger.i(TAG, "onDetach device = ${device?.deviceName}")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -93,7 +93,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 createNew: Boolean
             ) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onConnect device = ${device?.toString()}")
+                    Logger.i(TAG, "onConnect device = ${device?.deviceName}")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -111,7 +111,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDisconnect device = ${device?.toString()}")
+                    Logger.i(TAG, "onDisconnect device = ${device?.deviceName}")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -130,7 +130,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onCancel(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onCancel device = ${device?.toString()}")
+                    Logger.i(TAG, "onCancel device = ${device?.deviceName}")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
