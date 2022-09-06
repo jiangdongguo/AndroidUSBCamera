@@ -401,6 +401,15 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     }
 
     /**
+     * Remove preview data call back
+     *
+     * @param callBack preview data call back, see [IPreviewDataCallBack]
+     */
+    fun removePreviewDataCallBack(callBack: IPreviewDataCallBack) {
+        mCamera?.removePreviewDataCallBack(callBack)
+    }
+
+    /**
      * Capture video start
      *
      * @param callBack capture result callback, see [ICaptureCallBack]

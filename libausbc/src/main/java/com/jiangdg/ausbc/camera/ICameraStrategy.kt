@@ -36,6 +36,7 @@ import com.jiangdg.ausbc.utils.bus.BusKey
 import com.jiangdg.ausbc.utils.bus.EventBus
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,7 +52,7 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
     private var mSurfaceHolder: SurfaceHolder? = null
     private var mCameraRequest: CameraRequest? = null
     private var mContext: Context? = null
-    protected var mPreviewDataCbList = mutableListOf<IPreviewDataCallBack>()
+    protected var mPreviewDataCbList = CopyOnWriteArrayList<IPreviewDataCallBack>()
     protected var mCaptureDataCb: ICaptureCallBack? = null
     protected val mMainHandler: Handler = Handler(Looper.getMainLooper())
     protected val mSaveImageExecutor: ExecutorService = Executors.newSingleThreadExecutor()
@@ -351,6 +352,18 @@ abstract class ICameraStrategy(context: Context) : Handler.Callback {
             return
         }
         mPreviewDataCbList.add(callBack)
+    }
+
+    /**
+     * Remove preview data call back
+     *
+     * @param callBack preview data call back
+     */
+    fun removePreviewDataCallBack(callBack: IPreviewDataCallBack) {
+        if (! mPreviewDataCbList.contains(callBack)) {
+            return
+        }
+        mPreviewDataCbList.remove(callBack)
     }
 
     /**

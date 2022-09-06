@@ -219,6 +219,15 @@ abstract class CameraFragment : BaseFragment() {
     }
 
     /**
+     * Remove preview data call back
+     *
+     * @param callBack preview data call back, see [IPreviewDataCallBack]
+     */
+    fun removePreviewDataCallBack(callBack: IPreviewDataCallBack) {
+        mCameraClient?.removePreviewDataCallBack(callBack)
+    }
+
+    /**
      * Capture video start
      *
      * @param callBack capture status, see [ICaptureCallBack]
