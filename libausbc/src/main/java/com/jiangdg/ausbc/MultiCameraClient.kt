@@ -372,6 +372,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             // 2. set preview size and register preview callback
             try {
                 val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
+                Logger.e(TAG, "getSuitableSize: $previewSize")
                 if (! isPreviewSizeSupported(previewSize)) {
                     mMainHandler.post {
                         mCameraStateCallback?.onCameraState(
@@ -905,12 +906,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             // find it
             sizeList.find {
                 (it.width == maxWidth && it.height == maxHeight)
-                        || (it.width == DEFAULT_PREVIEW_WIDTH || it.height == DEFAULT_PREVIEW_HEIGHT)
             }.also { size ->
                 size ?: return@also
                 return size
             }
-
             // find the same aspectRatio
             val aspectRatio = maxWidth.toFloat() / maxHeight
             sizeList.find {
@@ -930,6 +929,13 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     minDistance = abs(maxWidth - size.width)
                     closetSize = size
                 }
+            }
+            // use default
+            sizeList.find {
+                (it.width == DEFAULT_PREVIEW_WIDTH || it.height == DEFAULT_PREVIEW_HEIGHT)
+            }.also { size ->
+                size ?: return@also
+                return size
             }
             return closetSize
         }
