@@ -264,7 +264,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             Handler(Looper.getMainLooper())
         }
         private val mSaveImageExecutor: ExecutorService by lazy {
-            Executors.newSingleThreadExecutor()
+            Executors.newFixedThreadPool(10)
         }
         private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
             LinkedBlockingDeque(MAX_NV21_DATA)
@@ -278,22 +278,28 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
 
         private val frameCallBack = IFrameCallback { frame ->
             frame?.apply {
+                frame.position(0)
                 val data = ByteArray(capacity())
                 get(data)
                 mPreviewCallback?.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
-                // for image
-                if (mNV21DataQueue.size >= MAX_NV21_DATA) {
-                    mNV21DataQueue.removeLast()
-                }
-                mNV21DataQueue.offerFirst(data)
-                // for video
-                // avoid preview size changed
                 mPreviewSize?.apply {
+                    // for image
+                    if (mNV21DataQueue.size >= MAX_NV21_DATA) {
+                        mNV21DataQueue.removeLast()
+                    }
+                    mNV21DataQueue.offerFirst(data)
+                    // for video
+                    // avoid preview size changed
+                    if (mVideoProcess?.isEncoding() != true) {
+                        return@IFrameCallback
+                    }
                     if (data.size != width * height * 3 /2) {
                         return@IFrameCallback
                     }
-                    YUVUtils.nv21ToYuv420sp(data, width, height)
-                    mVideoProcess?.putRawData(RawData(data, data.size))
+                    val yuv420sp = ByteArray(data.size)
+                    System.arraycopy(data, 0, yuv420sp, 0, data.size)
+                    YUVUtils.nv21ToYuv420sp(yuv420sp, width, height)
+                    mVideoProcess?.putRawData(RawData(yuv420sp, yuv420sp.size))
                 }
             }
         }
@@ -504,7 +510,6 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 val location = Utils.getGpsLocation(ctx)
                 val width = mPreviewSize!!.width
                 val height = mPreviewSize!!.height
-                YUVUtils.yuv420spToNv21(data, width, height)
                 val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
                 if (! ret) {
                     val file = File(path)
