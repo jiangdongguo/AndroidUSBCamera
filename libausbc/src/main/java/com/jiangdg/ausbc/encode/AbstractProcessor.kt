@@ -25,6 +25,7 @@ import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.Utils
+import com.jiangdg.natives.YUVUtils
 import java.lang.Exception
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * @author Created by jiangdg on 2022/2/10
  */
-abstract class AbstractProcessor(private val gLESRender: Boolean = false) {
+abstract class AbstractProcessor(private val gLESRender: Boolean = false, private val width: Int = 0, private val height: Int = 0) {
     private var mEncodeThread: HandlerThread? = null
     private var mEncodeHandler: Handler? = null
     protected var mMediaCodec: MediaCodec? = null
@@ -222,6 +223,7 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false) {
             } else {
                 codec.getInputBuffer(inputIndex)
             }
+            YUVUtils.nv21ToYuv420sp(rawData.data, width, height)
             inputBuffer?.clear()
             inputBuffer?.put(rawData.data)
             codec.queueInputBuffer(inputIndex, 0, rawData.data.size, getPTSUs(rawData.data.size), 0)

@@ -264,7 +264,6 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
             val location = Utils.getGpsLocation(getContext())
             val width = getRequest()!!.previewWidth
             val height = getRequest()!!.previewHeight
-            YUVUtils.yuv420spToNv21(data, width, height)
             val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
             if (!ret) {
                 val file = File(path)

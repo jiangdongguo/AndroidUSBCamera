@@ -117,16 +117,10 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             val width = mRequest!!.previewWidth
             val height = mRequest!!.previewHeight
             // avoid preview size changed
-            if (mVideoProcess?.isEncoding() != true) {
-                return
-            }
             if (data.size != width * height * 3 /2) {
                 return
             }
-            val yuv420sp = ByteArray(data.size)
-            System.arraycopy(data, 0, yuv420sp, 0, data.size)
-            YUVUtils.nv21ToYuv420sp(yuv420sp, width, height)
-            mVideoProcess?.putRawData(RawData(yuv420sp, yuv420sp.size))
+            mVideoProcess?.putRawData(RawData(it, it.size))
         }
     }
 

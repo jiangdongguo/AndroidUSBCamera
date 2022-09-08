@@ -290,16 +290,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     mNV21DataQueue.offerFirst(data)
                     // for video
                     // avoid preview size changed
-                    if (mVideoProcess?.isEncoding() != true) {
-                        return@IFrameCallback
-                    }
                     if (data.size != width * height * 3 /2) {
                         return@IFrameCallback
                     }
-                    val yuv420sp = ByteArray(data.size)
-                    System.arraycopy(data, 0, yuv420sp, 0, data.size)
-                    YUVUtils.nv21ToYuv420sp(yuv420sp, width, height)
-                    mVideoProcess?.putRawData(RawData(yuv420sp, yuv420sp.size))
+                    mVideoProcess?.putRawData(RawData(data, data.size))
                 }
             }
         }

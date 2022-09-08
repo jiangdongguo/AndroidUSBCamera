@@ -35,7 +35,7 @@ class H264EncodeProcessor(
     val width: Int,
     val height: Int,
     private val gLESRender: Boolean = true
-) : AbstractProcessor(gLESRender) {
+) : AbstractProcessor(gLESRender, width, height) {
 
     private var mFrameRate: Int? = null
     private var mBitRate: Int? = null

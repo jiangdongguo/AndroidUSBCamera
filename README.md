@@ -62,7 +62,7 @@ class DemoFragment : CameraFragment() {
     private lateinit var mViewBinding: FragmentDemoBinding
     
     override fun initView() {
-        
+        super.initView()
     }
     
     override fun getCameraView(): IAspectRatio {
@@ -70,7 +70,7 @@ class DemoFragment : CameraFragment() {
     }
     
     override fun initData() {
-        
+        super.initData()
     }
 
     override fun getCameraViewContainer(): ViewGroup {
