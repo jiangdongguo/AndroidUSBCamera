@@ -223,12 +223,18 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
             } else {
                 codec.getInputBuffer(inputIndex)
             }
-            YUVUtils.nv21ToYuv420sp(rawData.data, width, height)
+            var data: ByteArray = rawData.data
+            if (isVideo) {
+                val yuv420sp = ByteArray(rawData.size)
+                System.arraycopy(rawData.data, 0, yuv420sp, 0, rawData.size)
+                YUVUtils.nv21ToYuv420sp(yuv420sp, width, height)
+                data = yuv420sp
+            }
             inputBuffer?.clear()
-            inputBuffer?.put(rawData.data)
-            codec.queueInputBuffer(inputIndex, 0, rawData.data.size, getPTSUs(rawData.data.size), 0)
+            inputBuffer?.put(data)
+            codec.queueInputBuffer(inputIndex, 0, data.size, getPTSUs(data.size), 0)
             if (Utils.debugCamera) {
-                Logger.i(TAG, "queue mediacodec data, isVideo=$isVideo, len=${rawData.data.size}")
+                Logger.i(TAG, "queue mediacodec data, isVideo=$isVideo, len=${data.size}")
             }
         }
     }
