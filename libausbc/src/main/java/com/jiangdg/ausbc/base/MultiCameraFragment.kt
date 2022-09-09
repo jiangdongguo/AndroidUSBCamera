@@ -18,7 +18,7 @@ package com.jiangdg.ausbc.base
 import android.hardware.usb.UsbDevice
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
-import com.serenegiant.usb.USBMonitor
+import com.jiangdg.usb.USBMonitor
 
 /** Multi-road camera fragment
  *

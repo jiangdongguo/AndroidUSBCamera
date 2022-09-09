@@ -48,9 +48,8 @@ import com.jiangdg.ausbc.utils.bus.EventBus
 import com.jiangdg.ausbc.widget.AspectRatioSurfaceView
 import com.jiangdg.ausbc.widget.AspectRatioTextureView
 import com.jiangdg.ausbc.widget.IAspectRatio
-import com.jiangdg.natives.YUVUtils
-import com.serenegiant.usb.USBMonitor
-import com.serenegiant.usb.UVCCamera
+import com.jiangdg.usb.USBMonitor
+import com.jiangdg.uvc.UVCCamera
 import kotlin.math.abs
 
 /**

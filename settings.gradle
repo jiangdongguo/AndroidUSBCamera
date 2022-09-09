@@ -2,9 +2,9 @@ include ':app'
 include ':libutils'
 
 // For debug online
-//include ':libausbc'
-//include ':libuvc'
-//include ':libpush'
-//include ':libnative'
-//include ':libuvccommon'
+include ':libausbc'
+include ':libuvc'
+include ':libpush'
+include ':libnative'
+include ':libuvccommon'
 

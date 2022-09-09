@@ -1,7 +1,7 @@
 package com.jiangdg.ausbc.callback
 
 import android.hardware.usb.UsbDevice
-import com.serenegiant.usb.USBMonitor
+import com.jiangdg.usb.USBMonitor
 
 /**
  * I device connect call back

@@ -16,7 +16,7 @@
 package com.jiangdg.ausbc.utils
 
 import android.app.Application
-import com.serenegiant.utils.XLogWrapper
+import com.jiangdg.utils.XLogWrapper
 
 /** Logger utils
  *

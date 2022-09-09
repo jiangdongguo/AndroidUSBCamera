@@ -23,8 +23,8 @@ import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.natives.YUVUtils
-import com.serenegiant.usb.*
+import com.jiangdg.usb.*
+import com.jiangdg.uvc.UVCCamera
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

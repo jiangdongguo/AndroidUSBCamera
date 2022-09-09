@@ -7,7 +7,7 @@ import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import androidx.core.content.ContextCompat
 import com.jiangdg.ausbc.R
-import com.serenegiant.usb.DeviceFilter
+import com.jiangdg.usb.DeviceFilter
 
 /** Camera tools
  *

@@ -20,7 +20,7 @@
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <com.serenegiant.widget.ItemPickerButton
+    <com.jiangdg.widget.ItemPickerButton
         android:id="@+id/decrement"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
         android:singleLine="true"
         android:textSize="30sp" />
 
-    <com.serenegiant.widget.ItemPickerButton
+    <com.jiangdg.widget.ItemPickerButton
         android:id="@+id/increment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

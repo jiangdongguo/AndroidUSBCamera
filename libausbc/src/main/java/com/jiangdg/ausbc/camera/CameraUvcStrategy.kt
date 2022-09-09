@@ -32,11 +32,10 @@ import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.natives.YUVUtils
-import com.serenegiant.usb.DeviceFilter
-import com.serenegiant.usb.IFrameCallback
-import com.serenegiant.usb.USBMonitor
-import com.serenegiant.usb.UVCCamera
+import com.jiangdg.usb.DeviceFilter
+import com.jiangdg.usb.IFrameCallback
+import com.jiangdg.usb.USBMonitor
+import com.jiangdg.uvc.UVCCamera
 import java.io.File
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit

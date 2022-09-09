@@ -31,7 +31,7 @@
     android:paddingLeft="@dimen/horizontal_margin"
     android:paddingRight="@dimen/horizontal_margin"
     android:paddingTop="@dimen/vertical_margin"
-    tools:context="com.serenegiant.usb.CameraDialog" >
+    tools:context="com.jiangdg.usb.CameraDialog" >
 
     <TextView
         android:id="@+id/textView1"
