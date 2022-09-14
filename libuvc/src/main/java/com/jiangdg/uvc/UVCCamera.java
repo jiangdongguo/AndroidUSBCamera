@@ -29,10 +29,7 @@ import android.text.TextUtils;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import com.jiangdg.usb.IButtonCallback;
-import com.jiangdg.usb.IFrameCallback;
-import com.jiangdg.usb.IStatusCallback;
-import com.jiangdg.usb.Size;
+import com.jiangdg.utils.Size;
 import com.jiangdg.usb.USBMonitor.UsbControlBlock;
 import com.jiangdg.utils.XLogWrapper;
 

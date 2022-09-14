@@ -37,6 +37,7 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Handler;
 import android.text.TextUtils;
+
 import com.jiangdg.utils.XLogWrapper;
 import android.util.SparseArray;
 

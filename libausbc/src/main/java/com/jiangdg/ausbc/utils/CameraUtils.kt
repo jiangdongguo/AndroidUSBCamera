@@ -44,6 +44,26 @@ object CameraUtils {
     }
 
     /**
+     * Is camera contains mic
+     *
+     * @param device usb device
+     * @return true contains
+     */
+    fun isCameraContainsMic(device: UsbDevice?): Boolean {
+//        device ?: return false
+//        var hasMic = false
+//        for (i in 0 until device.interfaceCount) {
+//            val cls = device.getInterface(i).interfaceClass
+//            if (cls == UsbConstants.USB_CLASS_AUDIO) {
+//                hasMic = true
+//                break
+//            }
+//        }
+//        return hasMic
+        return false
+    }
+
+    /**
      * Filter needed usb device by according to filter regular
      *
      * @param context context

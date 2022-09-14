@@ -2032,15 +2032,15 @@ static JNINativeMethod methods[] = {
 	{ "nativeConnect",					"(JIIIIILjava/lang/String;)I", (void *) nativeConnect },
 	{ "nativeRelease",					"(J)I", (void *) nativeRelease },
 
-	{ "nativeSetStatusCallback",		"(JLcom/jiangdg/usb/IStatusCallback;)I", (void *) nativeSetStatusCallback },
-	{ "nativeSetButtonCallback",		"(JLcom/jiangdg/usb/IButtonCallback;)I", (void *) nativeSetButtonCallback },
+	{ "nativeSetStatusCallback",		"(JLcom/jiangdg/uvc/IStatusCallback;)I", (void *) nativeSetStatusCallback },
+	{ "nativeSetButtonCallback",		"(JLcom/jiangdg/uvc/IButtonCallback;)I", (void *) nativeSetButtonCallback },
 
 	{ "nativeGetSupportedSize",			"(J)Ljava/lang/String;", (void *) nativeGetSupportedSize },
 	{ "nativeSetPreviewSize",			"(JIIIIIF)I", (void *) nativeSetPreviewSize },
 	{ "nativeStartPreview",				"(J)I", (void *) nativeStartPreview },
 	{ "nativeStopPreview",				"(J)I", (void *) nativeStopPreview },
 	{ "nativeSetPreviewDisplay",		"(JLandroid/view/Surface;)I", (void *) nativeSetPreviewDisplay },
-	{ "nativeSetFrameCallback",			"(JLcom/jiangdg/usb/IFrameCallback;I)I", (void *) nativeSetFrameCallback },
+	{ "nativeSetFrameCallback",			"(JLcom/jiangdg/uvc/IFrameCallback;I)I", (void *) nativeSetFrameCallback },
 
 	{ "nativeSetCaptureDisplay",		"(JLandroid/view/Surface;)I", (void *) nativeSetCaptureDisplay },
 

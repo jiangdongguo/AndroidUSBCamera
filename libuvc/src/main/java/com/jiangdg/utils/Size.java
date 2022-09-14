@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.jiangdg.usb;
+package com.jiangdg.utils;
 
 import android.os.Parcel;
 import android.os.Parcelable;

@@ -134,7 +134,6 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             return
         }
         Logger.i(TAG, "start open camera request = $mRequest, gl = $isEnableGLEs")
-        initEncodeProcessor()
         val previewWidth = mRequest!!.previewWidth
         val previewHeight = mRequest!!.previewHeight
         when (cameraView) {
@@ -168,13 +167,14 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
 
             // using opengl es
             // cameraView is null, means offscreen render
-            if (! isEnableGLEs) return
+            if (! isEnableGLEs) return@also
             view.apply {
                 val listener = object : RenderManager.CameraSurfaceTextureListener {
                     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                         surfaceTexture?.let {
                             mCamera?.startPreview(mRequest!!, it)
                             mCamera?.addPreviewDataCallBack(this@CameraClient)
+                            initEncodeProcessor()
                         }
                     }
                 }
@@ -534,7 +534,17 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         } else {
             mRequest!!.previewHeight
         }
-        mAudioProcess = AACEncodeProcessor()
+        mAudioProcess = AACEncodeProcessor(if ((mCamera is CameraUvcStrategy) && mCamera.isMicSupported()) {
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "Audio record by using device internal mic")
+            }
+            mCamera.getUsbControlBlock()
+        } else {
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "Audio record by using system mic")
+            }
+            null
+        })
         mVideoProcess = H264EncodeProcessor(encodeWidth, encodeHeight, isEnableGLEs)
     }
 

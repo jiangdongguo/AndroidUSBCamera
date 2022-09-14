@@ -19,11 +19,15 @@ import android.media.*
 import android.os.Process
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPlayCallBack
+import com.jiangdg.ausbc.encode.audio.AudioSystem
+import com.jiangdg.ausbc.encode.audio.AudioUac
+import com.jiangdg.ausbc.encode.audio.IAudio
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.natives.LameMp3
+import com.jiangdg.usb.USBMonitor
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -36,9 +40,8 @@ import kotlin.Exception
  *
  * @author Created by jiangdg on 2022/2/10
  */
-class AACEncodeProcessor : AbstractProcessor() {
+class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : AbstractProcessor() {
     private var mAudioTrack: AudioTrack? = null
-    private var mAudioRecord: AudioRecord? = null
     private var mPresentationTimeUs: Long = 0L
     private val mPlayQueue: ConcurrentLinkedQueue<RawData> by lazy {
         ConcurrentLinkedQueue()
@@ -58,8 +61,10 @@ class AACEncodeProcessor : AbstractProcessor() {
     private val mRecordMp3State: AtomicBoolean by lazy {
         AtomicBoolean(false)
     }
-    private val mBufferSize: Int by lazy {
-        AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_IN_CONFIG, AUDIO_FORMAT_16BIT)
+    private var mAudioRecord: IAudio = if (ctrlBlock != null) {
+        AudioUac(ctrlBlock)
+    } else {
+        AudioSystem()
     }
 
     override fun getThreadName(): String = TAG
@@ -67,11 +72,13 @@ class AACEncodeProcessor : AbstractProcessor() {
     override fun handleStartEncode() {
         initAudioRecord()
         try {
+            val sampleRate = mAudioRecord.getSampleRate()
+            val channelCount = mAudioRecord.getChannelCount()
             MediaFormat().apply {
                 setString(MediaFormat.KEY_MIME, MIME_TYPE)
                 setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
-                setInteger(MediaFormat.KEY_CHANNEL_COUNT, CHANNEL_COUNT)
-                setInteger(MediaFormat.KEY_SAMPLE_RATE, SAMPLE_RATE)
+                setInteger(MediaFormat.KEY_CHANNEL_COUNT, channelCount)
+                setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate)
                 setInteger(MediaFormat.KEY_AAC_PROFILE, CODEC_AAC_PROFILE)
                 setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_INPUT_SIZE)
             }.also { format ->
@@ -112,7 +119,9 @@ class AACEncodeProcessor : AbstractProcessor() {
         //totalBytes : total size of incoming encoder
         //1000 000L : The unit is microseconds, after conversion = 1s,
         //Divided by 8: The original unit of pcm is bit, 1 byte = 8 bit, 1 short = 16 bit, and it needs to be converted if it is carried by Byte[] and Short[]
-        mPresentationTimeUs += (1.0 * bufferSize / (SAMPLE_RATE * CHANNEL_COUNT * (AUDIO_FORMAT_BITS / 8)) * 1000000.0).toLong()
+        val sampleRate = mAudioRecord.getSampleRate()
+        val channelCount = mAudioRecord.getChannelCount()
+        mPresentationTimeUs += (1.0 * bufferSize / (sampleRate * channelCount * (AUDIO_FORMAT_BITS / 8)) * 1000000.0).toLong()
         return mPresentationTimeUs
     }
 
@@ -189,7 +198,9 @@ class AACEncodeProcessor : AbstractProcessor() {
                 }
                 fos = FileOutputStream(file)
                 val mp3Buf = ByteArray(1024)
-                LameMp3.lameInit(SAMPLE_RATE, CHANNEL_COUNT, SAMPLE_RATE, BIT_RATE, DEGREE_RECORD_MP3)
+                val sampleRate = mAudioRecord.getSampleRate()
+                val channelCount = mAudioRecord.getChannelCount()
+                LameMp3.lameInit(sampleRate, channelCount, sampleRate, BIT_RATE, DEGREE_RECORD_MP3)
                 mMainHandler.post {
                     callBack.onBegin()
                 }
@@ -247,38 +258,34 @@ class AACEncodeProcessor : AbstractProcessor() {
     private fun initAudioRecord() {
         if (mAudioRecordState.get()) return
         mAudioThreadPool.submit {
-            initAudioRecordInternal()
+            mAudioRecord.initAudioRecord()
+            mAudioRecord.startRecording()
+            mAudioRecordState.set(true)
             while (mAudioRecordState.get()) {
-                val recordingState = mAudioRecord?.recordingState
-                if (recordingState != AudioRecord.RECORDSTATE_RECORDING) {
-                    Logger.e(TAG, "initAudioRecord failed, state = $recordingState")
-                    break
-                }
-                val data = ByteArray(mBufferSize)
-                val readBytes = mAudioRecord?.read(data, 0, mBufferSize) ?: 0
-                if (readBytes <= 0) {
-                    continue
-                }
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "read pcm data, len = $readBytes")
-                }
+                val data = mAudioRecord.read()
+                data ?: continue
                 // pcm encode queue
                 if (mRawDataQueue.size >= MAX_QUEUE_SIZE) {
                     mRawDataQueue.poll()
                 }
-                mRawDataQueue.offer(RawData(data, readBytes))
+                mRawDataQueue.offer(data)
                 // pcm play queue
                 if (mPlayQueue.size >= MAX_QUEUE_SIZE) {
                     mPlayQueue.poll()
                 }
-                mPlayQueue.offer(RawData(data, readBytes))
+                mPlayQueue.offer(data)
                 // pcm to mp3 queue
                 if (mRecordMp3Queue.size >= MAX_QUEUE_SIZE) {
                     mRecordMp3Queue.poll()
                 }
-                mRecordMp3Queue.offer(RawData(data, readBytes))
+                mRecordMp3Queue.offer(data)
             }
-            releaseAudioRecordInternal()
+            mAudioRecord.stopRecording()
+            mAudioRecord.releaseAudioRecord()
+            mAudioRecordState.set(false)
+            mPlayQueue.clear()
+            mRecordMp3Queue.clear()
+            mRawDataQueue.clear()
         }
     }
 
@@ -289,53 +296,25 @@ class AACEncodeProcessor : AbstractProcessor() {
         mAudioRecordState.set(false)
     }
 
-    private fun initAudioRecordInternal() {
-        try {
-            Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
-            mAudioRecord = AudioRecord(
-                AUDIO_RECORD_SOURCE, SAMPLE_RATE,
-                CHANNEL_IN_CONFIG, AUDIO_FORMAT_16BIT, mBufferSize
-            )
-            mAudioRecord?.startRecording()
-            mAudioRecordState.set(true)
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "initAudioRecordInternal success")
-            }
-        } catch (e: Exception) {
-            Logger.e(TAG, "initAudioRecordInternal failed, err = ${e.localizedMessage}", e)
-        }
-    }
-
-    private fun releaseAudioRecordInternal() {
-        try {
-            mAudioRecord?.stop()
-            mAudioRecord?.release()
-            mAudioRecord = null
-            mRawDataQueue.clear()
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "releaseAudioRecordInternal success.")
-            }
-        } catch (e: Exception) {
-            Logger.e(TAG, "releaseAudioRecordInternal failed, err = ${e.localizedMessage}", e)
-        }
-    }
-
     private fun initAudioTrack() {
         if (mAudioPlayState.get()) {
             Logger.w(TAG, "initAudioTracker has ready execute!")
             return
         }
+        val sampleRate = mAudioRecord.getSampleRate()
+        val rateResolution = mAudioRecord.getAudioFormat()
+        Logger.i(TAG, "initAudioTrack: sampleRate = $sampleRate, mRateResolution = $rateResolution")
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
         val minBufferSize = AudioTrack.getMinBufferSize(
-            SAMPLE_RATE,
+            sampleRate,
             CHANNEL_OUT_CONFIG,
-            AUDIO_FORMAT_16BIT
+            rateResolution
         )
         mAudioTrack = AudioTrack(
             AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE,
+            sampleRate,
             CHANNEL_OUT_CONFIG,
-            AUDIO_FORMAT_16BIT,
+            rateResolution,
             minBufferSize,
             AUDIO_TRACK_MODE
         )
@@ -354,15 +333,10 @@ class AACEncodeProcessor : AbstractProcessor() {
     companion object {
         private const val TAG = "AACEncodeProcessor"
         private const val MIME_TYPE = "audio/mp4a-latm"
-        private const val SAMPLE_RATE = 8000
         private const val BIT_RATE = 16000
         private const val MAX_INPUT_SIZE = 8192
-        private const val CHANNEL_COUNT = 1
-        private const val CHANNEL_IN_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_MONO
-        private const val AUDIO_FORMAT_16BIT = AudioFormat.ENCODING_PCM_16BIT
         private const val AUDIO_TRACK_MODE = AudioTrack.MODE_STREAM
-        private const val AUDIO_RECORD_SOURCE = MediaRecorder.AudioSource.MIC
         private const val CODEC_AAC_PROFILE = MediaCodecInfo.CodecProfileLevel.AACObjectLC
         private const val AUDIO_FORMAT_BITS = 16
         private const val DEGREE_RECORD_MP3 = 7

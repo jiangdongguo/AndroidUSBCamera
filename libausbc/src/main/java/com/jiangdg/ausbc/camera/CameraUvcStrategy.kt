@@ -20,21 +20,18 @@ import android.content.Context
 import android.hardware.usb.UsbDevice
 import android.os.Build
 import android.provider.MediaStore
-import com.jiangdg.ausbc.utils.SettableFuture
 import com.jiangdg.ausbc.R
 import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.bean.CameraStatus
 import com.jiangdg.ausbc.camera.bean.CameraUvcInfo
 import com.jiangdg.ausbc.camera.bean.PreviewSize
+import com.jiangdg.ausbc.utils.*
 import com.jiangdg.ausbc.utils.CameraUtils.isFilterDevice
 import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
-import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.MediaUtils
-import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.usb.DeviceFilter
-import com.jiangdg.usb.IFrameCallback
 import com.jiangdg.usb.USBMonitor
+import com.jiangdg.uvc.IFrameCallback
 import com.jiangdg.uvc.UVCCamera
 import java.io.File
 import java.util.concurrent.LinkedBlockingDeque
@@ -49,6 +46,7 @@ import kotlin.Exception
 class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     private var mDevSettableFuture: SettableFuture<UsbDevice?>? = null
     private var mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?>? = null
+    private val mConnectSettableFuture: SettableFuture<Boolean> = SettableFuture()
     private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
         LinkedBlockingDeque(MAX_NV21_DATA)
     }
@@ -457,6 +455,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 }
                 mDevSettableFuture?.set(device)
                 mCtrlBlockSettableFuture?.set(ctrlBlock)
+                mConnectSettableFuture.set(true)
             }
 
             /**
@@ -477,6 +476,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 }
                 stopPreview()
                 mDevConnectCallBack?.onDisConnectDec(device, ctrlBlock)
+                mConnectSettableFuture.set(false)
             }
 
             /**
@@ -565,12 +565,40 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
      */
     fun getCurrentDevice(): UsbDevice? {
         return try {
+            val isConnected = mConnectSettableFuture.get(3, TimeUnit.SECONDS)
+            if (isConnected != true) {
+                return null
+            }
             mDevSettableFuture?.get(1, TimeUnit.SECONDS)
         } catch (e: Exception) {
-            Logger.w(TAG, "get current usb device times out")
             null
         }
     }
+
+    /**
+     * Get current usb control block
+     *
+     * @return USBMonitor.UsbControlBlock
+     */
+    fun getUsbControlBlock(): USBMonitor.UsbControlBlock? {
+        return try {
+            val isConnected = mConnectSettableFuture.get(3, TimeUnit.SECONDS)
+            if (isConnected != true) {
+                return null
+            }
+            mCtrlBlockSettableFuture?.get(1, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            Logger.w(TAG, "get current usb control block times out")
+            null
+        }
+    }
+
+    /**
+     * Is mic supported
+     *
+     * @return true camera support mic
+     */
+    fun isMicSupported() = CameraUtils.isCameraContainsMic(getCurrentDevice())
 
     /**
      * Send camera command

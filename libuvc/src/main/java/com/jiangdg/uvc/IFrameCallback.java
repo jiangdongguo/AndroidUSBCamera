@@ -21,7 +21,7 @@
  *  may have a different license, see the respective files.
  */
 
-package com.jiangdg.usb;
+package com.jiangdg.uvc;
 
 import java.nio.ByteBuffer;
 
