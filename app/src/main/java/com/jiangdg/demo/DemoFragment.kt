@@ -176,8 +176,10 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                         if (this is CameraUvcStrategy) {
                             mViewBinding.uvcLogoIv.visibility = View.GONE
                         }
+                        mViewBinding.frameRateTv.visibility = View.VISIBLE
                     }
                     else -> {
+                        mViewBinding.frameRateTv.visibility = View.GONE
                         if (this is CameraUvcStrategy) {
                             mViewBinding.uvcLogoIv.visibility = View.VISIBLE
                         }
