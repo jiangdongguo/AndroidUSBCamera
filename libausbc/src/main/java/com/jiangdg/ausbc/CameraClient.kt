@@ -133,6 +133,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
             Logger.e(TAG,"open camera failed, need Manifest.permission.CAMERA permission")
             return
         }
+        initEncodeProcessor()
         Logger.i(TAG, "start open camera request = $mRequest, gl = $isEnableGLEs")
         val previewWidth = mRequest!!.previewWidth
         val previewHeight = mRequest!!.previewHeight
@@ -167,14 +168,13 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
 
             // using opengl es
             // cameraView is null, means offscreen render
-            if (! isEnableGLEs) return@also
+            if (! isEnableGLEs) return
             view.apply {
                 val listener = object : RenderManager.CameraSurfaceTextureListener {
                     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
                         surfaceTexture?.let {
                             mCamera?.startPreview(mRequest!!, it)
                             mCamera?.addPreviewDataCallBack(this@CameraClient)
-                            initEncodeProcessor()
                         }
                     }
                 }

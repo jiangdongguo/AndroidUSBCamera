@@ -177,16 +177,13 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                             mViewBinding.uvcLogoIv.visibility = View.GONE
                         }
                     }
-                    CameraStatus.STOP -> {
-                        if (this is CameraUvcStrategy) {
-                            mViewBinding.uvcLogoIv.visibility = View.VISIBLE
-                        }
-                    }
                     else -> {
                         if (this is CameraUvcStrategy) {
                             mViewBinding.uvcLogoIv.visibility = View.VISIBLE
                         }
-                        ToastUtils.show(it.message ?: "camera error")
+                        it.message?.apply {
+                            ToastUtils.show(this)
+                        }
                     }
                 }
             }
