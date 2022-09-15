@@ -31,17 +31,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
-	sourceSets {
-		main {
-			jniLibs.srcDir 'libs'
-			jni.srcDirs = []
-		}
-	}
-	repositories {
-		flatDir {
-			dir 'libs'
-		}
-	}
 }
 
 tasks.withType(JavaCompile) {
