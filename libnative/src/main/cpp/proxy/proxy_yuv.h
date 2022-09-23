@@ -33,6 +33,7 @@ void nv21ToYuv420sp(JNIEnv *env, jobject instance, jbyteArray data, jint width, 
 void nv21ToYuv420spWithMirror(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
 void nv21ToYuv420p(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
 void nv21ToYuv420pWithMirror(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height);
+void nativeRotateNV21(JNIEnv *env, jobject instance, jbyteArray data, jint width, jint height, jint degree);
 
 #ifdef __cplusplus
 };

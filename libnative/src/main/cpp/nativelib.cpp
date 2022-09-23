@@ -55,6 +55,7 @@ static JNINativeMethod g_yuv_methods[] = {
         {"nv21ToYuv420spWithMirror", "([BII)V", (void *)nv21ToYuv420spWithMirror},
         {"nv21ToYuv420p", "([BII)V", (void *)nv21ToYuv420p},
         {"nv21ToYuv420pWithMirror", "([BII)V", (void *)nv21ToYuv420pWithMirror},
+        {"nativeRotateNV21", "([BIII)V", (void *)nativeRotateNV21},
 };
 
 static JNINativeMethod g_lame_methods[] = {
