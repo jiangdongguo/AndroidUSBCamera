@@ -576,7 +576,7 @@ public class UVCCamera {
      * @return white blance[%]
      */
 	public synchronized int getWhiteBlance() {
-    	return getFocus(nativeGetWhiteBlance(mNativePtr));
+    	return getWhiteBlance(nativeGetWhiteBlance(mNativePtr));
     }
 
 	public synchronized void resetWhiteBlance() {
