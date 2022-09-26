@@ -19,6 +19,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.jiangdg.ausbc.utils.ActivityStackUtils
 
 /** Base Activity
  *  Extended from AppCompatActivity which implemented LifecycleOwner.
@@ -32,11 +33,13 @@ abstract class BaseActivity: AppCompatActivity() {
         setContentView(getRootView(layoutInflater))
         initView()
         initData()
+        ActivityStackUtils.pushActivity(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         clear()
+        ActivityStackUtils.removeActivity(this)
     }
 
     protected abstract fun getRootView(layoutInflater: LayoutInflater): View?

@@ -63,4 +63,6 @@ object ActivityStackUtils {
             }
         }
     }
+
+    fun hasActivity() = !mStack.isEmpty()
 }
