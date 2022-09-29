@@ -960,7 +960,7 @@ public class UVCCamera {
 	    	    	nativeUpdateWhiteBlanceLimit(mNativePtr);
 	    	    	nativeUpdateFocusLimit(mNativePtr);
     	    	}
-    	    	if (DEBUG) {
+    	    	if (false) {
 					dumpControls(mControlSupports);
 					dumpProc(mProcSupports);
 					XLogWrapper.v(TAG, String.format("Brightness:min=%d,max=%d,def=%d", mBrightnessMin, mBrightnessMax, mBrightnessDef));
