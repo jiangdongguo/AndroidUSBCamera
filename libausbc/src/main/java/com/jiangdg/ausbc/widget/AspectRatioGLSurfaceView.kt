@@ -279,7 +279,7 @@ class AspectRatioGLSurfaceView : GLSurfaceView, GLSurfaceView.Renderer,
     override fun setAspectRatio(width: Int, height: Int) {
         val orientation = context.resources.configuration.orientation
         // 处理竖屏和横屏情况
-        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setAspectRatio(height.toDouble() / width)
             return
         }

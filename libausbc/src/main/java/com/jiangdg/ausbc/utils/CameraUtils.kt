@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import androidx.core.content.ContextCompat
 import com.jiangdg.ausbc.R
 import com.jiangdg.usb.DeviceFilter
@@ -92,5 +93,16 @@ object CameraUtils {
     fun hasCameraPermission(ctx: Context): Boolean{
         val locPermission = ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
         return locPermission == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun hasUVCCamera(context: Context): Boolean {
+        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
+        val usbDevices = usbManager.deviceList
+        for (device in usbDevices.values) {
+            if (isUsbCamera(device) || isFilterDevice(context, device)) {
+                return true
+            }
+        }
+        return false
     }
 }

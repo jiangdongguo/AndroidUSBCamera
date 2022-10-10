@@ -294,7 +294,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         return mViewBinding.root
     }
 
-    override fun getGravity(): Int = Gravity.TOP
+    override fun getGravity(): Int = Gravity.CENTER
 
     override fun onViewClick(mode: CaptureMediaView.CaptureMode?) {
         if (! isCameraOpened()) {
