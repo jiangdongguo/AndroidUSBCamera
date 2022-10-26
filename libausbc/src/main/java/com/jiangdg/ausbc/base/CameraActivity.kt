@@ -385,7 +385,7 @@ abstract class CameraActivity : BaseActivity(){
     protected abstract fun getCameraViewContainer(): ViewGroup?
 
     protected open fun getCameraClient(): CameraClient? {
-        return null
+        return mCameraClient
     }
 
     private fun getDefault(): CameraClient {
