@@ -29,6 +29,7 @@ import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.callback.IPlayCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.Camera1Strategy
+import com.jiangdg.ausbc.camera.CameraUvcStrategy
 import com.jiangdg.ausbc.camera.ICameraStrategy
 import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
@@ -391,8 +392,8 @@ abstract class CameraActivity : BaseActivity(){
     private fun getDefault(): CameraClient {
         return CameraClient.newBuilder(this)
             .setEnableGLES(true)
-            .setDefaultEffect(EffectBlackWhite(this))
-            .setCameraStrategy(Camera1Strategy(this))
+            .setRawImage(true)
+            .setCameraStrategy(CameraUvcStrategy(this))
             .setCameraRequest(getCameraRequest())
             .openDebug(true)
             .build()
@@ -403,8 +404,8 @@ abstract class CameraActivity : BaseActivity(){
             .setFrontCamera(false)
             .setContinuousAFModel(true)
             .setContinuousAFModel(true)
-            .setPreviewWidth(1280)
-            .setPreviewHeight(720)
+            .setPreviewWidth(640)
+            .setPreviewHeight(480)
             .create()
     }
 
