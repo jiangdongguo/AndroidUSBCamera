@@ -429,7 +429,7 @@ class RenderManager(
             mCaptureDataCb?.onBegin()
         }
         val date = mDateFormat.format(System.currentTimeMillis())
-        val title = savePath ?: "IMG_JJCamera_$date"
+        val title = savePath ?: "IMG_AUSBC_$date"
         val displayName = savePath ?: "$title.jpg"
         val path = savePath ?: "$mCameraDir/$displayName"
         val width = mWidth
