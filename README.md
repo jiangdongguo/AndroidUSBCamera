@@ -24,6 +24,7 @@ Feature
 - Support recording media along with acquiring YUV/RGBA/PCM/H.264/AAC stream, you can push it to your media server;
 - Support acquiring all resolutions and usb devices, etc;
 - Support acquiring system or device mic(UAC) audio data;
+- Support armeabi-v7a, arm64-v8a, x86 & x86_64;
 
 Usages
 -------
