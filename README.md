@@ -15,16 +15,15 @@ Feature
 -------
 
 - Support opening multi-road camera;
-- Support opening camera1、camera2 and uvc camera on Android 4.4+;
+- Support opening uvc camera on Android 4.4+;
 - Support previewing 480p、720p、1080p，etc;
 - Support adding effects with OpenGL ES 2.0;
 - Support capture photo(`.jpg`)、viedo(`.mp4`/`.h264`/`yuv`) and audio(`pcm`/`mp3`/`aac`)
 - Support rotating camera view;
-- Support showing camera offscreen;
-- Support recording media along with acquring h264/aac stream, you can push it to your media server;
-- Support acquring all resolutions and usb devices, etc 
-
-
+- Support offscreen rendering;
+- Support recording media along with acquiring YUV/RGBA/PCM/H.264/AAC stream, you can push it to your media server;
+- Support acquiring all resolutions and usb devices, etc;
+- Support acquiring system or device mic(UAC) audio data;
 
 Usages
 -------
@@ -58,30 +57,39 @@ dependencies {
 &emsp; As for how to use this module correctly,  just  making your Fragment or Activity implement **CameraFragment** or **CameraActivity**.
 
 ```kotlin
-class DemoFragment : CameraFragment() {
-    private lateinit var mViewBinding: FragmentDemoBinding
-    
-    override fun initView() {
-        super.initView()
-    }
-    
-    override fun getCameraView(): IAspectRatio {
-        return AspectRatioTextureView(requireContext())
-    }
-    
-    override fun initData() {
-        super.initData()
+class DemoFragment: CameraFragment() {
+    private var mViewBinding: FragmentUvcBinding? = null
+
+    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View? {
+        if (mViewBinding == null) {
+            mViewBinding = FragmentUvcBinding.inflate(inflater, container, false)
+        }
+        return mViewBinding?.root
     }
 
-    override fun getCameraViewContainer(): ViewGroup {
-        return mViewBinding.cameraViewContainer
+    // if you want offscreen render
+    // please return null
+    override fun getCameraView(): IAspectRatio? {
+        return mViewBinding?.tvCameraRender
     }
 
-    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {
-        mViewBinding = FragmentDemoBinding.inflate(inflater, container, false)
-        return mViewBinding.root
+    // if you want offscreen render
+    // please return null, the same as getCameraView()
+    override fun getCameraViewContainer(): ViewGroup? {
+        return mViewBinding?.container
     }
 
+    // camera open status callback
+    override fun onCameraState(self: ICamera, 
+                               code: ICameraStateCallBack.State,
+                               msg: String?) {
+        when (code) {
+            ICameraStateCallBack.State.OPENED -> handleCameraOpened()
+            ICameraStateCallBack.State.CLOSED -> handleCameraClosed()
+            ICameraStateCallBack.State.ERROR -> handleCameraError()
+        }
+    }
+    
     override fun getGravity(): Int = Gravity.TOP
 }
 ```
@@ -91,83 +99,88 @@ class DemoFragment : CameraFragment() {
 
 - **Advanced usage**
 
-&emsp;If you want some custom configurations, you can do like this: 
+&emsp;If you want some custom configurations, you can do like this in your **DemoFragment**: 
 
 ```kotlin
-class DemoFragment : CameraFragment() {
-    ...
-    override fun getCameraClient(): CameraClient? {
-        return CameraClient.newBuilder(requireContext())
-            .setEnableGLES(true)   // use opengl render 
-            .setRawImage(true)     // capture raw or filter image
-            .setDefaultEffect(EffectBlackWhite(requireContext())) // default effect
-            .setCameraStrategy(CameraUvcStrategy(requireContext())) // camera type
-            .setCameraRequest(getCameraRequest()) // camera configurations
-            .setDefaultRotateType(RotateType.ANGLE_0) // default camera rotate angle
-            .openDebug(true) // is debug mode
-            .build()
-    }
-    
-    private fun getCameraRequest(): CameraRequest {
-        return CameraRequest.CameraRequestBuilder()
-            .setFrontCamera(false) // only for camera1/camera2
-            .setPreviewWidth(640)  // initial camera preview width
-            .setPreviewHeight(480) // initial camera preview height
-            .create()
-    }
+// if you want to open a camera default
+// please override getDefaultCamera()
+override fun getDefaultCamera(): UsbDevice? {
+    return super.getDefaultCamera()
 }
+
+// if you want to custom camera requst
+// please override getCameraRequest()
+override fun getCameraRequest(): CameraRequest {
+    return CameraRequest.Builder()
+    .setPreviewWidth(1280) // camera preview width
+    .setPreviewHeight(720) // camera preview height
+    .setRenderMode(CameraRequest.RenderMode.OPENGL) // camera render mode
+    .setDefaultRotateType(RotateType.ANGLE_0) // rotate camera image when opengl mode
+    .setAudioSource(CameraRequest.AudioSource.SOURCE_AUTO) // set audio source
+    .setAspectRatioShow(false)  
+    .setCaptureRawImage(false) // capture raw image picture when opengl mode
+    .setRawPreviewData(false)  // preview raw image when opengl mode
+    .create()
+}
+
+
 ```
 
-&emsp;There is no doubt that **CameraClient** is the core class in this library, you can use the default CameraClient object to preview your camera or custom it. By using **CameraClient**, you can capture a **jpg** image or a **mp4** video or  a **mp3** audio file and update resolution or different uvc camera. You can even acquring the stream of **H264/AAC/YUV**. For example:
+&emsp;Of course, you can also capture a **jpg** image or a **mp4** video or  a **mp3** audio file and update resolution or different uvc camera and acquring the stream of **H264/AAC/YUV/PCM**  by calling those method:
 
 ```kotlin
 // capture jpg image
-mCameraClient?.captureImage(callBack, savePath)
-
+captureImage(callBack, savePath)
 // capture mp4 video
-mCameraClient?.captureVideoStart(callBack, path, durationInSec)
-mCameraClient?.captureVideoStop()
-
+captureVideoStart(callBack, path, durationInSec)
+captureVideoStop()
+// capture stream(H.264/AAC) only
+captureStreamStart()
+captureStreamStop()
+// capture mp4 video
+captureVideoStart(callBack, path, durationInSec)
+captureVideoStop()
 // capture mp3 audio
-mCameraClient?.captureAudioStart(callBack, path)
-mCameraClient?.captureAudioStop()
-
+captureAudioStart(callBack, path)
+captureAudioStop()
 // play mic in real time
-mCameraClient?.startPlayMic(callBack)
-mCameraClient?.stopPlayMic()
-
+startPlayMic(callBack)
+stopPlayMic()
 // rotate camera
 // base on opening opengl es
-mCameraClient?.setRotateType(type)
-
+setRotateType(type)
 // switch different camera
-mCameraClient?.switchCamera(cameraId)
-
+switchCamera(UsbDevice)
 // update resolution
-mCameraClient?.updateResolution(width, height)
-
+updateResolution(width, height)
 // get all preview sizes
-mCameraClient?.getAllPreviewSizes(aspectRatio)
-
-// acquire encode data(h264 or aac)
-mCameraClient?.addEncodeDataCallBack(callBack)
-
-// acquire raw data(yuv)
-mCameraClient?.addPreviewDataCallBack(callBack)
+getAllPreviewSizes(aspectRatio)
+// acquire encode data(H.264 or AAC)
+addEncodeDataCallBack(callBack)
+// acquire raw data(NV21 or RGBA)
+setPreviewDataCallBack(callBack)
+// get current camera
+getCurrentCamera()
+// get current camera status
+isCameraOpened()
+// get all camera device list
+getDeviceList()
 ```
 
-&emsp;Or,camera configuration:
+&emsp;Or, camera configuration:
 
 ```kotlin
-mCamera?.setZoom(0)
-mCamera?.setSharpness(0)
-mCamera?.setHue(0)
-mCamera?.setSaturation(0)
-mCamera?.setContrast(0)
-mCamera?.setGamma(0)
-mCamera?.setGain(0)
-mCamera?.setAutoWhiteBalance(true)
-mCamera?.setAutoFocus(true)
+setZoom(0)
+setSharpness(0)
+setHue(0)
+setSaturation(0)
+setContrast(0)
+setGamma(0)
+setGain(0)
+setAutoWhiteBalance(true)
+setAutoFocus(true)
+// send custom command to camera
+sendCameraCommand(command)
 ```
 
 &emsp;For more advanced features, you can even add some **filters** to your camera.This library providers some default filters, sush as **EffectBlackWhite**、**EffectSoul** and **EffectZoom**, and more filters will be added in the future.Of coure, you can also relize your own filters by extending **AbstractEffect**. For example：
@@ -190,10 +203,12 @@ class EffectBlackWhite(ctx: Context) : AbstractEffect(ctx) {
 }
 
 // Second, adding or updating or removing filter
-mCameraClient?.addRenderEffect(effect)
-mCameraClient?.removeRenderEffect(effect)
-mCameraClient?.updateRenderEffect(classifyId, effect)
+addRenderEffect(effect)
+removeRenderEffect(effect)
+updateRenderEffect(classifyId, effect)
 ```
+
+&emsp;At last, If you want to realize streaming, maybe **IPusher** and **AusbcPusher** can help you.
 
 - open multi-road camera
 
@@ -202,36 +217,45 @@ mCameraClient?.updateRenderEffect(classifyId, effect)
 ```kotlin
 class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
 
-    override fun onCameraAttached(camera: MultiCameraClient.Camera) {
- 		// a camera be attached
-    }
+    // a camera be attached
+    override fun onCameraAttached(camera: MultiCameraClient.Camera) {}
+    
+	// a camera be detached
+    override fun onCameraDetached(camera: MultiCameraClient.Camera) {}
 
-    override fun onCameraDetached(camera: MultiCameraClient.Camera) {
-		// a camera be detached
-    }
-
+    // a camera be connected
     override fun onCameraConnected(camera: MultiCameraClient.Camera) {
-        // a camera be connected
   		camera.openCamera(textureView, getCameraRequest())
         camera.setCameraStateCallBack(this)
     }
 
+    // a camera be disconnected
     override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
-     // a camera be disconnected
+         camrea.closeCamera()
     }
 
-
+    // a camera be opened or closed or error
     override fun onCameraState(
         self: MultiCameraClient.Camera,
         code: ICameraStateCallBack.State,
-        msg: String?
-    ) {
-		// a camera be opened or closed or error
+        msg: String?) {
+		when (code) {
+            ICameraStateCallBack.State.OPENED -> handleCameraOpened()
+            ICameraStateCallBack.State.CLOSED -> handleCameraClosed()
+            ICameraStateCallBack.State.ERROR -> handleCameraError()
+        }
     }
 
     override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {
         return rootView
     }
+    
+    // [optional]
+    // If you want to open the specified camera,
+    // you need to let isAutoRequestPermission() false.
+    // And then you need to call requestPermission(device) in your own Fragment/Activity
+    // when onAttachDev() called, default is true.
+    protected fun isAutoRequestPermission() = true
 }
 ```
 
@@ -249,7 +273,6 @@ include ':app'
 // For debug online
 include ':libausbc'
 include ':libuvc'
-include ':libpush'
 include ':libnative'
 include ':libuvccommon'
 ```
@@ -302,7 +325,7 @@ Homepage & Help
 
 
 &emsp;If you have any question or fun ideas, please issues to me.  
-&emsp;Of course, you can also send me a **WeiXin**   "`laojiang299`"   or a **EMAIL**  "`765067602@qq.com`".   
+&emsp;Of course, you can also send me a **微信**   "`laojiang299`"   or a **EMAIL**  "`765067602@qq.com`".   
 
 &emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.ausbc/files** and collect logcat information by executing command `adb shell logcat -v threadtime > usbcamera.log`
 
@@ -319,7 +342,7 @@ License
 -------
 
 ```c
-Copyright 2017-2022 Jiangdongguo
+Copyright 2017-2023 Jiangdongguo
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

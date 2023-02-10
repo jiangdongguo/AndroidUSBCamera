@@ -35,11 +35,12 @@ import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.encode.AACEncodeProcessor
 import com.jiangdg.ausbc.encode.AbstractProcessor
 import com.jiangdg.ausbc.encode.H264EncodeProcessor
+import com.jiangdg.ausbc.encode.audio.AudioStrategySystem
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
 import com.jiangdg.ausbc.render.RenderManager
-import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.render.effect.AbstractEffect
+import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.Utils
@@ -56,7 +57,11 @@ import kotlin.math.abs
  * Camera client
  *
  * @author Created by jiangdg on 2022/2/20
+ *
+ * Deprecated since version 3.3.0, and it will be deleted in the future.
+ * I recommend using the [MultiCameraClient] API for your application.
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack {
     private val mCtx: Context? = builder.context
     private val isEnableGLEs: Boolean = builder.enableGLEs
@@ -65,8 +70,6 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     private var mCameraView: IAspectRatio? = null
     private var mRequest: CameraRequest? = builder.cameraRequest
     private var mDefaultEffect: AbstractEffect? = builder.defaultEffect
-    private val mEncodeBitRate: Int? = builder.videoEncodeBitRate
-    private val mEncodeFrameRate: Int? = builder.videoEncodeFrameRate
     private val mDefaultRotateType: RotateType? = builder.defaultRotateType
     private var mAudioProcess: AbstractProcessor? = null
     private var mVideoProcess: AbstractProcessor? = null
@@ -74,7 +77,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
     private val mMainHandler: Handler = Handler(Looper.getMainLooper())
 
     private val mRenderManager: RenderManager? by lazy {
-        RenderManager(mCtx!!, mRequest!!.previewWidth, mRequest!!.previewHeight)
+        RenderManager(mCtx!!, mRequest!!.previewWidth, mRequest!!.previewHeight, null)
     }
 
     init {
@@ -111,10 +114,8 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         }
     }
 
-    override fun onPreviewData(data: ByteArray?, format: IPreviewDataCallBack.DataFormat) {
+    override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat) {
         data?.let {
-            val width = mRequest!!.previewWidth
-            val height = mRequest!!.previewHeight
             // avoid preview size changed
             if (data.size != width * height * 3 /2) {
                 return
@@ -380,8 +381,8 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param callBack camera encoded data call back, see [IEncodeDataCallBack]
      */
     fun addEncodeDataCallBack(callBack: IEncodeDataCallBack) {
-        mVideoProcess?.addEncodeDataCallBack(callBack)
-        mAudioProcess?.addEncodeDataCallBack(callBack)
+        mVideoProcess?.setEncodeDataCallBack(callBack)
+        mAudioProcess?.setEncodeDataCallBack(callBack)
     }
 
     /**
@@ -410,9 +411,8 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param durationInSec video file auto divide duration is seconds
      */
     fun captureVideoStart(callBack: ICaptureCallBack, path: String ?= null, durationInSec: Long = 0L) {
-        mMediaMuxer = Mp4Muxer(mCtx, callBack, path, durationInSec)
+        mMediaMuxer = Mp4Muxer(callBack, path, durationInSec)
         (mVideoProcess as? H264EncodeProcessor)?.apply {
-            setEncodeRate(mEncodeBitRate, mEncodeFrameRate)
             startEncode()
             setMp4Muxer(mMediaMuxer!!, true)
             setOnEncodeReadyListener(object : H264EncodeProcessor.OnEncodeReadyListener {
@@ -534,17 +534,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         } else {
             mRequest!!.previewHeight
         }
-        mAudioProcess = AACEncodeProcessor(if ((mCamera is CameraUvcStrategy) && mCamera.isMicSupported()) {
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "Audio record by using device internal mic")
-            }
-            mCamera.getUsbControlBlock()
-        } else {
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "Audio record by using system mic")
-            }
-            null
-        })
+        mAudioProcess = AACEncodeProcessor(AudioStrategySystem())
         mVideoProcess = H264EncodeProcessor(encodeWidth, encodeHeight, isEnableGLEs)
     }
 

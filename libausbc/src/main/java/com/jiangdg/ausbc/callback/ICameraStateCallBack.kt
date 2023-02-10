@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.jiangdg.ausbc.MultiCameraClient
  * @author Created by jiangdg on 2022/2/09
  */
 interface ICameraStateCallBack {
-    fun onCameraState(self: MultiCameraClient.Camera, code: State, msg: String? = null)
+    fun onCameraState(self: MultiCameraClient.ICamera, code: State, msg: String? = null)
 
     enum class State {
         OPENED, CLOSED, ERROR

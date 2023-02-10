@@ -35,7 +35,7 @@ class DemoApplication: BaseApplication() {
     override fun onCreate() {
         super.onCreate()
         // init bugly library
-        CrashReport.initCrashReport(this, "165c46d5b1", true)
+        CrashReport.initCrashReport(this, "9baa0e3fac", true)
         MMKVUtils.init(this)
     }
 }

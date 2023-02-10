@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,8 @@ class EGLEvn {
         if (mEglDisplay == EGL14.EGL_NO_DISPLAY) {
             return
         }
+        // If surface is null
+        // Force off screen mode
         mEglSurface = if (surface == null) {
             val attributes  = intArrayOf(
                 EGL14.EGL_WIDTH, surfaceWidth,

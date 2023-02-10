@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,4 +23,5 @@ object BusKey {
     const val KEY_FRAME_RATE = "frame-rate"
     const val KEY_RENDER_READY = "render-ready"
     const val KEY_CAMERA_STATUS = "camera-status"
+    const val KEY_PREVIEW_RATE = "preview-frame-rate"
 }

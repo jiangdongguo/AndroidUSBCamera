@@ -78,8 +78,6 @@ class GlSurfaceFragment: BaseFragment() {
     private fun getCameraRequest(): CameraRequest {
         return CameraRequest.Builder()
             .setFrontCamera(false)
-            .setContinuousAFModel(true)
-            .setContinuousAutoModel(true)
             .setPreviewWidth(CAMERA_PREVIEW_WIDTH)
             .setPreviewHeight(CAMERA_PREVIEW_HEIGHT)
             .create()

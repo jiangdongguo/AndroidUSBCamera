@@ -1,5 +1,7 @@
 package com.jiangdg.demo
 
+import android.content.Context
+import android.hardware.usb.UsbDevice
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +13,8 @@ import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.base.MultiCameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.ICaptureCallBack
+import com.jiangdg.ausbc.camera.CameraUVC
 import com.jiangdg.ausbc.camera.bean.CameraRequest
-import com.jiangdg.ausbc.utils.SpaceItemDecoration
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.demo.databinding.FragmentMultiCameraBinding
 
@@ -24,19 +26,19 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     private lateinit var mAdapter: CameraAdapter
     private lateinit var mViewBinding: FragmentMultiCameraBinding
     private val mCameraList by lazy {
-        ArrayList<MultiCameraClient.Camera>()
+        ArrayList<MultiCameraClient.ICamera>()
     }
     private val mHasRequestPermissionList by lazy {
-        ArrayList<MultiCameraClient.Camera>()
+        ArrayList<MultiCameraClient.ICamera>()
     }
 
-    override fun onCameraAttached(camera: MultiCameraClient.Camera) {
+    override fun onCameraAttached(camera: MultiCameraClient.ICamera) {
         mAdapter.data.add(camera)
         mAdapter.notifyItemInserted(mAdapter.data.size - 1)
         mViewBinding.multiCameraTip.visibility = View.GONE
     }
 
-    override fun onCameraDetached(camera: MultiCameraClient.Camera) {
+    override fun onCameraDetached(camera: MultiCameraClient.ICamera) {
         mHasRequestPermissionList.remove(camera)
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
@@ -51,7 +53,11 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         }
     }
 
-    override fun onCameraConnected(camera: MultiCameraClient.Camera) {
+    override fun generateCamera(ctx: Context, device: UsbDevice): MultiCameraClient.ICamera {
+        return CameraUVC(ctx, device)
+    }
+
+    override fun onCameraConnected(camera: MultiCameraClient.ICamera) {
         for ((position, cam) in mAdapter.data.withIndex()) {
             if (cam.getUsbDevice().deviceId == camera.getUsbDevice().deviceId) {
                 val textureView = mAdapter.getViewByPosition(position, R.id.multi_camera_texture_view)
@@ -71,13 +77,13 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         }
     }
 
-    override fun onCameraDisConnected(camera: MultiCameraClient.Camera) {
+    override fun onCameraDisConnected(camera: MultiCameraClient.ICamera) {
         camera.closeCamera()
     }
 
 
     override fun onCameraState(
-        self: MultiCameraClient.Camera,
+        self: MultiCameraClient.ICamera,
         code: ICameraStateCallBack.State,
         msg: String?
     ) {
@@ -102,7 +108,7 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
         mViewBinding.multiCameraRv.adapter = mAdapter
         mViewBinding.multiCameraRv.layoutManager = GridLayoutManager(requireContext(), 2)
         mAdapter.setOnItemChildClickListener { adapter, view, position ->
-            val camera = adapter.data[position] as MultiCameraClient.Camera
+            val camera = adapter.data[position] as MultiCameraClient.ICamera
             when (view.id) {
                 R.id.multi_camera_capture_image -> {
                     camera.captureImage(object : ICaptureCallBack {
@@ -118,7 +124,7 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
                     })
                 }
                 R.id.multi_camera_capture_video -> {
-                    if (camera.isRecordVideo()) {
+                    if (camera.isRecording()) {
                         camera.captureVideoStop()
                         return@setOnItemChildClickListener
                     }
@@ -157,12 +163,12 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
     }
 
     inner class CameraAdapter :
-        BaseQuickAdapter<MultiCameraClient.Camera, BaseViewHolder>(R.layout.layout_item_camera) {
-        override fun convert(helper: BaseViewHolder, camera: MultiCameraClient.Camera?) {}
+        BaseQuickAdapter<MultiCameraClient.ICamera, BaseViewHolder>(R.layout.layout_item_camera) {
+        override fun convert(helper: BaseViewHolder, camera: MultiCameraClient.ICamera?) {}
 
         override fun convertPayloads(
             helper: BaseViewHolder,
-            camera: MultiCameraClient.Camera?,
+            camera: MultiCameraClient.ICamera?,
             payloads: MutableList<Any>
         ) {
             camera ?: return
@@ -183,7 +189,7 @@ class DemoMultiCameraFragment : MultiCameraFragment(), ICameraStateCallBack {
                 }
             }
             if (payloads.find { "video" == it } != null) {
-                if (camera.isRecordVideo()) {
+                if (camera.isRecording()) {
                     captureVideoIv.setImageResource(R.mipmap.ic_capture_video_on)
                 } else {
                     captureVideoIv.setImageResource(R.mipmap.ic_capture_video_off)

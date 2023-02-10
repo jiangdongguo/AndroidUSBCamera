@@ -32,13 +32,12 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
     implementation "androidx.constraintlayout:constraintlayout:${constraintlayoutVersion}"
     implementation "com.google.android.material:material:${materialVersion}"
+    api 'com.elvishew:xlog:1.11.0'
+//    implementation fileTree("libs")
 
-    // For debug online
     implementation project(path: ':libuvc')
     api project(path: ':libnative')
-    implementation project(path: ':libpush')
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,15 @@ class AspectRatioTextureView: TextureView, IAspectRatio {
     constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : super(context, attributeSet, defStyleAttr)
 
     override fun setAspectRatio(width: Int, height: Int) {
-        val orientation = context.resources.configuration.orientation
-        // 处理竖屏和横屏情况
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setAspectRatio(height.toDouble() / width)
-            return
+        postUITask {
+            val orientation = context.resources.configuration.orientation
+            // 处理竖屏和横屏情况
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setAspectRatio(height.toDouble() / width)
+                return@postUITask
+            }
+            setAspectRatio(width.toDouble() / height)
         }
-        setAspectRatio(width.toDouble() / height)
     }
 
     override fun getSurfaceWidth(): Int  = width

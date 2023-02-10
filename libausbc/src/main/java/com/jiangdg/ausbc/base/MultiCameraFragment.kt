@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jiangdg.ausbc.base
 
+import android.content.Context
 import android.hardware.usb.UsbDevice
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
@@ -23,10 +24,11 @@ import com.jiangdg.usb.USBMonitor
 /** Multi-road camera fragment
  *
  * @author Created by jiangdg on 2022/7/20
+ *      Modified for v3.3.0 by jiangdg on 2023/1/15
  */
 abstract class MultiCameraFragment: BaseFragment() {
     private var mCameraClient: MultiCameraClient? = null
-    private val mCameraMap = hashMapOf<Int, MultiCameraClient.Camera>()
+    private val mCameraMap = hashMapOf<Int, MultiCameraClient.ICamera>()
 
     override fun initData() {
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
@@ -36,12 +38,15 @@ abstract class MultiCameraFragment: BaseFragment() {
                     if (mCameraMap.containsKey(device.deviceId)) {
                         return
                     }
-                    MultiCameraClient.Camera(it, device).apply {
+                    generateCamera(it, device).apply {
                         mCameraMap[device.deviceId] = this
                         onCameraAttached(this)
                     }
+                    // Initiate permission request when device insertion is detected
+                    // If you want to open the specified camera, you need to let isAutoRequestPermission() false
+                    // And then you need to call requestPermission(device) in your own Fragment when onAttachDev() called
                     if (isAutoRequestPermission()) {
-                        mCameraClient?.requestPermission(device)
+                        requestPermission(device)
                     }
                 }
             }
@@ -91,33 +96,43 @@ abstract class MultiCameraFragment: BaseFragment() {
         mCameraClient = null
     }
 
-    /**
-     * On camera connected
-     *
-     * @param camera see [MultiCameraClient.Camera]
-     */
-    protected abstract fun onCameraConnected(camera: MultiCameraClient.Camera)
 
     /**
-     * On camera disconnected
+     * Generate camera
      *
-     * @param camera see [MultiCameraClient.Camera]
+     * @param ctx context [Context]
+     * @param device Usb device, see [UsbDevice]
+     * @return Inheritor assignment camera api policy
      */
-    protected abstract fun onCameraDisConnected(camera: MultiCameraClient.Camera)
+    abstract fun generateCamera(ctx: Context, device: UsbDevice): MultiCameraClient.ICamera
+
+    /**
+     * On camera is granted permission
+     *
+     * @param camera see [MultiCameraClient.ICamera]
+     */
+    protected abstract fun onCameraConnected(camera: MultiCameraClient.ICamera)
+
+    /**
+     * On camera is cancelled permission
+     *
+     * @param camera see [MultiCameraClient.ICamera]
+     */
+    protected abstract fun onCameraDisConnected(camera: MultiCameraClient.ICamera)
 
     /**
      * On camera attached
      *
-     * @param camera see [MultiCameraClient.Camera]
+     * @param camera see [MultiCameraClient.ICamera]
      */
-    protected abstract fun onCameraAttached(camera: MultiCameraClient.Camera)
+    protected abstract fun onCameraAttached(camera: MultiCameraClient.ICamera)
 
     /**
      * On camera detached
      *
-     * @param camera see [MultiCameraClient.Camera]
+     * @param camera see [MultiCameraClient.ICamera]
      */
-    protected abstract fun onCameraDetached(camera: MultiCameraClient.Camera)
+    protected abstract fun onCameraDetached(camera: MultiCameraClient.ICamera)
 
     /**
      * Get current connected cameras
@@ -135,8 +150,9 @@ abstract class MultiCameraFragment: BaseFragment() {
     protected fun getCameraClient() = mCameraClient
 
     /**
-     * Is auto request permission
-     * default is true
+     * If you want to open the specified camera,you need to let isAutoRequestPermission() false.
+    *  And then you need to call requestPermission(device) in your own Fragment
+     * when onAttachDev() called, default is true.
      */
     protected fun isAutoRequestPermission() = true
 
@@ -159,4 +175,6 @@ abstract class MultiCameraFragment: BaseFragment() {
     protected fun openDebug(debug: Boolean) {
         mCameraClient?.openDebug(debug)
     }
+
+    protected fun isFragmentDetached() = !isAdded || isDetached
 }

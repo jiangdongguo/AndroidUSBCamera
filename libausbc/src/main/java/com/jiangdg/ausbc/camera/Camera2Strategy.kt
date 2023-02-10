@@ -44,7 +44,10 @@ import kotlin.Exception
 /** Camera2 usage
  *
  * @author Created by jiangdg on 2021/12/20
+ * Deprecated since version 3.3.0, and it will be deleted in the future.
+ * I recommend using the [CameraUVC] API for your application.
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
     private val mCaptureResults: BlockingQueue<CaptureResult> = LinkedBlockingDeque()
@@ -237,20 +240,16 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
                 Logger.e(TAG, "createCaptureRequestBuilders failed, camera device is null.")
                 return
             }
-            getRequest()?.let { request ->
+            getRequest()?.let {
                 mPreviewCaptureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                if (request.isContinuousAFModel) {
-                    mPreviewCaptureBuilder?.set(
-                        CaptureRequest.CONTROL_AE_MODE,
-                        CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
-                    )
-                }
-                if (request.isContinuousAEModel) {
-                    mPreviewCaptureBuilder?.set(
-                        CaptureRequest.CONTROL_AF_MODE,
-                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
-                    )
-                }
+                mPreviewCaptureBuilder?.set(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
+                )
+                mPreviewCaptureBuilder?.set(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                )
                 mImageCaptureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
                 Logger.i(TAG, "createCaptureRequestBuilders success.")
             }
@@ -563,7 +562,7 @@ class Camera2Strategy(ctx: Context) : ICameraStrategy(ctx) {
                 }
 
                 mPreviewDataCbList.forEach { cb ->
-                    cb.onPreviewData(mYUVData, IPreviewDataCallBack.DataFormat.NV21)
+                    cb.onPreviewData(mYUVData, request.previewWidth, request.previewHeight, IPreviewDataCallBack.DataFormat.NV21)
                 }
                 it.close()
             } catch (e: IndexOutOfBoundsException) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ class CameraRender(context: Context) : AbstractFboRender(context) {
     private var mMVPMatrixHandle: Int = -1
     private var mStMatrix = FloatArray(16)
     private var mMVPMatrix = FloatArray(16)
+    private var mOESTextureId: Int = -1
 
     override fun init() {
+        mOESTextureId = createOESTexture()
         setMVPMatrix(0)
         Matrix.setIdentityM(mStMatrix, 0)
         mStMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uStMatrix")
@@ -101,6 +103,8 @@ class CameraRender(context: Context) : AbstractFboRender(context) {
         }
         return mMVPMatrix
     }
+
+    fun getCameraTextureId() = mOESTextureId
 
     companion object {
         private const val TAG = "CameraRender"

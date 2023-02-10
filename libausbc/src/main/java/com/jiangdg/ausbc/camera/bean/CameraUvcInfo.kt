@@ -19,6 +19,7 @@ package com.jiangdg.ausbc.camera.bean
  *
  * @author Created by jiangdg on 2022/1/27
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 class CameraUvcInfo(override val cameraId: String) : CameraInfo(cameraId) {
     var cameraName: String = ""
     var cameraProductName: String? = null

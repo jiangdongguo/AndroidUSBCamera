@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,21 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
 import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.natives.YUVUtils
-import java.lang.Exception
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.Exception
 
 
 /** Abstract processor
  *
  * @author Created by jiangdg on 2022/2/10
  */
-abstract class AbstractProcessor(private val gLESRender: Boolean = false, private val width: Int = 0, private val height: Int = 0) {
+abstract class AbstractProcessor() {
     private var mEncodeThread: HandlerThread? = null
     private var mEncodeHandler: Handler? = null
     protected var mMediaCodec: MediaCodec? = null
@@ -43,10 +42,15 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
     private var isVideo: Boolean = false
     private var mEncodeDataCb: IEncodeDataCallBack? = null
     protected val mRawDataQueue: ConcurrentLinkedQueue<RawData> = ConcurrentLinkedQueue()
+    protected var mBitRate: Int? = null
     protected var mMainHandler: Handler = Handler(Looper.getMainLooper())
 
     protected val mEncodeState: AtomicBoolean by lazy {
         AtomicBoolean(false)
+    }
+
+    private val mBufferInfo by lazy {
+        MediaCodec.BufferInfo()
     }
 
     /**
@@ -80,15 +84,26 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
         mEncodeThread?.quitSafely()
         mEncodeThread = null
         mEncodeHandler = null
-        mEncodeDataCb = null
     }
 
     /**
-     * Add encode data call back
+     * Update bit rate for encode audio or video
+     *
+     * @param bitRate bps
+     */
+    fun updateBitRate(bitRate: Int) {
+        this.mBitRate = bitRate
+        mEncodeState.set(false)
+        mEncodeHandler?.obtainMessage(MSG_STOP)?.sendToTarget()
+        mEncodeHandler?.obtainMessage(MSG_START)?.sendToTarget()
+    }
+
+    /**
+     * se encode data call back
      *
      * @param callBack aac or h264 data call back, see [IEncodeDataCallBack]
      */
-    fun addEncodeDataCallBack(callBack: IEncodeDataCallBack?) {
+    fun setEncodeDataCallBack(callBack: IEncodeDataCallBack?) {
         this.mEncodeDataCb = callBack
     }
 
@@ -161,40 +176,40 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
         while (mEncodeState.get()) {
             try {
                 queueFrameIfNeed()
-                val bufferInfo = MediaCodec.BufferInfo()
                 var outputIndex = 0
                 do {
                     mMediaCodec?.let { codec ->
-                        outputIndex = codec.dequeueOutputBuffer(bufferInfo, TIMES_OUT_US)
+                        outputIndex = codec.dequeueOutputBuffer(mBufferInfo, TIMES_OUT_US)
                         when (outputIndex) {
                             MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                                if (Utils.debugCamera) {
-                                    Logger.i(TAG, "addTracker is video = $isVideo")
-                                }
+                                Logger.i(TAG, "addTracker is video = $isVideo")
                                 mMp4Muxer?.addTracker(mMediaCodec?.outputFormat, isVideo)
                             }
                             else -> {
                                 if (outputIndex < 0) {
                                     return@let
                                 }
-                                val outputBuffer = if (isLowerLollipop()) {
-                                    codec.outputBuffers[outputIndex]
-                                } else {
-                                    codec.getOutputBuffer(outputIndex)
-                                }
-                                if (outputBuffer != null) {
-                                    val encodeData = ByteArray(bufferInfo.size)
-                                    outputBuffer.get(encodeData)
-                                    val type = if (isVideo) {
-                                        IEncodeDataCallBack.DataType.H264
+                                try {
+                                    val outputBuffer = if (isLowerLollipop()) {
+                                        codec.outputBuffers[outputIndex]
                                     } else {
-                                        IEncodeDataCallBack.DataType.AAC
+                                        codec.getOutputBuffer(outputIndex)
                                     }
-                                    mEncodeDataCb?.onEncodeData(encodeData, encodeData.size, type)
-                                    mMp4Muxer?.pumpStream(outputBuffer, bufferInfo, isVideo)
-                                    logSpecialFrame(bufferInfo, encodeData.size)
+                                    if (outputBuffer != null) {
+                                        outputBuffer.position(mBufferInfo.offset)
+                                        outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size)
+                                        val encodeData = ByteArray(mBufferInfo.size)
+                                        outputBuffer.get(encodeData)
+                                        processOutputData(mBufferInfo, encodeData).apply {
+                                            mEncodeDataCb?.onEncodeData(second,second.size, first, mBufferInfo.presentationTimeUs / 1000)
+                                        }
+                                        mMp4Muxer?.pumpStream(outputBuffer, mBufferInfo, isVideo)
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                } finally {
+                                    codec.releaseOutputBuffer(outputIndex, false)
                                 }
-                                codec.releaseOutputBuffer(outputIndex, false)
                             }
                         }
                     }
@@ -210,10 +225,11 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
             if (mRawDataQueue.isEmpty()) {
                 return@let
             }
-            if (gLESRender && isVideo) {
+            val rawData = mRawDataQueue.poll() ?: return@let
+            val data: ByteArray = rawData.data
+            if (processInputData(data) == null) {
                 return@let
             }
-            val rawData = mRawDataQueue.poll() ?: return@let
             val inputIndex = codec.dequeueInputBuffer(TIMES_OUT_US)
             if (inputIndex < 0) {
                 return@let
@@ -223,32 +239,14 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
             } else {
                 codec.getInputBuffer(inputIndex)
             }
-            var data: ByteArray = rawData.data
-            if (isVideo) {
-                val yuv420sp = ByteArray(rawData.size)
-                System.arraycopy(rawData.data, 0, yuv420sp, 0, rawData.size)
-                YUVUtils.nv21ToYuv420sp(yuv420sp, width, height)
-                data = yuv420sp
-            }
             inputBuffer?.clear()
             inputBuffer?.put(data)
             codec.queueInputBuffer(inputIndex, 0, data.size, getPTSUs(data.size), 0)
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "queue mediacodec data, isVideo=$isVideo, len=${data.size}")
-            }
         }
     }
 
-    private fun logSpecialFrame(bufferInfo: MediaCodec.BufferInfo, length: Int) {
-        if (length == 0 || !isVideo) {
-            return
-        }
-        if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_KEY_FRAME) {
-            Logger.i(TAG, "isVideo = $isVideo, Key frame, len = $length")
-        } else if (bufferInfo.flags == MediaCodec.BUFFER_FLAG_CODEC_CONFIG) {
-            Logger.i(TAG, "isVideo = $isVideo, Pps/sps frame, len = $length")
-        }
-    }
+    protected abstract fun processOutputData(bufferInfo: MediaCodec.BufferInfo, encodeData: ByteArray): Pair<IEncodeDataCallBack.DataType, ByteArray>
+    protected abstract fun processInputData(data: ByteArray): ByteArray?
 
     companion object {
         private const val TAG = "AbstractProcessor"
@@ -256,7 +254,7 @@ abstract class AbstractProcessor(private val gLESRender: Boolean = false, privat
         private const val MSG_STOP = 2
         private const val TIMES_OUT_US = 10000L
 
-        const val MAX_QUEUE_SIZE = 10
+        const val MAX_QUEUE_SIZE = 5
     }
 
 }

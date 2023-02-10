@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.jiangdg.ausbc.utils.Utils
  *
  * @author Created by jiangdg on 2022/9/14
  */
-class AudioSystem : IAudio {
+class AudioStrategySystem : IAudioStrategy {
     private val mBufferSize: Int by lazy {
         AudioRecord.getMinBufferSize(
             SAMPLE_RATE,
@@ -38,8 +38,7 @@ class AudioSystem : IAudio {
     override fun initAudioRecord() {
         try {
             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO)
-            mAudioRecord = AudioRecord(
-                AUDIO_RECORD_SOURCE, SAMPLE_RATE,
+            mAudioRecord = AudioRecord(AUDIO_RECORD_SOURCE, SAMPLE_RATE,
                 CHANNEL_IN_CONFIG, AUDIO_FORMAT_16BIT, mBufferSize
             )
             if (Utils.debugCamera) {

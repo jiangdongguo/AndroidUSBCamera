@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ abstract class AbstractRender(context: Context) {
         GLES20.glViewport(0, 0, mWidth, mHeight)
     }
 
-    open fun drawFrame(textureId: Int) {
-        GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1.0f)
+    open fun drawFrame(textureId: Int): Int {
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT or GLES20.GL_COLOR_BUFFER_BIT)
         // 1. 激活程序，绑定纹理
         GLES20.glUseProgram(mProgram)
@@ -80,6 +80,7 @@ abstract class AbstractRender(context: Context) {
         // 3. 绘制
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
         GLES20.glBindTexture(getBindTextureType(), 0)
+        return textureId
     }
 
     protected open fun beforeDraw() {}
@@ -120,6 +121,10 @@ abstract class AbstractRender(context: Context) {
         clear()
         Logger.i(TAG, "release surface texture render success!")
     }
+
+    fun getRenderWidth() = mWidth
+
+    fun getRenderHeight() = mHeight
 
     private fun loadShader(shaderType: Int, source: String): Int {
         val shader = GLES20.glCreateShader(shaderType)
@@ -164,8 +169,7 @@ abstract class AbstractRender(context: Context) {
 
     private fun isGLESStatusError() = GLES20.glGetError() != GLES20.GL_NO_ERROR
 
-    protected fun createTexture(): Int {
-        val textures = IntArray(1)
+    protected fun createTexture(textures: IntArray) {
         GLES20.glGenTextures(1, textures, 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
@@ -173,7 +177,6 @@ abstract class AbstractRender(context: Context) {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
         Logger.i(TAG, "create texture, id = ${textures[0]}")
-        return textures[0]
     }
 
     fun createOESTexture(): Int {

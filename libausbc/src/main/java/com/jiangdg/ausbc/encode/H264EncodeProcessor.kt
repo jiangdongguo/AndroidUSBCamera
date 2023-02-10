@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.view.Surface
+import com.jiangdg.ausbc.MultiCameraClient
+import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.Utils
+import com.jiangdg.natives.YUVUtils
 import java.lang.Exception
 
 /**
@@ -29,25 +31,32 @@ import java.lang.Exception
  * @property width yuv width
  * @property height yuv height
  * @property gLESRender rendered by opengl flag
+ * @property isPortrait phone direction capture
  * @author Created by jiangdg on 2022/2/10
  */
 class H264EncodeProcessor(
     val width: Int,
     val height: Int,
-    private val gLESRender: Boolean = true
-) : AbstractProcessor(gLESRender, width, height) {
-
-    private var mFrameRate: Int? = null
-    private var mBitRate: Int? = null
+    private val gLESRender: Boolean = false,
+    private val isPortrait: Boolean = true
+) : AbstractProcessor() {
     private var mReadyListener: OnEncodeReadyListener? = null
+    private var mPpsSps = ByteArray(0)
 
     override fun getThreadName(): String = TAG
 
     override fun handleStartEncode() {
         try {
-            val mediaFormat = MediaFormat.createVideoFormat(MIME, width, height)
-            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate ?: FRAME_RATE)
-            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate ?: getEncodeBitrate(width, height))
+            val mediaFormat = if (isPortrait) {
+                MediaFormat.createVideoFormat(MIME, height, width)
+            } else {
+                MediaFormat.createVideoFormat(MIME, width, height)
+            }
+            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+            mediaFormat.setInteger(
+                MediaFormat.KEY_BIT_RATE,
+                mBitRate ?: getEncodeBitrate(width, height)
+            )
             mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEY_FRAME_INTERVAL)
             mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, getSupportColorFormat())
             mMediaCodec = MediaCodec.createEncoderByType(MIME)
@@ -57,10 +66,9 @@ class H264EncodeProcessor(
             }
             mMediaCodec?.start()
             mEncodeState.set(true)
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "init h264 media codec success.")
-            }
             doEncodeData()
+            Logger.i(TAG, "init h264 media codec success, bit = ")
+
         } catch (e: Exception) {
             Logger.e(TAG, "start h264 media codec failed, err = ${e.localizedMessage}", e)
         }
@@ -71,9 +79,7 @@ class H264EncodeProcessor(
             mEncodeState.set(false)
             mMediaCodec?.stop()
             mMediaCodec?.release()
-            if (Utils.debugCamera) {
-                Logger.i(TAG, "release h264 media codec success.")
-            }
+            Logger.i(TAG, "release h264 media codec success.")
         } catch (e: Exception) {
             Logger.e(TAG, "Stop mediaCodec failed, err = ${e.localizedMessage}", e)
         } finally {
@@ -83,6 +89,43 @@ class H264EncodeProcessor(
     }
 
     override fun getPTSUs(bufferSize: Int): Long = System.nanoTime() / 1000L
+
+    override fun processOutputData(
+        bufferInfo: MediaCodec.BufferInfo,
+        encodeData: ByteArray
+    ): Pair<IEncodeDataCallBack.DataType, ByteArray> {
+        return when (bufferInfo.flags) {
+            MediaCodec.BUFFER_FLAG_CODEC_CONFIG -> {
+                mPpsSps = encodeData
+                Pair(IEncodeDataCallBack.DataType.H264_SPS, encodeData)
+            }
+            MediaCodec.BUFFER_FLAG_KEY_FRAME -> {
+                val iFrameData = ByteArray(mPpsSps.size + bufferInfo.size)
+                System.arraycopy(mPpsSps, 0, iFrameData, 0, mPpsSps.size)
+                System.arraycopy(encodeData, 0, iFrameData, mPpsSps.size, encodeData.size)
+                Pair(IEncodeDataCallBack.DataType.H264_KEY, iFrameData)
+            }
+            else -> {
+                Pair(IEncodeDataCallBack.DataType.H264, encodeData)
+            }
+        }
+    }
+
+    override fun processInputData(data: ByteArray): ByteArray? {
+        return if (gLESRender) {
+            null
+        } else {
+            data.apply {
+                if (size != width * height * 3 /2) {
+                    return null
+                }
+                if (isPortrait) {
+                    YUVUtils.nativeRotateNV21(data,width, height, 90)
+                }
+                YUVUtils.nv21ToYuv420sp(data, width, height)
+            }
+        }
+    }
 
     /**
      * Set on encode ready listener
@@ -113,15 +156,15 @@ class H264EncodeProcessor(
     }
 
     /**
-     * Set encode rate
-     *
-     * @param bitRate encode bit rate, kpb/s
-     * @param frameRate encode frame rate, fp/s
+     * Get encode width
      */
-    fun setEncodeRate(bitRate: Int?, frameRate: Int?) {
-        this.mBitRate = bitRate
-        this.mFrameRate = frameRate
-    }
+    fun getEncodeWidth() = width
+
+
+    /**
+     * Get encode height
+     */
+    fun getEncodeHeight() = height
 
     /**
      * On encode ready listener
@@ -140,5 +183,9 @@ class H264EncodeProcessor(
         private const val MIME = "video/avc"
         private const val FRAME_RATE = 30
         private const val KEY_FRAME_INTERVAL = 1
+
+        private const val KEY_FRAME = 2
+        private const val OTHER_FRAME = 1
+        private const val PPS_SPS_FRAME = -1
     }
 }

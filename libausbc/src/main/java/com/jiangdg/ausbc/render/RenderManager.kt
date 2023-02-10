@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,16 @@
  */
 package com.jiangdg.ausbc.render
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
-import android.location.Location
-import android.location.LocationManager
 import android.opengl.EGLContext
 import android.os.*
 import android.provider.MediaStore
 import android.view.Surface
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import com.jiangdg.ausbc.callback.ICaptureCallBack
+import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.render.effect.AbstractEffect
 import com.jiangdg.ausbc.render.internal.*
@@ -41,23 +34,32 @@ import com.jiangdg.ausbc.utils.bus.EventBus
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Render manager
  *
- * @property previewWidth camera preview width
- * @property previewHeight camera preview height
+ * @property surfaceWidth camera preview width
+ * @property surfaceHeight camera preview height
  *
  * @param context context
  *
  * @author Created by jiangdg on 2021/12/28
  */
-class RenderManager(context: Context, private val previewWidth: Int, private val previewHeight: Int) :
-    SurfaceTexture.OnFrameAvailableListener, Handler.Callback {
-    private var mTextureId: Int = 0
+class RenderManager(
+    context: Context,
+    private val surfaceWidth: Int,         // render surface width
+    private val surfaceHeight: Int,        // render surface height
+    private val mPreviewDataCbList: CopyOnWriteArrayList<IPreviewDataCallBack>?=null
+) : SurfaceTexture.OnFrameAvailableListener, Handler.Callback {
+    private var mPreviewByteBuffer: ByteBuffer? = null
+    private var mEOSTextureId: Int? = null
     private var mRenderThread: HandlerThread? = null
     private var mRenderHandler: Handler? = null
     private var mRenderCodecThread: HandlerThread? = null
@@ -78,6 +80,9 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     private var mFrameRate = 0
     private var mEndTime: Long = 0L
     private var mStartTime = System.currentTimeMillis()
+    private val mStFuture by lazy {
+        SettableFuture<SurfaceTexture>()
+    }
     private val mMainHandler: Handler by lazy {
         Handler(Looper.getMainLooper())
     }
@@ -95,8 +100,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         this.mCameraRender = CameraRender(context)
         this.mScreenRender = ScreenRender(context)
         this.mCaptureRender = CaptureRender(context)
-        addLifecycleObserver(context)
-
         Logger.i(TAG, "create RenderManager, Open ES version is ${Utils.getGLESVersion(context)}")
     }
 
@@ -106,12 +109,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
      * Note: EGL must be initialized first, otherwise GL cannot run
      */
     override fun handleMessage(msg: Message): Boolean {
-        Utils.getGLESVersion(mContext)?.let { version ->
-            if (version.toFloat() < 2F) {
-                Logger.e(TAG, "OpenGL ES version(${version}) is too lower")
-                return true
-            }
-        }
         when (msg.what) {
             MSG_GL_INIT -> {
                 (msg.obj as Triple<*, *, *>).apply {
@@ -120,10 +117,12 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                     val surface = third as? Surface
                     mScreenRender?.initEGLEvn()
                     mScreenRender?.setupSurface(surface, w, h)
-                    mScreenRender?.eglMakeCurrent()
-                    mCameraRender?.initGLES()
                     mScreenRender?.initGLES()
+                    mCameraRender?.initGLES()
                     mCaptureRender?.initGLES()
+                    mEOSTextureId = mCameraRender?.getCameraTextureId()?.apply {
+                        mStFuture.set(SurfaceTexture(this))
+                    }
                     EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).postMessage(true)
                 }
             }
@@ -157,26 +156,25 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 }
             }
             MSG_GL_DRAW -> {
-                // 将摄像头数据渲染到SurfaceTexture
-                // 同时设置图像的矫正矩阵
+                //Render camera data to SurfaceTexture
+                //Set the correction matrix of the image at the same time
                 mCameraSurfaceTexture?.updateTexImage()
                 mCameraSurfaceTexture?.getTransformMatrix(mTransformMatrix)
                 mCameraRender?.setTransformMatrix(mTransformMatrix)
-                mCameraRender?.drawFrame(mTextureId)
-                // 滤镜、渲染处理
-                mCameraRender?.getFboTextureId()?.let { fboId ->
+                val textureId = mEOSTextureId?.let { mCameraRender?.drawFrame(it) }
+                //Filter FBO and rendering
+                textureId?.let { fboId ->
                     var effectId = fboId
                     mEffectList.forEach { effectRender ->
-                        effectRender.drawFrame(effectId)
-                        effectId = effectRender.getFboTextureId()
+                        effectId = effectRender.drawFrame(effectId)
                     }
                     effectId
                 }?.also { id ->
                     mScreenRender?.drawFrame(id)
                     drawFrame2Capture(id)
                     drawFrame2Codec(id, mCameraSurfaceTexture?.timestamp ?: 0)
-                    mScreenRender?.swapBuffers(mCameraSurfaceTexture?.timestamp ?: 0)
                 }
+                mScreenRender?.swapBuffers(mCameraSurfaceTexture?.timestamp ?: 0)
             }
             MSG_GL_ADD_EFFECT -> {
                 (msg.obj as? AbstractEffect)?.let { effect->
@@ -218,9 +216,24 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
     }
 
     private fun drawFrame2Capture(fboId: Int) {
-        mCaptureRender?.drawFrame(fboId)
-        mCaptureRender?.getFboTextureId()?.let { id->
-            mFBOId = id
+        mCaptureRender?.drawFrame(fboId)?.apply {
+            mFBOId = this
+        }?.also { id ->
+            // opengl preview data, format is rgba
+            val renderWidth = mCaptureRender?.getRenderWidth() ?: mWidth
+            val renderHeight = mCaptureRender?.getRenderHeight() ?: mHeight
+            val rgbaLen = renderWidth * renderHeight * 4
+            mPreviewDataCbList?.forEach { callback ->
+                if (mPreviewByteBuffer==null || mPreviewByteBuffer?.remaining() != rgbaLen) {
+                    mPreviewByteBuffer = ByteBuffer.allocateDirect(rgbaLen)
+                    mPreviewByteBuffer?.order(ByteOrder.LITTLE_ENDIAN)
+                }
+                mPreviewByteBuffer?.let {
+                    it.clear()
+                    GLBitmapUtils.readPixelToByteBuffer(id,renderWidth, renderHeight, mPreviewByteBuffer)
+                    callback.onPreviewData(it.array(),renderWidth, renderHeight, IPreviewDataCallBack.DataFormat.RGBA)
+                }
+            }
         }
     }
 
@@ -233,17 +246,25 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
      * @param listener acquire camera surface texture, see [CameraSurfaceTextureListener]
      */
     fun startRenderScreen(w: Int, h: Int, outSurface: Surface?, listener: CameraSurfaceTextureListener? = null) {
-        if (mCameraSurfaceTexture == null) {
-            mTextureId = mCameraRender?.createOESTexture()!!
-            mCameraSurfaceTexture = SurfaceTexture(mTextureId)
-            mCameraSurfaceTexture?.setOnFrameAvailableListener(this)
-        }
-        listener?.onSurfaceTextureAvailable(mCameraSurfaceTexture)
         mRenderThread = HandlerThread(RENDER_THREAD)
         mRenderThread?.start()
         mRenderHandler = Handler(mRenderThread!!.looper, this@RenderManager)
         Triple(w, h, outSurface).apply {
             mRenderHandler?.obtainMessage(MSG_GL_INIT, this)?.sendToTarget()
+        }
+        // wait camera SurfaceTexture created
+        try {
+            mStFuture.get(3, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            Logger.e(TAG, "wait for creating camera SurfaceTexture failed")
+            null
+        }?.apply {
+            setDefaultBufferSize(w, h)
+            setOnFrameAvailableListener(this@RenderManager)
+            mCameraSurfaceTexture = this
+        }.also {
+            listener?.onSurfaceTextureAvailable(it)
+            Logger.i(TAG, "create camera SurfaceTexture: $it")
         }
         setRenderSize(w, h)
     }
@@ -412,7 +433,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         val path = savePath ?: "$mCameraDir/$displayName"
         val width = mWidth
         val height = mHeight
-        val location = getGpsLocation()
         // 写入文件
         // glReadPixels读取的是大端数据，但是我们保存的是小端
         // 故需要将图片上下颠倒为正
@@ -435,8 +455,8 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
                 Logger.e(TAG, "Failed to write file, err = ${e.localizedMessage}", e)
             }
         }
-        // 判断是否保存成功
-        // 如果成功，则更新图库
+        //Judge whether it is saved successfully
+        //Update gallery if successful
         val file = File(path)
         if (file.length() == 0L) {
             Logger.e(TAG, "Failed to save file $path")
@@ -451,8 +471,6 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
         values.put(MediaStore.Images.ImageColumns.WIDTH, width)
         values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
-        values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
-        values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
         mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
@@ -463,37 +481,12 @@ class RenderManager(context: Context, private val previewWidth: Int, private val
         }
     }
 
-    private fun addLifecycleObserver(context: Context) {
-        if (context !is LifecycleOwner) return
-        context.lifecycle.addObserver(object : LifecycleEventObserver {
-            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-                when (event) {
-                    Lifecycle.Event.ON_DESTROY -> {
-                        stopRenderScreen()
-                    }
-                    else -> {}
-                }
-            }
-        })
-    }
-
-    private fun getGpsLocation(): Location? {
-        mContext.let { ctx->
-            val locationManager = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val locPermission = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION)
-            if (locPermission == PackageManager.PERMISSION_GRANTED) {
-                return locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)
-            }
-        }
-        return null
-    }
-
     private fun emitFrameRate() {
         mFrameRate++
         mEndTime = System.currentTimeMillis()
         if (mEndTime - mStartTime >= 1000) {
             if (Utils.debugCamera) {
-                Logger.i(TAG, "camera render frame rate is $mFrameRate fps")
+                Logger.i(TAG, "camera render frame rate is $mFrameRate fps-->${Thread.currentThread().name}")
             }
             EventBus.with<Int>(BusKey.KEY_FRAME_RATE).postMessage(mFrameRate)
             mStartTime = mEndTime

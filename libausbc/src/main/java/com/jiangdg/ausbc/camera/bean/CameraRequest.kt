@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.jiangdg.ausbc.camera.bean
 
 import androidx.annotation.Keep
+import com.jiangdg.ausbc.render.effect.AbstractEffect
+import com.jiangdg.ausbc.render.env.RotateType
 
 
 /** Camera request parameters
@@ -26,18 +28,19 @@ import androidx.annotation.Keep
 class CameraRequest private constructor() {
     var previewWidth: Int = DEFAULT_WIDTH
     var previewHeight: Int = DEFAULT_HEIGHT
-    var cameraId: String = ""
-    var isFrontCamera: Boolean = false
-    var isContinuousAFModel: Boolean = true
-        private set
-    var isContinuousAEModel: Boolean = true
-        private set
+    var renderMode: RenderMode = RenderMode.OPENGL
+    var isAspectRatioShow: Boolean = false
+    var isRawPreviewData: Boolean = false
+    var isCaptureRawImage: Boolean = false
+    var defaultEffect: AbstractEffect? = null
+    var defaultRotateType: RotateType = RotateType.ANGLE_0
+    var audioSource: AudioSource = AudioSource.SOURCE_AUTO
 
-    override fun toString(): String {
-        return "CameraRequest(previewWidth=$previewWidth, previewHeight=$previewHeight, " +
-                "cameraId='$cameraId', isFrontCamera=$isFrontCamera, " +
-                "isContinuousAFModel=$isContinuousAFModel, isContinuousAEModel=$isContinuousAEModel)"
-    }
+    @kotlin.Deprecated("Deprecated since version 3.3.0")
+    var cameraId: String = ""
+
+    @kotlin.Deprecated("Deprecated since version 3.3.0")
+    var isFrontCamera: Boolean = false
 
     /**
      * Camera request builder
@@ -47,6 +50,18 @@ class CameraRequest private constructor() {
     class Builder {
         private val mRequest by lazy {
             CameraRequest()
+        }
+
+        /**
+         * Set front camera
+         *
+         * @param isFrontCamera front camera flag
+         * @return [Builder]
+         */
+        @kotlin.Deprecated("Deprecated since version 3.3.0")
+        fun setFrontCamera(isFrontCamera: Boolean): Builder {
+            mRequest.isFrontCamera = isFrontCamera
+            return this
         }
 
         /**
@@ -72,57 +87,130 @@ class CameraRequest private constructor() {
         }
 
         /**
-         * Set camera id
+         * Set camera id, not for uvc
          *
          * @param cameraId camera id
-         * @return [Builder]
+         * @return see [Builder]
          */
+        @kotlin.Deprecated("Deprecated since version 3.3.0")
         fun setCameraId(cameraId: String): Builder {
             mRequest.cameraId = cameraId
             return this
         }
 
         /**
-         * Set front camera
+         * Using opengl es render or not
          *
-         * @param isFrontCamera front camera flag
-         * @return [Builder]
+         * @param renderMode default is [RenderMode.OPENGL]
+         * @return see [Builder]
          */
-        fun setFrontCamera(isFrontCamera: Boolean): Builder {
-            mRequest.isFrontCamera = isFrontCamera
+        fun setRenderMode(renderMode: RenderMode): Builder {
+            mRequest.renderMode = renderMode
             return this
         }
 
         /**
-         * Set continuous a f model
+         * Set aspect ratio show
          *
-         * @param isContinuousAF
-         * @return [Builder]
+         * @param isAspectRatioShow  default is false
+         * @return see [Builder]
          */
-        fun setContinuousAFModel(isContinuousAF: Boolean): Builder {
-            mRequest.isContinuousAFModel = isContinuousAF
+        fun setAspectRatioShow(isAspectRatioShow: Boolean): Builder {
+            mRequest.isAspectRatioShow = isAspectRatioShow
             return this
         }
 
         /**
-         * Set continuous auto model
+         * Set should need raw preview data when OpenGL ES render opened
          *
-         * @param isContinuousAuto
-         * @return [Builder]
+         * @param isRawPreviewData default is false
+         * @return see [Builder]
          */
-        fun setContinuousAutoModel(isContinuousAuto: Boolean): Builder {
-            mRequest.isContinuousAEModel = isContinuousAuto
+        fun setRawPreviewData(isRawPreviewData: Boolean): Builder {
+            mRequest.isRawPreviewData = isRawPreviewData
+            return this
+        }
+
+        /**
+         * Capture raw jpeg image when OpenGL ES render opened
+         *  You also should set setRawPreviewData(true) at the same time.
+         *
+         * @param isCaptureRawImage default is false
+         * @return see [Builder]
+         */
+        fun setCaptureRawImage(isCaptureRawImage: Boolean): Builder {
+            mRequest.isCaptureRawImage = isCaptureRawImage
+            return this
+        }
+
+        /**
+         * Set default effect, only OPENGL mode effect
+         *
+         * @param defaultEffect default is null
+         * @return  see [Builder]
+         */
+        fun setDefaultEffect(defaultEffect: AbstractEffect): Builder {
+            mRequest.defaultEffect = defaultEffect
+            return this
+        }
+
+        /**
+         * Set default rotate type, only OPENGL mode useful
+         *
+         * @param defaultRotateType default is [RotateType.ANGLE_0]
+         * @return  see [Builder]
+         */
+        fun setDefaultRotateType(defaultRotateType: RotateType): Builder {
+            mRequest.defaultRotateType = defaultRotateType
+            return this
+        }
+
+        /**
+         * Set audio source
+         *
+         * @param source audio record source, default is [AudioSource.SOURCE_AUTO]
+         * @return see [Builder]
+         */
+        fun setAudioSource(source: AudioSource): Builder {
+            mRequest.audioSource = source
             return this
         }
 
         /**
          * Create a CameraRequest
          *
-         * @return [CameraRequest]
+         * @return see [CameraRequest]
          */
         fun create(): CameraRequest {
             return mRequest
         }
+    }
+
+    /**
+     * Camera render mode
+     *
+     * NORMAL: normal render
+     * OPENGL: opengl es render,default mode.
+     */
+    enum class RenderMode {
+        NORMAL,
+        OPENGL
+    }
+
+    /**
+     * Audio record source
+     *
+     * NONE: not record audio
+     * SOURCE_SYS_MIC: record from system mic
+     * SOURCE_DEV_MIC: record from camera device mic(UAC)
+     * SOURCE_AUTO: record from camera device mic, if unsupported
+     *              switch to system mic.default mode.
+     */
+    enum class AudioSource {
+        NONE,
+        SOURCE_SYS_MIC,
+        SOURCE_DEV_MIC,
+        SOURCE_AUTO
     }
 
     companion object {

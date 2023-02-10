@@ -42,7 +42,11 @@ import kotlin.Exception
 /** UVC Camera usage
  *
  * @author Created by jiangdg on 2021/12/20
+ *
+ * Deprecated since version 3.3.0, and it will be deleted in the future.
+ * I recommend using the [CameraUVC] API for your application.
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
     private var mDevSettableFuture: SettableFuture<UsbDevice?>? = null
     private var mCtrlBlockSettableFuture: SettableFuture<USBMonitor.UsbControlBlock?>? = null
@@ -780,7 +784,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
                 frame.position(0)
                 val data = ByteArray(capacity())
                 get(data)
-                cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
+                cb.onPreviewData(data, getRequest()!!.previewWidth, getRequest()!!.previewHeight,IPreviewDataCallBack.DataFormat.NV21)
                 if (mNV21DataQueue.size >= MAX_NV21_DATA) {
                     mNV21DataQueue.removeLast()
                 }

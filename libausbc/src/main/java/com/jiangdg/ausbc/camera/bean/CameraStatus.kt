@@ -6,6 +6,7 @@ import androidx.annotation.Keep
  *
  * @author Created by jiangdg on 2022/4/5
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 @Keep
 data class CameraStatus(val code: Int, val message: String? = null) {
     companion object {

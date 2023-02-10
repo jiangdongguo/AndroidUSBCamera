@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ abstract class BaseFragment: Fragment() {
     }
 
     open fun isFragmentAttached(): Boolean {
-        return if (null == activity || activity!!.isDestroyed) {
+        return if (null == activity || requireActivity().isDestroyed) {
             false
         } else isAdded && !isDetached
     }

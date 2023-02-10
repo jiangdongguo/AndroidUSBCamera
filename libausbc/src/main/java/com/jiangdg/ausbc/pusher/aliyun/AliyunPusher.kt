@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,42 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.ausbc.camera
+package com.jiangdg.ausbc.pusher.aliyun
 
 import android.content.Context
-import com.jiangdg.ausbc.camera.bean.PreviewSize
+import com.jiangdg.ausbc.pusher.IPusher
+import com.jiangdg.ausbc.pusher.callback.IStateCallback
+import com.jiangdg.ausbc.pusher.config.AusbcConfig
 
-/** CameraX API
+/** Your self pusher engine
  *
- * @author Created by jiangdg on 2021/12/20
+ * @author Created by jiangdg on 2023/1/29
  */
-class CameraxStrategy(ctx: Context): ICameraStrategy(ctx) {
-    override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
+class AliyunPusher: IPusher {
+    override fun init(context: Context?, ausbcConfig: AusbcConfig?, callback: IStateCallback?) {
         TODO("Not yet implemented")
     }
 
-    override fun loadCameraInfo() {
+    override fun start(url: String?) {
         TODO("Not yet implemented")
     }
 
-    override fun startPreviewInternal() {
+    override fun stop() {
         TODO("Not yet implemented")
     }
 
-    override fun stopPreviewInternal() {
+    override fun pause() {
         TODO("Not yet implemented")
     }
 
-    override fun captureImageInternal(savePath: String?) {
+    override fun resume() {
         TODO("Not yet implemented")
     }
 
-    override fun switchCameraInternal(cameraId: String?) {
+    override fun reconnect() {
         TODO("Not yet implemented")
     }
 
-    override fun updateResolutionInternal(width: Int, height: Int) {
+    override fun reconnectUrl(url: String?) {
         TODO("Not yet implemented")
     }
 
+    override fun pushStream(type: Int, data: ByteArray?, size: Int, pts: Long) {
+        TODO("Not yet implemented")
+    }
+
+    override fun destroy() {
+        TODO("Not yet implemented")
+    }
+
+    override fun isPushing(): Boolean {
+        TODO("Not yet implemented")
+    }
 }

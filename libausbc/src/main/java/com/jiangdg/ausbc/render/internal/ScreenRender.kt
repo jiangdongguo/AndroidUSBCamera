@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,6 @@ class ScreenRender(context: Context) : AbstractRender(context) {
 
     fun setupSurface(surface: Surface?, surfaceWidth: Int = 0, surfaceHeight: Int = 0) {
         mEgl?.setupSurface(surface, surfaceWidth, surfaceHeight)
-    }
-
-    fun eglMakeCurrent() {
         mEgl?.eglMakeCurrent()
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package com.jiangdg.ausbc.callback
 
 /** Encode data callback
  *
- *  type = 0  video encode data -> h264
- *  type = 1  audio encode data, aac
- *
  * @author Created by jiangdg on 2022/1/29
  */
 interface IEncodeDataCallBack {
-    fun onEncodeData(data: ByteArray?, size: Int, type: DataType)
-
+    fun onEncodeData(data: ByteArray?, size: Int, type: DataType, timestamp: Long)
     enum class DataType {
-        AAC, H264
+        AAC,       // aac with ADTS
+        H264_KEY,  // H.264, key frame
+        H264_SPS,  // H.264, sps & pps
+        H264       // H.264 not key frame
     }
 }

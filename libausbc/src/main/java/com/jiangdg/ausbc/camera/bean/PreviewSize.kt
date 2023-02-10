@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,4 +20,4 @@ package com.jiangdg.ausbc.camera.bean
  *
  * @author Created by jiangdg on 2021/12/24
  */
-data class PreviewSize(val width: Int = 0, val height: Int = 0)
+data class PreviewSize(val width: Int, val height: Int)

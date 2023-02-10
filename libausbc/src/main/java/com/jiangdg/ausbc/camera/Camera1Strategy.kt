@@ -34,7 +34,11 @@ import kotlin.Exception
 /** Camera1 usage
  *
  * @author Created by jiangdg on 2021/12/20
+ *
+ * Deprecated since version 3.3.0, and it will be deleted in the future.
+ * I recommend using the [CameraUVC] API for your application.
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 @Suppress("DEPRECATION")
 class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallback {
     private var mCamera: Camera? = null
@@ -340,7 +344,7 @@ class Camera1Strategy(ctx: Context) : ICameraStrategy(ctx), Camera.PreviewCallba
                 return
             }
             mPreviewDataCbList.forEach { cb ->
-                cb.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
+                cb.onPreviewData(data, getRequest()!!.previewWidth , getRequest()!!.previewHeight, IPreviewDataCallBack.DataFormat.NV21)
             }
             mCamera?.addCallbackBuffer(data)
         } catch (e: IndexOutOfBoundsException) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jiangdg.ausbc.camera.bean
+package com.jiangdg.ausbc.encode.audio
 
-/** camera 1 info
+import com.jiangdg.ausbc.encode.bean.RawData
+
+/** Audio(pcm) collection context
  *
- * @author Created by jiangdg on 2022/1/27
+ * @author Created by jiangdg on 2022/9/14
  */
-@kotlin.Deprecated("Deprecated since version 3.3.0")
-data class CameraV1Info(override val cameraId: String) : CameraInfo(cameraId) {
-    var cameraType: Int = 0
-
-    override fun toString(): String {
-        return "CameraV1Info(cameraId='$cameraId', " +
-                "cameraType=$cameraType)"
-    }
+interface IAudioStrategy {
+    fun initAudioRecord()
+    fun startRecording()
+    fun stopRecording()
+    fun releaseAudioRecord()
+    fun read(): RawData?
+    fun isRecording(): Boolean
+    fun getSampleRate(): Int
+    fun getAudioFormat(): Int
+    fun getChannelCount(): Int
+    fun getChannelConfig(): Int
 }

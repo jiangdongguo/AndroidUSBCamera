@@ -1,23 +1,24 @@
 /*
- * Copyright 2017-2022 Jiangdg
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2017-2023 Jiangdg
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.jiangdg.ausbc.render.internal
 
 import android.content.Context
 import android.opengl.GLES20
 import com.jiangdg.ausbc.utils.Logger
+import com.jiangdg.ausbc.utils.OpenGLUtils
 
 /** A AbstractRender subclass, also abstract
  *       create a fbo,and draw to it instead of screen.
@@ -28,51 +29,60 @@ import com.jiangdg.ausbc.utils.Logger
  * @author Created by jiangdg on 2021/12/27
  */
 abstract class AbstractFboRender(context: Context) : AbstractRender(context) {
-    private var mFBOTextureId: Int = -1
+    private val mFrameBuffers by lazy {
+        IntArray(1)
+    }
 
-    fun getFboTextureId() = mFBOTextureId
+    // texture id for draw frame
+    // not mFrameBuffers, otherwise will be "clear error 0x502"
+    private val mFBOTextures by lazy {
+        IntArray(1)
+    }
 
-    override fun drawFrame(textureId: Int) {
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFBOTextureId)
+    override fun drawFrame(textureId: Int): Int {
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0])
         super.drawFrame(textureId)
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+        return mFBOTextures[0]
     }
 
     override fun setSize(width: Int, height: Int) {
         super.setSize(width, height)
-        mFBOTextureId = createFBO(width, height)
+        loadFBO(width, height)
     }
 
-    private fun createFBO(width: Int, height: Int): Int {
-        val fboBuffers = IntArray(1)
-        // 1. 创建、绑定FBO
-        GLES20.glGenFramebuffers(1, fboBuffers, 0)
-        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboBuffers[0])
-
-        // 2. 创建FBO（普通）纹理，将其绑定到FBO
-        val fboId = createTexture()
-        GLES20.glFramebufferTexture2D(
-            GLES20.GL_FRAMEBUFFER,
-            GLES20.GL_COLOR_ATTACHMENT0,
-            GLES20.GL_TEXTURE_2D,
-            fboId,
-            0
-        )
-
-        // 3. 设置FBO分配内存的大小
+    private fun loadFBO(width: Int, height: Int) {
+        destroyFrameBuffers()
+        //Create FrameBuffer
+        GLES20.glGenFramebuffers(mFrameBuffers.size, mFrameBuffers, 0)
+        //Texture in FBO
+        createTexture(mFBOTextures)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mFBOTextures[0])
+        //Specifies the format of the output image of the FBO texture RGBA
         GLES20.glTexImage2D(
-            GLES20.GL_TEXTURE_2D, 0,
-            GLES20.GL_RGBA, width, height, 0,
-            GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null
+            GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height,
+            0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null
         )
-        val status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER)
-        if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
-            Logger.e(TAG, "glFramebufferTexture2D err = ${GLES20.glGetError()}")
-        }
-        // 4. 解绑纹理和FBO
+        GLES20.glBindFramebuffer(
+            GLES20.GL_FRAMEBUFFER,
+            mFrameBuffers[0]
+        )
+        OpenGLUtils.checkGlError("glBindFramebuffer")
+        //Bind fbo to 2d texture
+        GLES20.glFramebufferTexture2D(
+            GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D,
+            mFBOTextures[0], 0
+        )
+        OpenGLUtils.checkGlError("glFramebufferTexture2D")
+        //Unbind textures and FrameBuffer
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
-        return fboBuffers[0]
+        Logger.i(TAG, "load fbo, textures: $mFBOTextures, buffers: $mFrameBuffers")
+    }
+
+    private fun destroyFrameBuffers() {
+        GLES20.glDeleteTextures(1, mFBOTextures, 0)
+        GLES20.glDeleteFramebuffers(1, mFrameBuffers, 0)
     }
 
     companion object {

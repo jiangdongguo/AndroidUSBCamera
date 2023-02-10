@@ -1,23 +1,9 @@
-/*
- * Copyright 2017-2022 Jiangdg
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.jiangdg.uac;
 
 import android.text.TextUtils;
+import android.util.Log;
+
 import com.jiangdg.usb.USBMonitor;
-import com.jiangdg.utils.XLogWrapper;
 
 /** usb audio engine
  *
@@ -26,10 +12,14 @@ import com.jiangdg.utils.XLogWrapper;
 public class UACAudio {
     private static final String TAG = "UACAudio";
     private static final String DEFAULT_USBFS = "/dev/bus/usb";
-    // called by native
+    /**
+     * called by native for pcm data callback
+     */
     public UACAudioCallBack mAudioCallBack;
-    private AudioStatus mStatus;
-    // called by native
+    private AudioStatus mStatus = AudioStatus.RELEASED;
+    /**
+     * called by native as file handle
+     */
     private long mNativePtr;
 
     static {
@@ -45,43 +35,43 @@ public class UACAudio {
                     ctrlBlock.getFileDescriptor(),
                     getUSBFSName(ctrlBlock));
         } catch (final Exception e) {
-            XLogWrapper.w(TAG, "initAudio: err = " + e.getMessage());
+            Log.w(TAG, "initAudio: err = " + e.getMessage());
         }
         mStatus = result<0 ? AudioStatus.ERROR : AudioStatus.CREATED;
-        XLogWrapper.i(TAG, "initAudio: " + result+ ", mNativePtr = " +mNativePtr);
+        Log.i(TAG, "initAudio: " + result+ ", mNativePtr = " +mNativePtr);
     }
 
     public void startRecording() {
-        if (mStatus != AudioStatus.CREATED) {
-            XLogWrapper.e(TAG, "startRecording failed: init status error");
+        if (mStatus == AudioStatus.RELEASED) {
+            Log.e(TAG, "startRecording failed: init status error");
             return;
         }
         if (nativeStartRecord(mNativePtr) < 0) {
-            XLogWrapper.e(TAG, "startRecording: start failed");
+            Log.e(TAG, "startRecording: start failed");
             mStatus = AudioStatus.ERROR;
             return;
         }
         mStatus = AudioStatus.RUNNING;
-        XLogWrapper.i(TAG, "startRecording: success");
+        Log.i(TAG, "startRecording: success");
     }
 
     public void stopRecording() {
         if (mStatus != AudioStatus.RUNNING) {
-            XLogWrapper.e(TAG, "stopRecording: not in running");
+            Log.e(TAG, "stopRecording: not in running");
             return;
         }
         if (nativeStopRecord(mNativePtr) < 0) {
-            XLogWrapper.e(TAG, "stopRecording: stop failed.");
+            Log.e(TAG, "stopRecording: stop failed.");
             return;
         }
         mStatus = AudioStatus.STOPPED;
-        XLogWrapper.i(TAG, "stopRecording: success");
+        Log.i(TAG, "stopRecording: success");
     }
 
     public void release() {
         nativeRelease(mNativePtr);
         mStatus = AudioStatus.RELEASED;
-        XLogWrapper.i(TAG, "release: success");
+        Log.i(TAG, "release: success");
     }
 
     public int getSampleRate() {
@@ -129,7 +119,7 @@ public class UACAudio {
             result = sb.toString();
         }
         if (TextUtils.isEmpty(result)) {
-            XLogWrapper.w(TAG, "failed to get USBFS path, try to use default path:" + name);
+            Log.w(TAG, "failed to get USBFS path, try to use default path:" + name);
             result = DEFAULT_USBFS;
         }
         return result;

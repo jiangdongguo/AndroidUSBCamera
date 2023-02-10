@@ -1,44 +1,47 @@
 package com.jiangdg.ausbc
 
-import android.content.ContentValues
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
 import android.os.*
-import android.provider.MediaStore
 import android.view.Surface
-import android.view.SurfaceView
-import android.view.TextureView
 import com.jiangdg.ausbc.callback.*
 import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.encode.AACEncodeProcessor
 import com.jiangdg.ausbc.encode.AbstractProcessor
 import com.jiangdg.ausbc.encode.H264EncodeProcessor
+import com.jiangdg.ausbc.encode.audio.AudioStrategySystem
+import com.jiangdg.ausbc.encode.audio.AudioStrategyUAC
+import com.jiangdg.ausbc.encode.audio.IAudioStrategy
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
+import com.jiangdg.ausbc.render.RenderManager
+import com.jiangdg.ausbc.render.effect.AbstractEffect
+import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.CameraUtils.isFilterDevice
 import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
 import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.MediaUtils
+import com.jiangdg.ausbc.utils.OpenGLUtils
 import com.jiangdg.ausbc.utils.Utils
+import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.usb.*
 import com.jiangdg.usb.DeviceFilter
-import com.jiangdg.uvc.IFrameCallback
 import com.jiangdg.uvc.UVCCamera
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 /** Multi-road camera client
  *
  * @author Created by jiangdg on 2022/7/18
+ *      Modified for v3.3.0 by jiangdg on 2023/1/15
  */
 class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
     private var mUsbMonitor: USBMonitor? = null
@@ -55,7 +58,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onAttach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device = ${device?.toString()}")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -73,7 +76,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDetach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDetach device = ${device?.deviceName}")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -95,7 +98,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 createNew: Boolean
             ) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onConnect device = ${device?.deviceName}")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -113,7 +116,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDisconnect device = ${device?.deviceName}")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -132,7 +135,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onCancel(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onCancel device = ${device?.deviceName}")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -242,81 +245,125 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
 
 
     /**
-     * Create a uvc camera
+     * Camera strategy super class
      *
+     * @property ctx context
      * @property device see [UsbDevice]
-     * @constructor Create camera
+     * @constructor Create camera by inherit it
      */
-    class Camera(private val ctx: Context, private val device: UsbDevice) : Handler.Callback {
-        private var mCameraStateCallback: ICameraStateCallBack? = null
+    abstract class ICamera(val ctx: Context, val device: UsbDevice): Handler.Callback,
+        H264EncodeProcessor.OnEncodeReadyListener {
         private var mMediaMuxer: Mp4Muxer? = null
-        private var mCameraView: Any? = null
-        private var mCameraRequest: CameraRequest? = null
-        private var mPreviewSize: PreviewSize? = null
-        private var isPreviewed: Boolean = false
-        private var mCameraThread: HandlerThread? = null
-        private var mCameraHandler: Handler? = null
-        private var mUvcCamera: UVCCamera? = null
-        private var mPreviewCallback: IPreviewDataCallBack? = null
         private var mEncodeDataCallBack: IEncodeDataCallBack? = null
+        private var mCameraThread: HandlerThread? = null
         private var mAudioProcess: AbstractProcessor? = null
         private var mVideoProcess: AbstractProcessor? = null
-        private var mCtrlBlock: USBMonitor.UsbControlBlock? = null
-        private val mMainHandler: Handler by lazy {
+        private var mRenderManager: RenderManager?  = null
+        private var mCameraView: Any? = null
+        private var mCameraStateCallback: ICameraStateCallBack? = null
+        protected var mContext = ctx
+        protected var mCameraRequest: CameraRequest? = null
+        protected var mCameraHandler: Handler? = null
+        protected var isPreviewed: Boolean = false
+        protected var isNeedGLESRender: Boolean = false
+        protected var mCtrlBlock: USBMonitor.UsbControlBlock? = null
+        protected var mPreviewDataCbList = CopyOnWriteArrayList<IPreviewDataCallBack>()
+        private val mCacheEffectList by lazy {
+            arrayListOf<AbstractEffect>()
+        }
+        protected val mMainHandler: Handler by lazy {
             Handler(Looper.getMainLooper())
         }
-        private val mSaveImageExecutor: ExecutorService by lazy {
-            Executors.newFixedThreadPool(10)
-        }
-        private val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
+        protected val mNV21DataQueue: LinkedBlockingDeque<ByteArray> by lazy {
             LinkedBlockingDeque(MAX_NV21_DATA)
         }
-        private val mDateFormat by lazy {
+        protected val mSaveImageExecutor: ExecutorService by lazy {
+            Executors.newFixedThreadPool(10)
+        }
+        protected val mDateFormat by lazy {
             SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
         }
-        private val mCameraDir by lazy {
+        protected val mCameraDir by lazy {
             "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
-        }
-
-        private val frameCallBack = IFrameCallback { frame ->
-            frame?.apply {
-                frame.position(0)
-                val data = ByteArray(capacity())
-                get(data)
-                mPreviewCallback?.onPreviewData(data, IPreviewDataCallBack.DataFormat.NV21)
-                mPreviewSize?.apply {
-                    // for image
-                    if (mNV21DataQueue.size >= MAX_NV21_DATA) {
-                        mNV21DataQueue.removeLast()
-                    }
-                    mNV21DataQueue.offerFirst(data)
-                    // for video
-                    // avoid preview size changed
-                    if (data.size != width * height * 3 / 2) {
-                        return@IFrameCallback
-                    }
-                    mVideoProcess?.putRawData(RawData(data, data.size))
-                }
-            }
         }
 
         override fun handleMessage(msg: Message): Boolean {
             when (msg.what) {
                 MSG_START_PREVIEW -> {
-                    (msg.obj as Pair<*, *>).apply {
-                        openCameraInternal(first, second as? CameraRequest ?: getDefaultCameraRequest())
+                    val previewWidth = mCameraRequest!!.previewWidth
+                    val previewHeight = mCameraRequest!!.previewHeight
+                    val renderMode = mCameraRequest!!.renderMode
+                    val isRawPreviewData = mCameraRequest!!.isRawPreviewData
+                    when (val cameraView = mCameraView) {
+                        is IAspectRatio -> {
+                            if (mCameraRequest!!.isAspectRatioShow) {
+                                cameraView.setAspectRatio(previewWidth, previewHeight)
+                            }
+                            cameraView
+                        }
+                        else -> {
+                            null
+                        }
+                    }.also { view->
+                        isNeedGLESRender = isGLESRender(renderMode == CameraRequest.RenderMode.OPENGL)
+                        if (! isNeedGLESRender && view != null) {
+                            openCameraInternal(view)
+                            return true
+                        }
+                        // use opengl render
+                        // if surface is null, force off screen render whatever mode
+                        // and use init preview size for render size
+                        mCameraRequest!!.renderMode = CameraRequest.RenderMode.OPENGL
+                        val screenWidth = view?.getSurfaceWidth() ?: previewWidth
+                        val screenHeight = view?.getSurfaceHeight() ?: previewHeight
+                        val surface = view?.getSurface()
+                        val previewCb = if (isRawPreviewData) {
+                            null
+                        } else {
+                            mPreviewDataCbList
+                        }
+                        mRenderManager = RenderManager(ctx, previewWidth, previewHeight, previewCb)
+                        mRenderManager?.startRenderScreen(screenWidth, screenHeight, surface, object : RenderManager.CameraSurfaceTextureListener {
+                            override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture?) {
+                                if (surfaceTexture == null) {
+                                    closeCamera()
+                                    postStateEvent(ICameraStateCallBack.State.ERROR, "create camera surface failed")
+                                    return
+                                }
+                                openCameraInternal(surfaceTexture)
+                            }
+                        })
+                        mRenderManager?.setRotateType(mCameraRequest!!.defaultRotateType)
+                        if (mCacheEffectList.isNotEmpty()) {
+                            mCacheEffectList.forEach { effect ->
+                                mRenderManager?.addRenderEffect(effect)
+                            }
+                            return@also
+                        }
+                        mCameraRequest?.defaultEffect?.apply {
+                            mRenderManager?.addRenderEffect(this)
+                        }
                     }
                 }
                 MSG_STOP_PREVIEW -> {
                     closeCameraInternal()
+                    mRenderManager?.getCacheEffectList()?.apply {
+                        mCacheEffectList.clear()
+                        mCacheEffectList.addAll(this)
+                    }
+                    mRenderManager?.stopRenderScreen()
+                    mRenderManager = null
                 }
                 MSG_CAPTURE_IMAGE -> {
                     (msg.obj as Pair<*, *>).apply {
-                        captureImageInternal(first as? String, second as ICaptureCallBack)
+                        val path = first as? String
+                        val cb = second as ICaptureCallBack
+                        if (isNeedGLESRender && !mCameraRequest!!.isCaptureRawImage) {
+                            mRenderManager?.saveImage(cb, path)
+                            return@apply
+                        }
+                        captureImageInternal(path, second as ICaptureCallBack)
                     }
-                }
-                MSG_SEND_COMMAND -> {
-                    sendCameraCommandInternal(msg.obj as Int)
                 }
                 MSG_CAPTURE_VIDEO_START -> {
                     (msg.obj as Triple<*, *, *>).apply {
@@ -326,377 +373,237 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 MSG_CAPTURE_VIDEO_STOP -> {
                     captureVideoStopInternal()
                 }
+                MSG_CAPTURE_STREAM_START -> {
+                    captureStreamStartInternal()
+                }
+                MSG_CAPTURE_STREAM_STOP -> {
+                    captureStreamStopInternal()
+                }
             }
             return true
         }
 
-        private fun <T> openCameraInternal(cameraView: T, request: CameraRequest) {
-            if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
-                closeCamera()
-                mMainHandler.post {
-                    mCameraStateCallback?.onCameraState(
-                        this,
-                        ICameraStateCallBack.State.ERROR,
-                        "Has no CAMERA permission."
-                    )
-                }
-                Logger.e(TAG ,"open camera failed, need Manifest.permission.CAMERA permission when targetSdk>=28")
-                return
-            }
-            if (mCtrlBlock == null) {
-                closeCamera()
-                mMainHandler.post {
-                    mCameraStateCallback?.onCameraState(
-                        this,
-                        ICameraStateCallBack.State.ERROR,
-                        "Usb control block can not be null "
-                    )
-                }
-                return
-            }
-            // 1. create a UVCCamera
-            try {
-                mUvcCamera = UVCCamera().apply {
-                    open(mCtrlBlock)
-                }
-            } catch (e: Exception) {
-                mMainHandler.post {
-                    mCameraStateCallback?.onCameraState(
-                        this,
-                        ICameraStateCallBack.State.ERROR,
-                        "open camera failed ${e.localizedMessage}"
-                    )
-                }
-                Logger.e(TAG, "open camera failed.", e)
-                closeCamera()
-            }
+        protected abstract fun <T> openCameraInternal(cameraView: T)
+        protected abstract fun closeCameraInternal()
+        protected abstract fun captureImageInternal(savePath: String?, callback: ICaptureCallBack)
 
-            // 2. set preview size and register preview callback
-            try {
-                val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
-                Logger.e(TAG, "getSuitableSize: $previewSize")
-                if (! isPreviewSizeSupported(previewSize)) {
-                    mMainHandler.post {
-                        mCameraStateCallback?.onCameraState(
-                            this,
-                            ICameraStateCallBack.State.ERROR,
-                            "unsupported preview size"
-                        )
-                    }
-                    closeCamera()
-                    Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
-                    return
-                }
-                initEncodeProcessor(previewSize.width, previewSize.height)
-                mPreviewSize = previewSize
-                mUvcCamera?.setPreviewSize(
-                    previewSize.width,
-                    previewSize.height,
-                    MIN_FS,
-                    MAX_FS,
-                    UVCCamera.FRAME_FORMAT_MJPEG,
-                    UVCCamera.DEFAULT_BANDWIDTH
-                )
-            } catch (e: Exception) {
-                try {
-                    val previewSize = getSuitableSize(request.previewWidth, request.previewHeight)
-                    if (! isPreviewSizeSupported(previewSize)) {
-                        mMainHandler.post {
-                            mCameraStateCallback?.onCameraState(
-                                this,
-                                ICameraStateCallBack.State.ERROR,
-                                "unsupported preview size"
-                            )
+        protected open fun getAudioStrategy(): IAudioStrategy? {
+            return when(mCameraRequest?.audioSource) {
+                CameraRequest.AudioSource.SOURCE_AUTO -> {
+                    if (isMicSupported(device) && mCtrlBlock!=null) {
+                        if (Utils.debugCamera) {
+                            Logger.i(TAG, "Audio record by using device internal mic")
                         }
-                        closeCamera()
-                        Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
-                        return
+                        AudioStrategyUAC(mCtrlBlock!!)
+                    } else {
+                        if (Utils.debugCamera) {
+                            Logger.i(TAG, "Audio record by using system mic")
+                        }
+                        AudioStrategySystem()
                     }
-                    Logger.e(TAG, " setPreviewSize failed, try to use yuv format...")
-                    mUvcCamera?.setPreviewSize(
-                        mPreviewSize!!.width,
-                        mPreviewSize!!.height,
-                        MIN_FS,
-                        MAX_FS,
-                        UVCCamera.FRAME_FORMAT_YUYV,
-                        UVCCamera.DEFAULT_BANDWIDTH
-                    )
-                } catch (e: Exception) {
-                    mMainHandler.post {
-                        mCameraStateCallback?.onCameraState(
-                            this,
-                            ICameraStateCallBack.State.ERROR,
-                            e.localizedMessage
-                        )
+                }
+                CameraRequest.AudioSource.SOURCE_DEV_MIC -> {
+                    if (isMicSupported(device) && mCtrlBlock!=null) {
+                        if (Utils.debugCamera) {
+                            Logger.i(TAG, "Audio record by using device internal mic")
+                        }
+                        return AudioStrategyUAC(mCtrlBlock!!)
                     }
-                    closeCamera()
-                    Logger.e(TAG, " setPreviewSize failed, even using yuv format", e)
-                    return
+                    return null
                 }
-            }
-            mUvcCamera?.setFrameCallback(frameCallBack, UVCCamera.PIXEL_FORMAT_YUV420SP)
-            // 3. start preview
-            mCameraView = cameraView ?: mCameraView
-            when(cameraView) {
-                is Surface -> {
-                    mUvcCamera?.setPreviewDisplay(cameraView)
-                }
-                is SurfaceTexture -> {
-                    mUvcCamera?.setPreviewTexture(cameraView)
-                }
-                is SurfaceView -> {
-                    mUvcCamera?.setPreviewDisplay(cameraView.holder)
-                }
-                is TextureView -> {
-                    mUvcCamera?.setPreviewTexture(cameraView.surfaceTexture)
+                CameraRequest.AudioSource.SOURCE_SYS_MIC -> {
+                    if (Utils.debugCamera) {
+                        Logger.i(TAG, "Audio record by using system mic")
+                    }
+                    AudioStrategySystem()
                 }
                 else -> {
-                    throw IllegalStateException("Only support Surface or SurfaceTexture or SurfaceView or TextureView or GLSurfaceView--$cameraView")
+                    null
                 }
-            }
-            mUvcCamera?.autoFocus = true
-            mUvcCamera?.autoWhiteBlance = true
-            mUvcCamera?.startPreview()
-            mUvcCamera?.updateCameraParams()
-            isPreviewed = true
-            mMainHandler.post {
-                mCameraStateCallback?.onCameraState(this, ICameraStateCallBack.State.OPENED)
-            }
-            if (Utils.debugCamera) {
-                Logger.i(TAG, " start preview, name = ${device.deviceName}, preview=$mPreviewSize")
             }
         }
 
-        private fun closeCameraInternal() {
-            isPreviewed = false
+        /**
+         * should use opengl, recommend
+         *
+         * @return default depend on device opengl version, >=2.0 is true
+         */
+        private fun isGLESRender(isGlesRenderOpen: Boolean): Boolean =isGlesRenderOpen && OpenGLUtils.isGlEsSupported(ctx)
+
+        /**
+         * Init encode processor
+         *
+         * @param previewWidth camera opened preview width
+         * @param previewHeight camera opened preview height
+         */
+        protected fun initEncodeProcessor(previewWidth: Int, previewHeight: Int) {
             releaseEncodeProcessor()
-            mUvcCamera?.destroy()
-            mUvcCamera = null
-            mMainHandler.post {
-                mCameraStateCallback?.onCameraState(this, ICameraStateCallBack.State.CLOSED)
+            // create audio process
+            getAudioStrategy()?.let { audio->
+                AACEncodeProcessor(audio)
+            }?.also { processor ->
+                mAudioProcess = processor
             }
-            if (Utils.debugCamera) {
-                Logger.i(TAG, " stop preview, name = ${device.deviceName}, preview=$mPreviewSize")
-            }
-        }
-
-        private fun captureImageInternal(savePath: String?, callback: ICaptureCallBack) {
-            mSaveImageExecutor.submit {
-                if (! CameraUtils.hasStoragePermission(ctx)) {
-                    mMainHandler.post { callback.onError("have no storage permission") }
-                    Logger.e(TAG ,"open camera failed, have no storage permission")
-                    return@submit
-                }
-                if (! isPreviewed || mPreviewSize == null) {
-                    mMainHandler.post { callback.onError("camera not previewing") }
-                    Logger.i(TAG, "captureImageInternal failed, camera not previewing")
-                    return@submit
-                }
-                val data = mNV21DataQueue.pollFirst(CAPTURE_TIMES_OUT_SEC, TimeUnit.SECONDS)
-                if (data == null) {
-                    mMainHandler.post { callback.onError("Times out") }
-                    Logger.i(TAG, "captureImageInternal failed, times out.")
-                    return@submit
-                }
-                mMainHandler.post { callback.onBegin() }
-                val date = mDateFormat.format(System.currentTimeMillis())
-                val title = savePath ?: "IMG_AUSBC_$date"
-                val displayName = savePath ?: "$title.jpg"
-                val path = savePath ?: "$mCameraDir/$displayName"
-                val location = Utils.getGpsLocation(ctx)
-                val width = mPreviewSize!!.width
-                val height = mPreviewSize!!.height
-                val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
-                if (! ret) {
-                    val file = File(path)
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                    mMainHandler.post { callback.onError("save yuv to jpeg failed.") }
-                    Logger.w(TAG, "save yuv to jpeg failed.")
-                    return@submit
-                }
-                val values = ContentValues()
-                values.put(MediaStore.Images.ImageColumns.TITLE, title)
-                values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-                values.put(MediaStore.Images.ImageColumns.DATA, path)
-                values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-                values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
-                values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
-                ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                mMainHandler.post { callback.onComplete(path) }
-                if (Utils.debugCamera) { Logger.i(TAG, "captureImageInternal save path = $path") }
+            // create video process
+            mContext.resources.configuration.orientation.let { orientation ->
+                orientation == Configuration.ORIENTATION_PORTRAIT
+            }.also { isPortrait ->
+                mVideoProcess = H264EncodeProcessor(previewWidth, previewHeight, isNeedGLESRender, isPortrait)
             }
         }
 
-        private fun sendCameraCommandInternal(command: Int) {
-            mUvcCamera?.sendCommand(command)
-        }
-
-        private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
-            if (! CameraUtils.hasStoragePermission(ctx) || ! CameraUtils.hasAudioPermission(ctx)) {
-                mMainHandler.post {
-                    callBack.onError("have no storage or audio permission")
-                }
-                Logger.e(TAG ,"open camera failed, have no storage and audio permission")
-                return
-            }
-            mMediaMuxer = Mp4Muxer(ctx, callBack, path, durationInSec)
-            (mVideoProcess as? H264EncodeProcessor)?.apply {
-                startEncode()
-                setMp4Muxer(mMediaMuxer!!, true)
-                addEncodeDataCallBack(mEncodeDataCallBack)
-            }
-            (mAudioProcess as? AACEncodeProcessor)?.apply {
-                startEncode()
-                setMp4Muxer(mMediaMuxer!!, false)
-                addEncodeDataCallBack(mEncodeDataCallBack)
-            }
-        }
-
-        private fun captureVideoStopInternal() {
-            mMediaMuxer?.release()
+        /**
+         * Release encode processor
+         */
+        protected fun releaseEncodeProcessor() {
             mVideoProcess?.stopEncode()
             mAudioProcess?.stopEncode()
-            mMediaMuxer = null
+            mVideoProcess = null
+            mAudioProcess = null
         }
 
         /**
-         * Set auto focus
+         * Put video data
          *
-         * @param enable true enable auto focus
+         * @param data NV21 raw data
          */
-        fun setAutoFocus(enable: Boolean) {
-            mUvcCamera?.autoFocus = enable
+        protected fun putVideoData(data: ByteArray) {
+            mVideoProcess?.putRawData(RawData(data, data.size))
         }
 
         /**
-         * Set auto white balance
+         * Start rec mp3
          *
-         * @param autoWhiteBalance true enable auto white balance
+         * @param mp3Path  mp3 save path
+         * @param callBack record status, see [ICaptureCallBack]
          */
-        fun setAutoWhiteBalance(autoWhiteBalance: Boolean) {
-            mUvcCamera?.autoWhiteBlance = autoWhiteBalance
+        fun captureAudioStart(callBack: ICaptureCallBack, mp3Path: String?=null) {
+            if (! CameraUtils.hasAudioPermission(mContext)) {
+                callBack.onError("Has no audio permission")
+                return
+            }
+            if (! CameraUtils.hasStoragePermission(mContext)) {
+                callBack.onError("Has no storage permission")
+                return
+            }
+            val path = if (mp3Path.isNullOrEmpty()) {
+                "${mContext.getExternalFilesDir(null)?.path}/${System.currentTimeMillis()}.mp3"
+            } else {
+                mp3Path
+            }
+            (mAudioProcess as? AACEncodeProcessor)?.recordMp3Start(path, callBack)
         }
 
         /**
-         * Set zoom
-         *
-         * @param zoom zoom value, 0 means reset
+         * Stop rec mp3
          */
-        fun setZoom(zoom: Int) {
-            mUvcCamera?.zoom = zoom
+        fun captureAudioStop() {
+            (mAudioProcess as? AACEncodeProcessor)?.recordMp3Stop()
         }
 
         /**
-         * Get zoom
-         */
-        fun getZoom() = mUvcCamera?.zoom
-
-        /**
-         * Set gain
+         * Start play mic
          *
-         * @param gain gain value, 0 means reset
+         * @param callBack play mic status in real-time, see [IPlayCallBack]
          */
-        fun setGain(gain: Int) {
-            mUvcCamera?.gain = gain
+        fun startPlayMic(callBack: IPlayCallBack?) {
+            if (! CameraUtils.hasAudioPermission(mContext)) {
+                callBack?.onError("Has no audio permission")
+                return
+            }
+            (mAudioProcess as? AACEncodeProcessor)?.playAudioStart(callBack)
         }
 
         /**
-         * Get gain
+         * Stop play mic
          */
-        fun getGain() = mUvcCamera?.gain
-
-        /**
-         * Set gamma
-         *
-         * @param gamma gamma value, 0 means reset
-         */
-        fun setGamma(gamma: Int) {
-            mUvcCamera?.gamma = gamma
+        fun stopPlayMic() {
+            (mAudioProcess as? AACEncodeProcessor)?.playAudioStop()
         }
 
         /**
-         * Get gamma
-         */
-        fun getGamma() = mUvcCamera?.gamma
-
-        /**
-         * Set brightness
+         * Rotate camera render angle
          *
-         * @param brightness brightness value, 0 means reset
+         * @param type rotate angle, null means rotating nothing
+         * see [RotateType.ANGLE_90], [RotateType.ANGLE_270],...etc.
          */
-        fun setBrightness(brightness: Int) {
-            mUvcCamera?.brightness = brightness
+        fun setRotateType(type: RotateType?) {
+            mRenderManager?.setRotateType(type)
         }
 
         /**
-         * Get brightness
-         */
-        fun getBrightness() = mUvcCamera?.brightness
-
-        /**
-         * Set contrast
+         * Set render size
          *
-         * @param contrast contrast value, 0 means reset
+         * @param width surface width
+         * @param height surface height
          */
-        fun setContrast(contrast: Int) {
-            mUvcCamera?.contrast = contrast
+        fun setRenderSize(width: Int, height: Int) {
+            mRenderManager?.setRenderSize(width, height)
         }
 
         /**
-         * Get contrast
-         */
-        fun getContrast() = mUvcCamera?.contrast
-
-        /**
-         * Set sharpness
+         * Add render effect.There is only one setting in the same category
+         * <p>
+         * The default effects:
+         * @see [com.jiangdg.ausbc.render.effect.EffectBlackWhite]
+         * @see [com.jiangdg.ausbc.render.effect.EffectZoom]
+         * @see [com.jiangdg.ausbc.render.effect.EffectSoul]
+         * <p>
+         * Of course, you can also realize a custom effect by extending from [AbstractEffect]
          *
-         * @param sharpness sharpness value, 0 means reset
+         * @param effect a effect
          */
-        fun setSharpness(sharpness: Int) {
-            mUvcCamera?.sharpness = sharpness
+        fun addRenderEffect(effect: AbstractEffect) {
+            mRenderManager?.addRenderEffect(effect)
         }
 
         /**
-         * Get sharpness
-         */
-        fun getSharpness() = mUvcCamera?.sharpness
-
-        /**
-         * Set saturation
+         * Remove render effect
          *
-         * @param saturation saturation value, 0 means reset
+         * @param effect a effect, extending from [AbstractEffect]
          */
-        fun setSaturation(saturation: Int) {
-            mUvcCamera?.saturation = saturation
+        fun removeRenderEffect(effect: AbstractEffect) {
+            val defaultId =  mCameraRequest?.defaultEffect?.getId()
+            if (effect.getId() == defaultId) {
+                mCameraRequest?.defaultEffect = null
+            }
+            mRenderManager?.removeRenderEffect(effect)
         }
 
         /**
-         * Get saturation
+         * Get default effect
+         *
+         * @return  default effect, extending from [AbstractEffect]
          */
-        fun getSaturation() = mUvcCamera?.saturation
+        fun getDefaultEffect() = mCameraRequest?.defaultEffect
 
         /**
-         * Set hue
+         * Update render effect
          *
-         * @param hue hue value, 0 means reset
+         * @param classifyId effect classify id
+         * @param effect new effect, null means set none
          */
-        fun setHue(hue: Int) {
-            mUvcCamera?.hue = hue
+        fun updateRenderEffect(classifyId: Int, effect: AbstractEffect?) {
+            mRenderManager?.getCacheEffectList()?.find {
+                it.getClassifyId() == classifyId
+            }?.also {
+                removeRenderEffect(it)
+            }
+            effect ?: return
+            addRenderEffect(effect)
         }
 
         /**
-         * Get hue
-         */
-        fun getHue() = mUvcCamera?.hue
-
-        /**
-         * Get real preview size
+         * Post camera state to main thread
          *
-         * @return see [PreviewSize]
+         * @param state see [ICameraStateCallBack.State]
+         * @param msg detail msg
          */
-        fun getPreviewSize() = mPreviewSize
+        protected fun postStateEvent(state: ICameraStateCallBack.State, msg: String? = null) {
+            mMainHandler.post {
+                mCameraStateCallback?.onCameraState(this, state, msg)
+            }
+        }
 
         /**
          * Set usb control block, when the uvc device was granted permission
@@ -708,13 +615,27 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         /**
-         * Set camera state call back
+         * Get usb device information
          *
-         * @param callback camera be opened or closed
+         * @return see [UsbDevice]
          */
-        fun setCameraStateCallBack(callback: ICameraStateCallBack) {
-            mCameraStateCallback = callback
-        }
+        fun getUsbDevice() = device
+
+        /**
+         * Is mic supported
+         *
+         * @return true camera support mic
+         */
+        fun isMicSupported(device: UsbDevice?) = CameraUtils.isCameraContainsMic(device)
+
+
+        /**
+         * Get all preview sizes
+         *
+         * @param aspectRatio aspect ratio
+         * @return [PreviewSize] list of camera
+         */
+        abstract fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize>
 
         /**
          * Open camera
@@ -723,15 +644,18 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          *                      or SurfaceView or TextureView or GLSurfaceView
          * @param cameraRequest camera request
          */
-        fun openCamera(cameraView: Any? = null, cameraRequest: CameraRequest? = null) {
+        fun <T> openCamera(cameraView: T? = null, cameraRequest: CameraRequest? = null) {
+            mCameraView = cameraView ?: mCameraView
             mCameraRequest = cameraRequest ?: getDefaultCameraRequest()
-            val thread = HandlerThread("${device.deviceName}-${device.deviceId}").apply {
+            HandlerThread("camera-${System.currentTimeMillis()}").apply {
                 start()
+            }.let { thread ->
+                this.mCameraThread = thread
+                thread
             }.also {
                 mCameraHandler = Handler(it.looper, this)
-                mCameraHandler?.obtainMessage(MSG_START_PREVIEW, Pair(cameraView, mCameraRequest))?.sendToTarget()
+                mCameraHandler?.obtainMessage(MSG_START_PREVIEW)?.sendToTarget()
             }
-            this.mCameraThread = thread
         }
 
         /**
@@ -791,12 +715,18 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         /**
-         * Send camera command
-         *
-         * This method cannot be verified, please use it with caution
+         * Capture stream start
+         *  Getting H.264 and AAC stream
          */
-        fun sendCameraCommand(command: Int) {
-            mCameraHandler?.obtainMessage(MSG_SEND_COMMAND, command)?.sendToTarget()
+        fun captureStreamStart() {
+            mCameraHandler?.obtainMessage(MSG_CAPTURE_STREAM_START)?.sendToTarget()
+        }
+
+        /**
+         * Capture stream stop
+         */
+        fun captureStreamStop() {
+            mCameraHandler?.obtainMessage(MSG_CAPTURE_STREAM_STOP)?.sendToTarget()
         }
 
         /**
@@ -811,7 +741,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 Logger.w(TAG, "updateResolution failed, please open camera first.")
                 return
             }
-            if (mVideoProcess?.isEncoding() == true) {
+            if (isStreaming() || isRecording()) {
                 Logger.e(TAG, "updateResolution failed, video recording...")
                 return
             }
@@ -830,93 +760,47 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         }
 
         /**
-         * Is mic supported
+         * Set camera state call back
          *
-         * @return true camera support mic
+         * @param callback camera be opened or closed
          */
-        fun isMicSupported() = CameraUtils.isCameraContainsMic(device)
+        fun setCameraStateCallBack(callback: ICameraStateCallBack?) {
+            this.mCameraStateCallback = callback
+        }
 
         /**
-         * Is record video
-         */
-        fun isRecordVideo() = mVideoProcess?.isEncoding() == true
-
-        /**
-         * Add encode data call back
+         * set encode data call back
          *
          * @param callBack camera encoded data call back, see [IEncodeDataCallBack]
          */
-        fun addEncodeDataCallBack(callBack: IEncodeDataCallBack) {
+        fun setEncodeDataCallBack(callBack: IEncodeDataCallBack?) {
             this.mEncodeDataCallBack = callBack
         }
 
         /**
-         * Add preview raw data call back
-         *
-         * @param callBack camera preview data call back, see [IPreviewDataCallBack]
+         * Add preview data call back
+         * @param callBack preview data call back
          */
         fun addPreviewDataCallBack(callBack: IPreviewDataCallBack) {
-            this.mPreviewCallback = callBack
-        }
-
-        /**
-         * Get usb device information
-         *
-         * @return see [UsbDevice]
-         */
-        fun getUsbDevice() = device
-
-        /**
-         * Get all preview sizes
-         *
-         * @param aspectRatio aspect ratio
-         * @return [PreviewSize] list of camera
-         */
-        fun getAllPreviewSizes(aspectRatio: Double? = null): MutableList<PreviewSize> {
-            val previewSizeList = arrayListOf<PreviewSize>()
-            if (mUvcCamera?.supportedSizeList?.isNotEmpty() == true) {
-                mUvcCamera?.supportedSizeList
-            }  else {
-                mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
-            }.also { sizeList ->
-                sizeList?.forEach { size ->
-                    val width = size.width
-                    val height = size.height
-                    val ratio = width.toDouble() / height
-                    if (aspectRatio == null || aspectRatio == ratio) {
-                        previewSizeList.add(PreviewSize(width, height))
-                    }
-                }
+            if (mPreviewDataCbList.contains(callBack)) {
+                return
             }
-            if (Utils.debugCamera)
-                Logger.i(TAG, "aspect ratio = $aspectRatio, getAllPreviewSizes = $previewSizeList, ")
-            return previewSizeList
+            mPreviewDataCbList.add(callBack)
         }
 
-        private fun initEncodeProcessor(previewWidth: Int, previewHeight: Int) {
-            releaseEncodeProcessor()
-            mAudioProcess = AACEncodeProcessor(if (isMicSupported()) {
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "Audio record by using device internal mic")
-                }
-                mCtrlBlock
-            } else {
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "Audio record by using system mic")
-                }
-                null
-            })
-            mVideoProcess = H264EncodeProcessor(previewWidth, previewHeight, false)
+        /**
+         * Remove preview data call back
+         *
+         * @param callBack preview data call back
+         */
+        fun removePreviewDataCallBack(callBack: IPreviewDataCallBack) {
+            if (! mPreviewDataCbList.contains(callBack)) {
+                return
+            }
+            mPreviewDataCbList.remove(callBack)
         }
 
-        private fun releaseEncodeProcessor() {
-            mVideoProcess?.stopEncode()
-            mAudioProcess?.stopEncode()
-            mVideoProcess = null
-            mAudioProcess = null
-        }
-
-        private fun getSuitableSize(maxWidth: Int, maxHeight: Int): PreviewSize {
+        fun getSuitableSize(maxWidth: Int, maxHeight: Int): PreviewSize {
             val sizeList = getAllPreviewSizes()
             if (sizeList.isNullOrEmpty()) {
                 return PreviewSize(DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT)
@@ -958,34 +842,112 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             return closetSize
         }
 
-        private fun isPreviewSizeSupported(previewSize: PreviewSize): Boolean {
+        fun isPreviewSizeSupported(previewSize: PreviewSize): Boolean {
             return getAllPreviewSizes().find {
                 it.width == previewSize.width && it.height == previewSize.height
             } != null
         }
 
+        fun isRecording() = mMediaMuxer?.isMuxerStarter() == true
+
+        fun isStreaming() = mVideoProcess?.isEncoding() == true || mAudioProcess?.isEncoding() == true
+
+        private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
+            if (! isCameraOpened()) {
+                Logger.e(TAG ,"capture video failed, camera not opened")
+                return
+            }
+            if (isRecording()) {
+                Logger.w(TAG, "capturing video already running")
+                return
+            }
+            captureStreamStartInternal()
+            Mp4Muxer(callBack, path, durationInSec, mAudioProcess==null).apply {
+                mVideoProcess?.setMp4Muxer(this, true)
+                mAudioProcess?.setMp4Muxer(this, false)
+            }.also { muxer ->
+                mMediaMuxer = muxer
+            }
+            Logger.i(TAG, "capturing video start")
+        }
+
+        private fun captureVideoStopInternal() {
+            captureStreamStopInternal()
+            mMediaMuxer?.release()
+            mMediaMuxer = null
+            Logger.i(TAG, "capturing video stop")
+        }
+
+        private fun captureStreamStartInternal() {
+            if (! isCameraOpened()) {
+                Logger.e(TAG ,"capture stream failed, camera not opened")
+                return
+            }
+            if (isStreaming()) {
+                Logger.w(TAG, "capturing stream already running")
+                return
+            }
+            (mVideoProcess as? H264EncodeProcessor)?.apply {
+                if (mVideoProcess?.isEncoding() == true) {
+                    return@apply
+                }
+                startEncode()
+                setEncodeDataCallBack(mEncodeDataCallBack)
+                setOnEncodeReadyListener(this@ICamera)
+            }
+            (mAudioProcess as? AACEncodeProcessor)?.apply {
+                if (mAudioProcess?.isEncoding() == true) {
+                    return@apply
+                }
+                startEncode()
+                setEncodeDataCallBack(mEncodeDataCallBack)
+            }
+            Logger.i(TAG, "capturing stream start")
+        }
+
+        private fun captureStreamStopInternal() {
+            mRenderManager?.stopRenderCodec()
+            (mVideoProcess as? H264EncodeProcessor)?.apply {
+                stopEncode()
+                setEncodeDataCallBack(null)
+            }
+            (mAudioProcess as? AACEncodeProcessor)?.apply {
+                stopEncode()
+                setEncodeDataCallBack(null)
+            }
+            Logger.i(TAG, "capturing stream stop")
+        }
+
+        override fun onReady(surface: Surface?) {
+            if (surface == null) {
+                Logger.e(TAG, "start encode failed, input surface is null")
+                return
+            }
+            mCameraRequest?.apply {
+                mRenderManager?.startRenderCodec(surface, previewWidth, previewHeight)
+            }
+        }
 
         private fun getDefaultCameraRequest(): CameraRequest {
             return CameraRequest.Builder()
-                .setPreviewWidth(640)
-                .setPreviewHeight(480)
+                .setPreviewWidth(1280)
+                .setPreviewHeight(720)
                 .create()
         }
     }
 
     companion object {
         private const val TAG = "MultiCameraClient"
-        private const val MIN_FS = 10
-        private const val MAX_FS = 60
         private const val MSG_START_PREVIEW = 0x01
         private const val MSG_STOP_PREVIEW = 0x02
         private const val MSG_CAPTURE_IMAGE = 0x03
         private const val MSG_CAPTURE_VIDEO_START = 0x04
         private const val MSG_CAPTURE_VIDEO_STOP = 0x05
-        private const val MSG_SEND_COMMAND = 0x06
+        private const val MSG_CAPTURE_STREAM_START = 0x06
+        private const val MSG_CAPTURE_STREAM_STOP = 0x07
         private const val DEFAULT_PREVIEW_WIDTH = 640
         private const val DEFAULT_PREVIEW_HEIGHT = 480
-        private const val MAX_NV21_DATA = 5
-        private const val CAPTURE_TIMES_OUT_SEC = 3L
+        const val MAX_NV21_DATA = 5
+        const val CAPTURE_TIMES_OUT_SEC = 3L
     }
 }

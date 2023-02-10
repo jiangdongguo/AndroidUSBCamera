@@ -1,28 +1,11 @@
-/*
- * Copyright 2017-2022 Jiangdg
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.jiangdg.uac;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-
-import androidx.annotation.NonNull;
+import android.util.Log;
 
 import com.jiangdg.usb.USBMonitor;
-import com.jiangdg.utils.XLogWrapper;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -117,6 +100,9 @@ public class UACAudioHandler extends Handler {
         if (callBack == null || isReleased()) {
             return;
         }
+        if (thread.mCallBackList.contains(callBack)) {
+            return;
+        }
         thread.mCallBackList.add(callBack);
     }
 
@@ -125,14 +111,17 @@ public class UACAudioHandler extends Handler {
         if (callBack == null || isReleased()) {
             return;
         }
+        if (! thread.mCallBackList.contains(callBack)) {
+            return;
+        }
         thread.mCallBackList.remove(callBack);
     }
 
     @Override
-    public void handleMessage(@NonNull Message msg) {
+    public void handleMessage(Message msg) {
         final AudioThread thread = mThreadWf.get();
         if (thread == null) {
-            XLogWrapper.w(TAG, "handleMessage: err, thread is null");
+            Log.w(TAG, "handleMessage: err, thread is null");
             return;
         }
         switch (msg.what) {
@@ -168,7 +157,7 @@ public class UACAudioHandler extends Handler {
      */
     public static  class AudioThread extends Thread {
         private final static String TAG = "AudioThread";
-        private final static long TIMES_OUT_MS = 3000;
+        private final static long TIMES_OUT_MS = 1500;
         private final Object mSync = new Object();
         private final USBMonitor.UsbControlBlock mCtrlBlock;
         private final Class<UACAudioHandler> mHandlerClass;
@@ -183,35 +172,38 @@ public class UACAudioHandler extends Handler {
         }
 
         public void handleInitAudioRecord() {
-            XLogWrapper.i(TAG, "handleInitAudioRecord:");
-            mUACAudio = new UACAudio();
-            mUACAudio.init(mCtrlBlock);
-            mUACAudio.addAudioCallBack(this::callOnDataCallBack);
             synchronized (mSync) {
+                if (isRecording()) {
+                    return;
+                }
+                mUACAudio = new UACAudio();
+                mUACAudio.init(mCtrlBlock);
+                mUACAudio.addAudioCallBack(this::callOnDataCallBack);
                 mSync.notifyAll();
             }
-            XLogWrapper.i(TAG, "handleInitAudioRecord: Finished");
+            Log.i(TAG, "handleInitAudioRecord");
         }
 
         public void handleStartRecording() {
             if (mUACAudio == null) {
-                XLogWrapper.e(TAG, "handleStartRecording failed, you should call initAudioRecord first");
+                Log.e(TAG, "handleStartRecording failed, you should call initAudioRecord first");
                 return;
             }
             mUACAudio.startRecording();
-            XLogWrapper.i(TAG, "handleStartRecording");
+            Log.i(TAG, "handleStartRecording");
         }
 
         public void handleStopRecording() {
             if (mUACAudio == null) {
-                XLogWrapper.e(TAG, "handleStopRecording failed, you should call initAudioRecord first");
+                Log.e(TAG, "handleStopRecording failed, you should call initAudioRecord first");
                 return;
             }
             mUACAudio.stopRecording();
-            XLogWrapper.i(TAG, "handleStopRecording");
+            Log.i(TAG, "handleStopRecording");
         }
 
         public void handleReleaseAudioRecord() {
+            handleStopRecording();
             if (mUACAudio != null) {
                 mUACAudio.release();
                 mUACAudio = null;
@@ -224,14 +216,14 @@ public class UACAudioHandler extends Handler {
             if (looper != null) {
                 looper.quit();
             }
-            XLogWrapper.i(TAG, "handleReleaseAudioRecord");
+            Log.i(TAG, "handleReleaseAudioRecord");
         }
 
         public int getSampleRate() {
             synchronized (mSync) {
                 if (mUACAudio == null) {
                     try {
-                        mSync.wait();
+                        mSync.wait(TIMES_OUT_MS);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -299,14 +291,14 @@ public class UACAudioHandler extends Handler {
 
         @Override
         public void run() {
-            XLogWrapper.i(TAG, "Audio thread start");
+            Log.i(TAG, "Audio thread start");
             Looper.prepare();
             UACAudioHandler uacHandler = null;
             try {
                 Constructor<UACAudioHandler> constructor = mHandlerClass.getDeclaredConstructor(AudioThread.class);
                 uacHandler = constructor.newInstance(this);
             } catch (Exception e) {
-                XLogWrapper.e(TAG, "UACAudioHandler new failed, " + e.getMessage());
+                Log.e(TAG, "UACAudioHandler new failed, " + e.getMessage());
             }
             if (uacHandler != null) {
                 synchronized (mSync) {
@@ -323,21 +315,21 @@ public class UACAudioHandler extends Handler {
                 mUACHandler = null;
                 mSync.notifyAll();
             }
-            XLogWrapper.i(TAG, "Audio thread stop");
+            Log.i(TAG, "Audio thread stop");
         }
 
         public UACAudioHandler getHandler() {
+            Log.i(TAG, "getHandler: ");
             synchronized (mSync) {
                 if (mUACHandler == null) {
                     try {
                         mSync.wait(TIMES_OUT_MS);
                     } catch (InterruptedException e) {
-                        XLogWrapper.e(TAG, "getHandler: failed, " + e.getMessage());
+                        Log.e(TAG, "getHandler: failed, " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
             }
-            XLogWrapper.i(TAG, "getHandler: " + mUACHandler);
             return mUACHandler;
         }
 
@@ -346,7 +338,7 @@ public class UACAudioHandler extends Handler {
                 try {
                     callBack.pcmData(pcm);
                 } catch (Exception e) {
-                    mCallBackList.remove(callBack);
+                    e.printStackTrace();
                 }
             }
         }

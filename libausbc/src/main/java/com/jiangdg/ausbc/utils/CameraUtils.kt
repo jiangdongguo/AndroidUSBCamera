@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
-import android.hardware.usb.UsbManager
+import android.media.Image
 import androidx.core.content.ContextCompat
 import com.jiangdg.ausbc.R
 import com.jiangdg.usb.DeviceFilter
@@ -15,6 +15,36 @@ import com.jiangdg.usb.DeviceFilter
  * @author Created by jiangdg on 2022/7/19
  */
 object CameraUtils {
+
+    fun transferYUV420ToNV21(image: Image, width: Int, height: Int): ByteArray {
+        val nv21 = ByteArray(width * height * 3 / 2)
+        val planes = image.planes
+        // Y通道
+        val yBuffer = planes[0].buffer
+        val yLen = width * height
+        yBuffer.get(nv21, 0, yLen)
+        // V通道
+        val vBuffer = planes[2].buffer
+        val vPixelStride = planes[2].pixelStride
+        for ((index, i) in (0 until vBuffer.remaining() step vPixelStride).withIndex()) {
+            val vIndex = yLen + 2 * index
+            if (vIndex >= nv21.size) {
+                break
+            }
+            nv21[vIndex] = vBuffer.get(i)
+        }
+        // U通道
+        val uBuffer = planes[1].buffer
+        val uPixelStride = planes[1].pixelStride
+        for ((index, i) in (0 until uBuffer.remaining() step uPixelStride).withIndex()) {
+            val uIndex = yLen + (2 * index + 1)
+            if (uIndex >= nv21.size) {
+                break
+            }
+            nv21[yLen + (2 * index + 1)] = uBuffer.get(i)
+        }
+        return nv21
+    }
 
     /**
      * check is usb camera
@@ -51,17 +81,16 @@ object CameraUtils {
      * @return true contains
      */
     fun isCameraContainsMic(device: UsbDevice?): Boolean {
-//        device ?: return false
-//        var hasMic = false
-//        for (i in 0 until device.interfaceCount) {
-//            val cls = device.getInterface(i).interfaceClass
-//            if (cls == UsbConstants.USB_CLASS_AUDIO) {
-//                hasMic = true
-//                break
-//            }
-//        }
-//        return hasMic
-        return false
+        device ?: return false
+        var hasMic = false
+        for (i in 0 until device.interfaceCount) {
+            val cls = device.getInterface(i).interfaceClass
+            if (cls == UsbConstants.USB_CLASS_AUDIO) {
+                hasMic = true
+                break
+            }
+        }
+        return hasMic
     }
 
     /**
@@ -93,16 +122,5 @@ object CameraUtils {
     fun hasCameraPermission(ctx: Context): Boolean{
         val locPermission = ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
         return locPermission == PackageManager.PERMISSION_GRANTED
-    }
-
-    fun hasUVCCamera(context: Context): Boolean {
-        val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
-        val usbDevices = usbManager.deviceList
-        for (device in usbDevices.values) {
-            if (isUsbCamera(device) || isFilterDevice(context, device)) {
-                return true
-            }
-        }
-        return false
     }
 }

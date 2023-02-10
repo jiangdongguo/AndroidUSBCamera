@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ package com.jiangdg.ausbc.callback
  * @author Created by jiangdg on 2022/1/29
  */
 interface IPreviewDataCallBack {
-    fun onPreviewData(data: ByteArray?, format: DataFormat)
+    fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: DataFormat)
 
     enum class DataFormat {
-        NV21
+        NV21, RGBA
     }
 }

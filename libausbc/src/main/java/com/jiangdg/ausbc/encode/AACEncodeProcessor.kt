@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 Jiangdg
+ * Copyright 2017-2023 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ package com.jiangdg.ausbc.encode
 import android.media.*
 import android.os.Process
 import com.jiangdg.ausbc.callback.ICaptureCallBack
+import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.callback.IPlayCallBack
-import com.jiangdg.ausbc.encode.audio.AudioSystem
-import com.jiangdg.ausbc.encode.audio.AudioUac
-import com.jiangdg.ausbc.encode.audio.IAudio
+import com.jiangdg.ausbc.encode.audio.AudioStrategySystem
+import com.jiangdg.ausbc.encode.audio.IAudioStrategy
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.natives.LameMp3
-import com.jiangdg.usb.USBMonitor
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -40,7 +39,7 @@ import kotlin.Exception
  *
  * @author Created by jiangdg on 2022/2/10
  */
-class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : AbstractProcessor() {
+class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor() {
     private var mAudioTrack: AudioTrack? = null
     private var mPresentationTimeUs: Long = 0L
     private val mPlayQueue: ConcurrentLinkedQueue<RawData> by lazy {
@@ -61,11 +60,9 @@ class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : Abstra
     private val mRecordMp3State: AtomicBoolean by lazy {
         AtomicBoolean(false)
     }
-    private var mAudioRecord: IAudio = if (ctrlBlock != null) {
-        AudioUac(ctrlBlock)
-    } else {
-        AudioSystem()
-    }
+    private var mAudioRecord: IAudioStrategy = strategy ?: AudioStrategySystem()
+
+    private var mSamplingRateIndex: Int = -1
 
     override fun getThreadName(): String = TAG
 
@@ -123,6 +120,20 @@ class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : Abstra
         val channelCount = mAudioRecord.getChannelCount()
         mPresentationTimeUs += (1.0 * bufferSize / (sampleRate * channelCount * (AUDIO_FORMAT_BITS / 8)) * 1000000.0).toLong()
         return mPresentationTimeUs
+    }
+
+    override fun processOutputData(
+        bufferInfo: MediaCodec.BufferInfo,
+        encodeData: ByteArray
+    ): Pair<IEncodeDataCallBack.DataType, ByteArray> {
+        val iFrameData = ByteArray(bufferInfo.size + ADTS_LEN)
+        addADTStoPacket(iFrameData, iFrameData.size)
+        System.arraycopy(encodeData, 0, iFrameData, ADTS_LEN, bufferInfo.size)
+        return Pair(IEncodeDataCallBack.DataType.AAC, iFrameData)
+    }
+
+    override fun processInputData(data: ByteArray): ByteArray? {
+        return data
     }
 
     /**
@@ -330,6 +341,16 @@ class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : Abstra
         }
     }
 
+    private fun addADTStoPacket(packet: ByteArray, packetLen: Int) {
+        packet[0] = 0xFF.toByte()
+        packet[1] = 0xF1.toByte()
+        packet[2] = (((2 - 1 shl 6) + (mSamplingRateIndex shl 2) + (1 shr 2)).toByte())
+        packet[3] = ((1 and 3 shl 6) + (packetLen shr 11)).toByte()
+        packet[4] = (packetLen and 0x7FF shr 3).toByte()
+        packet[5] = ((packetLen and 7 shl 5) + 0x1F).toByte()
+        packet[6] = 0xFC.toByte()
+    }
+
     companion object {
         private const val TAG = "AACEncodeProcessor"
         private const val MIME_TYPE = "audio/mp4a-latm"
@@ -340,5 +361,27 @@ class AACEncodeProcessor(ctrlBlock: USBMonitor.UsbControlBlock? = null) : Abstra
         private const val CODEC_AAC_PROFILE = MediaCodecInfo.CodecProfileLevel.AACObjectLC
         private const val AUDIO_FORMAT_BITS = 16
         private const val DEGREE_RECORD_MP3 = 7
+
+        private const val ADTS_LEN = 7
+        private const val AAC_FRAME = 0
+
+        private val AUDIO_SAMPLING_RATES = intArrayOf(
+            96000,  // 0
+            88200,  // 1
+            64000,  // 2
+            48000,  // 3
+            44100,  // 4
+            32000,  // 5
+            24000,  // 6
+            22050,  // 7
+            16000,  // 8
+            12000,  // 9
+            11025,  // 10
+            8000,  // 11
+            7350,  // 12
+            -1,  // 13
+            -1,  // 14
+            -1
+        )
     }
 }

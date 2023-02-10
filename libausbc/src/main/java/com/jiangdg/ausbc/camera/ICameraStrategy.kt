@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.bean.CameraInfo
@@ -34,6 +35,7 @@ import com.jiangdg.ausbc.camera.bean.CameraStatus
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.utils.bus.BusKey
 import com.jiangdg.ausbc.utils.bus.EventBus
+import java.lang.Deprecated
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -44,7 +46,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 /** Camera Manager abstract class
  *
  * @author Created by jiangdg on 2021/12/20
+ *
+ * Deprecated since version 3.3.0, and it will be deleted in the future.
+ * I recommend using the [MultiCameraClient.ICamera] API for your application.
  */
+@kotlin.Deprecated("Deprecated since version 3.3.0")
 abstract class ICameraStrategy(context: Context) : Handler.Callback {
     private var mThread: HandlerThread? = null
     private var mCameraHandler: Handler? = null
