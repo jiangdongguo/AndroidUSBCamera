@@ -39,6 +39,10 @@ abstract class AbstractFboRender(context: Context) : AbstractRender(context) {
         IntArray(1)
     }
 
+    // download image need when call
+    // glBindFramebuffer()
+    fun getFrameBufferId() = mFrameBuffers[0]
+
     override fun drawFrame(textureId: Int): Int {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0])
         super.drawFrame(textureId)

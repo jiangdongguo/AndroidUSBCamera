@@ -72,7 +72,7 @@ class RenderManager(
     private var mTransformMatrix: FloatArray = FloatArray(16)
     private var mWidth: Int = 0
     private var mHeight: Int = 0
-    private var mFBOId: Int = 0
+    private var mFBOBufferId: Int = 0
     private var mContext: Context = context
     private var mEffectList = arrayListOf<AbstractEffect>()
     private var mCacheEffectList = arrayListOf<AbstractEffect>()
@@ -216,9 +216,10 @@ class RenderManager(
     }
 
     private fun drawFrame2Capture(fboId: Int) {
-        mCaptureRender?.drawFrame(fboId)?.apply {
-            mFBOId = this
+        mCaptureRender?.drawFrame(fboId)?.let {
+            mCaptureRender!!.getFrameBufferId()
         }?.also { id ->
+            mFBOBufferId = id
             // opengl preview data, format is rgba
             val renderWidth = mCaptureRender?.getRenderWidth() ?: mWidth
             val renderHeight = mCaptureRender?.getRenderHeight() ?: mHeight
@@ -439,7 +440,7 @@ class RenderManager(
         var fos: FileOutputStream? = null
         try {
             fos = FileOutputStream(path)
-            GLBitmapUtils.transFrameBufferToBitmap(mFBOId, width, height).apply {
+            GLBitmapUtils.transFrameBufferToBitmap(mFBOBufferId, width, height).apply {
                 compress(Bitmap.CompressFormat.JPEG, 100, fos)
                 recycle()
             }
