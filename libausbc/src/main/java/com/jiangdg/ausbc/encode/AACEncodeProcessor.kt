@@ -313,19 +313,21 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
             return
         }
         val sampleRate = mAudioRecord.getSampleRate()
-        val rateResolution = mAudioRecord.getAudioFormat()
-        Logger.i(TAG, "initAudioTrack: sampleRate = $sampleRate, mRateResolution = $rateResolution")
+        val audioFormat = mAudioRecord.getAudioFormat()
+        val channelCount = mAudioRecord.getChannelCount()
+        val channelConfig = mAudioRecord.getChannelConfig()
+        Logger.i(TAG, "initAudioTrack: sample=$sampleRate,format=$audioFormat,count=$channelCount")
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
         val minBufferSize = AudioTrack.getMinBufferSize(
             sampleRate,
-            CHANNEL_OUT_CONFIG,
-            rateResolution
+            channelConfig,
+            audioFormat
         )
         mAudioTrack = AudioTrack(
             AudioManager.STREAM_MUSIC,
             sampleRate,
-            CHANNEL_OUT_CONFIG,
-            rateResolution,
+            channelConfig,
+            audioFormat,
             minBufferSize,
             AUDIO_TRACK_MODE
         )
