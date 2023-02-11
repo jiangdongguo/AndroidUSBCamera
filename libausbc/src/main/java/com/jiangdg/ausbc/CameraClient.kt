@@ -411,7 +411,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
      * @param durationInSec video file auto divide duration is seconds
      */
     fun captureVideoStart(callBack: ICaptureCallBack, path: String ?= null, durationInSec: Long = 0L) {
-        mMediaMuxer = Mp4Muxer(callBack, path, durationInSec)
+        mMediaMuxer = Mp4Muxer(mCtx, callBack,  path, durationInSec)
         (mVideoProcess as? H264EncodeProcessor)?.apply {
             startEncode()
             setMp4Muxer(mMediaMuxer!!, true)

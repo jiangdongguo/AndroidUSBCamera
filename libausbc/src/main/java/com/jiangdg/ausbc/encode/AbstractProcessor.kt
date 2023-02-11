@@ -200,10 +200,11 @@ abstract class AbstractProcessor() {
                                         outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size)
                                         val encodeData = ByteArray(mBufferInfo.size)
                                         outputBuffer.get(encodeData)
+                                        mMp4Muxer?.pumpStream(outputBuffer, mBufferInfo, isVideo)
+
                                         processOutputData(mBufferInfo, encodeData).apply {
                                             mEncodeDataCb?.onEncodeData(second,second.size, first, mBufferInfo.presentationTimeUs / 1000)
                                         }
-                                        mMp4Muxer?.pumpStream(outputBuffer, mBufferInfo, isVideo)
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()

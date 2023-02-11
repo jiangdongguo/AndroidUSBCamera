@@ -118,7 +118,13 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
         //Divided by 8: The original unit of pcm is bit, 1 byte = 8 bit, 1 short = 16 bit, and it needs to be converted if it is carried by Byte[] and Short[]
         val sampleRate = mAudioRecord.getSampleRate()
         val channelCount = mAudioRecord.getChannelCount()
-        mPresentationTimeUs += (1.0 * bufferSize / (sampleRate * channelCount * (AUDIO_FORMAT_BITS / 8)) * 1000000.0).toLong()
+        val format = mAudioRecord.getAudioFormat()
+        val formatBit = if (format == AudioFormat.ENCODING_PCM_16BIT) {
+            18
+        } else {
+            8
+        }
+        mPresentationTimeUs += (1.0 * bufferSize / (sampleRate * channelCount * (formatBit / 8)) * 1000000.0).toLong()
         return mPresentationTimeUs
     }
 
@@ -276,10 +282,7 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
                 val data = mAudioRecord.read()
                 data ?: continue
                 // pcm encode queue
-                if (mRawDataQueue.size >= MAX_QUEUE_SIZE) {
-                    mRawDataQueue.poll()
-                }
-                mRawDataQueue.offer(data)
+                putRawData(data)
                 // pcm play queue
                 if (mPlayQueue.size >= MAX_QUEUE_SIZE) {
                     mPlayQueue.poll()
@@ -302,6 +305,7 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
 
     private fun releaseAudioRecord() {
         if (mEncodeState.get() || mAudioPlayState.get() || mRecordMp3State.get()) {
+            Logger.w(TAG, "audio is using, cancel release")
             return
         }
         mAudioRecordState.set(false)
@@ -357,11 +361,10 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
         private const val TAG = "AACEncodeProcessor"
         private const val MIME_TYPE = "audio/mp4a-latm"
         private const val BIT_RATE = 16000
-        private const val MAX_INPUT_SIZE = 8192
+        private const val MAX_INPUT_SIZE = 48000
         private const val CHANNEL_OUT_CONFIG = AudioFormat.CHANNEL_OUT_MONO
         private const val AUDIO_TRACK_MODE = AudioTrack.MODE_STREAM
         private const val CODEC_AAC_PROFILE = MediaCodecInfo.CodecProfileLevel.AACObjectLC
-        private const val AUDIO_FORMAT_BITS = 16
         private const val DEGREE_RECORD_MP3 = 7
 
         private const val ADTS_LEN = 7

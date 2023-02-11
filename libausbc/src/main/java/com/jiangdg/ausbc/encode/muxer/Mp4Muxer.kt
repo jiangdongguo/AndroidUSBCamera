@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 Jiangdg
+ * Copyright 2017-2022 Jiangdg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,21 @@
  */
 package com.jiangdg.ausbc.encode.muxer
 
+import android.content.ContentValues
+import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import com.jiangdg.ausbc.MultiCameraClient
+import android.provider.MediaStore
+import android.text.format.DateUtils
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.utils.Logger
+import com.jiangdg.ausbc.utils.MediaUtils
+import com.jiangdg.ausbc.utils.Utils
+import java.io.File
 import java.lang.Exception
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
@@ -36,17 +42,18 @@ import java.util.*
  * @property durationInSec mp4 file auto divided in seconds
  *
  * @constructor
- * @param onlyVideo save mp4 without audio
+ * @param context context
  * @param callBack mp4 capture status, see [ICaptureCallBack]
  *
  * @author Created by jiangdg on 2022/2/10
  */
 class Mp4Muxer(
+    context: Context?,
     callBack: ICaptureCallBack,
     private var path: String? = null,
-    private val durationInSec: Long = 0,
-    private val isVideoOnly: Boolean = false
+    private val durationInSec: Long = 0
 ) {
+    private var mContext: Context? = null
     private var mMediaMuxer: MediaMuxer? = null
     private var mFileSubIndex: Int = 0
     private var mVideoTrackerIndex = -1
@@ -68,6 +75,7 @@ class Mp4Muxer(
 
     init {
         this.mCaptureCallBack = callBack
+        this.mContext= context
         try {
             if (path.isNullOrEmpty()) {
                 val date = mDateFormat.format(System.currentTimeMillis())
@@ -99,13 +107,15 @@ class Mp4Muxer(
                 if (isVideo) {
                     mVideoFormat = mediaFormat
                     mVideoTrackerIndex = tracker
-                    if (mAudioTrackerIndex != -1 || isVideoOnly) {
+                    if (mAudioTrackerIndex != -1) {
                         start()
                         mMainHandler.post {
                             mCaptureCallBack?.onBegin()
                         }
                         mBeginMillis = System.currentTimeMillis()
-                        Logger.i(TAG, "start media muxer")
+                        if (Utils.debugCamera) {
+                            Logger.i(TAG, "start media muxer")
+                        }
                     }
                 } else {
                     mAudioFormat = mediaFormat
@@ -116,10 +126,14 @@ class Mp4Muxer(
                             mCaptureCallBack?.onBegin()
                         }
                         mBeginMillis = System.currentTimeMillis()
-                        Logger.i(TAG, "start media muxer")
+                        if (Utils.debugCamera) {
+                            Logger.i(TAG, "start media muxer")
+                        }
                     }
                 }
-                Logger.i(TAG, "addTracker index = $tracker isVideo = $isVideo")
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "addTracker index = $tracker isVideo = $isVideo")
+                }
             }
         } catch (e: Exception) {
             release()
@@ -185,6 +199,7 @@ class Mp4Muxer(
             mVideoTrackerIndex = -1
             mAudioPts = 0L
             mVideoPts = 0L
+            insertDCIM(mContext, path)
 
             path = "${mOriginalPath}_${++mFileSubIndex}.mp4"
             mMediaMuxer = MediaMuxer(path!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -206,6 +221,7 @@ class Mp4Muxer(
         try {
             mMediaMuxer?.stop()
             mMediaMuxer?.release()
+            insertDCIM(mContext, path, true)
         } catch (e: Exception) {
             mMainHandler.post {
                 mCaptureCallBack?.onError(e.localizedMessage)
@@ -218,14 +234,43 @@ class Mp4Muxer(
             mAudioPts = 0L
             mVideoPts = 0L
         }
-        mMainHandler.post {
-            mCaptureCallBack?.onComplete(path)
+    }
+
+    fun getSavePath() = path
+
+    private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
+        context?.let { ctx ->
+            if (videoPath.isNullOrEmpty()) {
+                return
+            }
+            ctx.contentResolver.let { content ->
+                val uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                content.insert(uri, getVideoContentValues(videoPath))
+                mMainHandler.post {
+                    mCaptureCallBack?.onComplete(this.path)
+                }
+            }
         }
     }
 
-    fun getOutputPath() = path
+    private fun getVideoContentValues(path: String): ContentValues {
+        val file = File(path)
+        val values = ContentValues()
+        values.put(MediaStore.Video.Media.DATA, path)
+        values.put(MediaStore.Video.Media.DISPLAY_NAME, file.name)
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+        values.put(MediaStore.Video.Media.SIZE, file.totalSpace)
+        if (MediaUtils.isAboveQ()) {
+            val relativePath =  "${Environment.DIRECTORY_DCIM}${File.separator}Camera"
+            val dateExpires = (System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS) / 1000
+            values.put(MediaStore.Video.Media.RELATIVE_PATH, relativePath)
+            values.put(MediaStore.Video.Media.DATE_EXPIRES, dateExpires)
+        }
+        return values
+    }
 
-    fun isMuxerStarter() = mVideoTrackerIndex != -1 && (mAudioTrackerIndex != -1 || isVideoOnly)
+
+    fun isMuxerStarter() = mVideoTrackerIndex != -1 && mAudioTrackerIndex != -1
 
     companion object {
         private const val TAG = "Mp4Muxer"

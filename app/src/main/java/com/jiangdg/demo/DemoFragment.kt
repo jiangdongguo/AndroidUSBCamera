@@ -385,6 +385,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             }
 
             override fun onComplete(path: String?) {
+                ToastUtils.show(path ?: "")
                 isCapturingVideoOrAudio = false
                 mViewBinding.captureBtn.setCaptureVideoState(CaptureMediaView.CaptureVideoState.UNDO)
                 mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
