@@ -37,15 +37,16 @@ class AspectRatioTextureView: TextureView, IAspectRatio {
     constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : super(context, attributeSet, defStyleAttr)
 
     override fun setAspectRatio(width: Int, height: Int) {
-        postUITask {
-            val orientation = context.resources.configuration.orientation
-            // 处理竖屏和横屏情况
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                setAspectRatio(height.toDouble() / width)
-                return@postUITask
-            }
+        post {
+//            val orientation = context.resources.configuration.orientation
+//        // 处理竖屏和横屏情况
+//        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//            setAspectRatio(height.toDouble() / width)
+//            return
+//        }
             setAspectRatio(width.toDouble() / height)
         }
+
     }
 
     override fun getSurfaceWidth(): Int  = width

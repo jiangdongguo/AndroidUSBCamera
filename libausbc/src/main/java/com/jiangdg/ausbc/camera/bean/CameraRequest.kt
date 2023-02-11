@@ -29,7 +29,7 @@ class CameraRequest private constructor() {
     var previewWidth: Int = DEFAULT_WIDTH
     var previewHeight: Int = DEFAULT_HEIGHT
     var renderMode: RenderMode = RenderMode.OPENGL
-    var isAspectRatioShow: Boolean = false
+    var isAspectRatioShow: Boolean = true
     var isRawPreviewData: Boolean = false
     var isCaptureRawImage: Boolean = false
     var defaultEffect: AbstractEffect? = null
@@ -112,7 +112,7 @@ class CameraRequest private constructor() {
         /**
          * Set aspect ratio show
          *
-         * @param isAspectRatioShow  default is false
+         * @param isAspectRatioShow  default is true
          * @return see [Builder]
          */
         fun setAspectRatioShow(isAspectRatioShow: Boolean): Builder {

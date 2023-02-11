@@ -47,11 +47,7 @@ class H264EncodeProcessor(
 
     override fun handleStartEncode() {
         try {
-            val mediaFormat = if (isPortrait) {
-                MediaFormat.createVideoFormat(MIME, height, width)
-            } else {
-                MediaFormat.createVideoFormat(MIME, width, height)
-            }
+            val mediaFormat = MediaFormat.createVideoFormat(MIME, width, height)
             mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
             mediaFormat.setInteger(
                 MediaFormat.KEY_BIT_RATE,

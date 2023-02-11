@@ -914,7 +914,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             .setRenderMode(CameraRequest.RenderMode.OPENGL)
             .setDefaultRotateType(RotateType.ANGLE_0)
             .setAudioSource(CameraRequest.AudioSource.SOURCE_AUTO)
-            .setAspectRatioShow(false)
+            .setAspectRatioShow(true)
             .setCaptureRawImage(false)
             .setRawPreviewData(false)
             .create();
