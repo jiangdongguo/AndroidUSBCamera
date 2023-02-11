@@ -51,7 +51,8 @@ class Mp4Muxer(
     context: Context?,
     callBack: ICaptureCallBack,
     private var path: String? = null,
-    private val durationInSec: Long = 0
+    private val durationInSec: Long = 0,
+    private val isVideoOnly: Boolean = false
 ) {
     private var mContext: Context? = null
     private var mMediaMuxer: MediaMuxer? = null
@@ -107,7 +108,7 @@ class Mp4Muxer(
                 if (isVideo) {
                     mVideoFormat = mediaFormat
                     mVideoTrackerIndex = tracker
-                    if (mAudioTrackerIndex != -1) {
+                    if (mAudioTrackerIndex != -1 || isVideoOnly) {
                         start()
                         mMainHandler.post {
                             mCaptureCallBack?.onBegin()
@@ -270,7 +271,7 @@ class Mp4Muxer(
     }
 
 
-    fun isMuxerStarter() = mVideoTrackerIndex != -1 && mAudioTrackerIndex != -1
+    fun isMuxerStarter() = mVideoTrackerIndex != -1 && (mAudioTrackerIndex != -1 || isVideoOnly)
 
     companion object {
         private const val TAG = "Mp4Muxer"

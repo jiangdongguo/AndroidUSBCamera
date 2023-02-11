@@ -862,7 +862,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 return
             }
             captureStreamStartInternal()
-            Mp4Muxer(mContext, callBack, path, durationInSec).apply {
+            Mp4Muxer(mContext, callBack, path, durationInSec, mAudioProcess==null).apply {
                 mVideoProcess?.setMp4Muxer(this, true)
                 mAudioProcess?.setMp4Muxer(this, false)
             }.also { muxer ->
