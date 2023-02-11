@@ -58,7 +58,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onAttach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
+                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -76,7 +76,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDetach(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
+                    Logger.i(TAG, "detach device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -98,7 +98,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 createNew: Boolean
             ) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
+                    Logger.i(TAG, "connect device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -116,7 +116,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
+                    Logger.i(TAG, "disconnct device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {
@@ -135,7 +135,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onCancel(device: UsbDevice?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "attach device name/pid/vid:${device?.deviceName}/${device?.productId}/${device?.vendorId} ")
+                    Logger.i(TAG, "cancel device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {

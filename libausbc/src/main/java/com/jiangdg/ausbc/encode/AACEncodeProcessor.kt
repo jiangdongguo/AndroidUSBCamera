@@ -29,9 +29,7 @@ import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.natives.LameMp3
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.Exception
 
@@ -42,6 +40,7 @@ import kotlin.Exception
 class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor() {
     private var mAudioTrack: AudioTrack? = null
     private var mPresentationTimeUs: Long = 0L
+    private var mCountDownLatch: CountDownLatch? = null
     private val mPlayQueue: ConcurrentLinkedQueue<RawData> by lazy {
         ConcurrentLinkedQueue()
     }
@@ -150,7 +149,12 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
     fun playAudioStart(callBack: IPlayCallBack?) {
         mAudioThreadPool.submit {
             try {
+                mCountDownLatch = CountDownLatch(1)
                 initAudioRecord()
+                if (mCountDownLatch?.await(3, TimeUnit.SECONDS) == false) {
+                    callBack?.onError("times out, init audio failed")
+                    return@submit
+                }
                 initAudioTrack()
                 mMainHandler.post {
                     callBack?.onBegin()
@@ -208,27 +212,33 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
                     }
                     return@submit
                 }
+                mCountDownLatch = CountDownLatch(1)
                 initAudioRecord()
+                if (mCountDownLatch?.await(3, TimeUnit.SECONDS) == false) {
+                    callBack.onError("times out, init audio failed")
+                    return@submit
+                }
                 val file = File(audioPath)
                 if (file.exists()) {
                     file.delete()
                 }
                 fos = FileOutputStream(file)
-                val mp3Buf = ByteArray(1024)
+                val mp3Buf = ByteArray(2048)
                 val sampleRate = mAudioRecord.getSampleRate()
                 val channelCount = mAudioRecord.getChannelCount()
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "start record mp3 success, $sampleRate, $channelCount, $audioPath")
+                }
                 LameMp3.lameInit(sampleRate, channelCount, sampleRate, BIT_RATE, DEGREE_RECORD_MP3)
                 mMainHandler.post {
                     callBack.onBegin()
-                }
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "start record mp3 success, path = $audioPath")
                 }
                 mRecordMp3State.set(true)
                 while (mRecordMp3State.get()) {
                     mRecordMp3Queue.poll()?.apply {
                         val tmpData = MediaUtils.transferByte2Short(data, size)
                         val encodeSize = LameMp3.lameEncode(tmpData, null, tmpData.size, mp3Buf)
+                        Logger.i(TAG, "encode, $size, $encodeSize")
                         if (encodeSize > 0) {
                             fos?.write(mp3Buf, 0, encodeSize)
                         }
@@ -278,6 +288,7 @@ class AACEncodeProcessor(strategy: IAudioStrategy? = null) : AbstractProcessor()
             mAudioRecord.initAudioRecord()
             mAudioRecord.startRecording()
             mAudioRecordState.set(true)
+            mCountDownLatch?.countDown()
             while (mAudioRecordState.get()) {
                 val data = mAudioRecord.read()
                 data ?: continue

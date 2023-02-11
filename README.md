@@ -118,7 +118,7 @@ override fun getCameraRequest(): CameraRequest {
     .setRenderMode(CameraRequest.RenderMode.OPENGL) // camera render mode
     .setDefaultRotateType(RotateType.ANGLE_0) // rotate camera image when opengl mode
     .setAudioSource(CameraRequest.AudioSource.SOURCE_AUTO) // set audio source
-    .setAspectRatioShow(false)  
+    .setAspectRatioShow(true) // aspect render,default is true
     .setCaptureRawImage(false) // capture raw image picture when opengl mode
     .setRawPreviewData(false)  // preview raw image when opengl mode
     .create()
