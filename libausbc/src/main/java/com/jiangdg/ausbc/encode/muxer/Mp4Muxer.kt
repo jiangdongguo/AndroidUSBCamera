@@ -19,6 +19,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
+import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.os.Environment
 import android.os.Handler
@@ -260,7 +261,8 @@ class Mp4Muxer(
         values.put(MediaStore.Video.Media.DATA, path)
         values.put(MediaStore.Video.Media.DISPLAY_NAME, file.name)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        values.put(MediaStore.Video.Media.SIZE, file.totalSpace)
+        values.put(MediaStore.Video.Media.SIZE, file.length())
+        values.put(MediaStore.Video.Media.DURATION, getLocalVideoDuration(file.path))
         if (MediaUtils.isAboveQ()) {
             val relativePath =  "${Environment.DIRECTORY_DCIM}${File.separator}Camera"
             val dateExpires = (System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS) / 1000
@@ -272,6 +274,17 @@ class Mp4Muxer(
 
 
     fun isMuxerStarter() = mVideoTrackerIndex != -1 && (mAudioTrackerIndex != -1 || isVideoOnly)
+
+    private fun getLocalVideoDuration(filePath: String?): Long {
+        return try {
+            val mmr = MediaMetadataRetriever()
+            mmr.setDataSource(filePath)
+            mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?:0L
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0L
+        }
+    }
 
     companion object {
         private const val TAG = "Mp4Muxer"
