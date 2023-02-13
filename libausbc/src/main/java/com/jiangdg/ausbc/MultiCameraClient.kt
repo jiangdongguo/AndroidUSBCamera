@@ -116,7 +116,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
              */
             override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "disconnct device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
+                    Logger.i(TAG, "disconnect device name/pid/vid:${device?.deviceName}&${device?.productId}&${device?.vendorId} ")
                 }
                 device ?: return
                 if (!isUsbCamera(device) && !isFilterDevice(ctx, device)) {

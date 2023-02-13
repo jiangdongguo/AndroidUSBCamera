@@ -46,6 +46,9 @@ import java.util.concurrent.TimeUnit
  */
 class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx, device) {
     private var mUvcCamera: UVCCamera? = null
+    private val mCameraPreviewSize by lazy {
+        arrayListOf<PreviewSize>()
+    }
 
     private val frameCallBack = IFrameCallback { frame ->
         frame?.apply {
@@ -78,18 +81,28 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             mUvcCamera?.supportedSizeList
         }  else {
             mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
-        }.also { sizeList ->
-            sizeList?.forEach { size ->
-                val width = size.width
-                val height = size.height
-                val ratio = width.toDouble() / height
-                if (aspectRatio == null || aspectRatio == ratio) {
-                    previewSizeList.add(PreviewSize(width, height))
+        }?.let { sizeList ->
+            if (mCameraPreviewSize.isEmpty()) {
+                mCameraPreviewSize.clear()
+                sizeList.forEach { size->
+                    val width = size.width
+                    val height = size.height
+                    mCameraPreviewSize.add(PreviewSize(width, height))
                 }
             }
+            mCameraPreviewSize
+        }?.onEach { size ->
+            val width = size.width
+            val height = size.height
+            val ratio = width.toDouble() / height
+            if (aspectRatio == null || aspectRatio == ratio) {
+                previewSizeList.add(PreviewSize(width, height))
+            }
         }
-        if (Utils.debugCamera)
+        if (Utils.debugCamera) {
             Logger.i(TAG, "aspect ratio = $aspectRatio, getAllPreviewSizes = $previewSizeList, ")
+        }
+
         return previewSizeList
     }
 
@@ -131,11 +144,13 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 return
             }
             initEncodeProcessor(previewSize.width, previewSize.height)
+            // if give custom minFps or maxFps or unsupported preview size
+            // this method will fail
             mUvcCamera?.setPreviewSize(
                 previewSize.width,
                 previewSize.height,
                 MIN_FS,
-                MAX_FS,
+                MAX_FPS,
                 UVCCamera.FRAME_FORMAT_MJPEG,
                 UVCCamera.DEFAULT_BANDWIDTH
             )
@@ -156,7 +171,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                     previewSize.width,
                     previewSize.height,
                     MIN_FS,
-                    MAX_FS,
+                    MAX_FPS,
                     UVCCamera.FRAME_FORMAT_YUYV,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
@@ -501,6 +516,6 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     companion object {
         private const val TAG = "CameraUVC"
         private const val MIN_FS = 10
-        private const val MAX_FS = 60
+        private const val MAX_FPS = 60
     }
 }

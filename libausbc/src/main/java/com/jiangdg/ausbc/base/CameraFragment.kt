@@ -115,7 +115,12 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
                     setUsbControlBlock(null)
                 }
                 mRequestPermission.set(false)
-                mCurrentCamera = null
+                try {
+                    mCurrentCamera?.cancel(true)
+                    mCurrentCamera = null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
             override fun onConnectDev(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
@@ -125,6 +130,12 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
                 mCameraMap[device.deviceId]?.apply {
                     setUsbControlBlock(ctrlBlock)
                 }?.also { camera ->
+                    try {
+                        mCurrentCamera?.cancel(true)
+                        mCurrentCamera = null
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                     mCurrentCamera = SettableFuture()
                     mCurrentCamera?.set(camera)
                     openCamera(mCameraView)
@@ -135,12 +146,16 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             override fun onDisConnectDec(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 closeCamera()
                 mRequestPermission.set(false)
-                mCurrentCamera = null
             }
 
             override fun onCancelDev(device: UsbDevice?) {
                 mRequestPermission.set(false)
-                mCurrentCamera = null
+                try {
+                    mCurrentCamera?.cancel(true)
+                    mCurrentCamera = null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         })
         mCameraClient?.register()
