@@ -82,13 +82,16 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
         }  else {
             mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
         }?.let { sizeList ->
-            if (mCameraPreviewSize.isEmpty()) {
+            if (sizeList.size > mCameraPreviewSize.size) {
                 mCameraPreviewSize.clear()
                 sizeList.forEach { size->
                     val width = size.width
                     val height = size.height
                     mCameraPreviewSize.add(PreviewSize(width, height))
                 }
+            }
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "aspect ratio = $aspectRatio, supportedSizeList = $sizeList")
             }
             mCameraPreviewSize
         }?.onEach { size ->
@@ -99,10 +102,6 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 previewSizeList.add(PreviewSize(width, height))
             }
         }
-        if (Utils.debugCamera) {
-            Logger.i(TAG, "aspect ratio = $aspectRatio, getAllPreviewSizes = $previewSizeList, ")
-        }
-
         return previewSizeList
     }
 
