@@ -216,7 +216,7 @@ public class UVCCamera {
 					+";busNum="+(mCtrlBlock==null ? "": mCtrlBlock.getBusNum())+";devAddr="+(mCtrlBlock==null ? "": mCtrlBlock.getDevNum())
 					+";usbfs="+(mCtrlBlock==null ? "": getUSBFSName(mCtrlBlock))+"\n"+"Exception："+sb.toString());
 		}
-
+		mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
     	if (mNativePtr != 0 && TextUtils.isEmpty(mSupportedSize)) {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
     	}
@@ -356,6 +356,9 @@ public class UVCCamera {
 	}
 
 	public List<Size> getSupportedSizeList() {
+		if (mCurrentFrameFormat < 0) {
+			mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
+		}
 		return getSupportedSize((mCurrentFrameFormat > 0) ? 6 : 4, getSupportedSize());
 	}
 
