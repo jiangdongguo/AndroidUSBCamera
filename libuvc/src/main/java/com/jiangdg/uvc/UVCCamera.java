@@ -29,6 +29,7 @@ import android.text.TextUtils;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.jiangdg.usb.USBMonitor;
 import com.jiangdg.usb.USBMonitor.UsbControlBlock;
 import com.jiangdg.utils.Size;
 import com.jiangdg.utils.XLogWrapper;
@@ -44,14 +45,13 @@ public class UVCCamera {
 	public static boolean DEBUG = false;	// TODO set false when releasing
 	private static final String TAG = UVCCamera.class.getSimpleName();
 	private static final String DEFAULT_USBFS = "/dev/bus/usb";
+	public static final int FRAME_FORMAT_YUYV = 0;
+	public static final int FRAME_FORMAT_MJPEG = 1;
 
-	public static final int DEFAULT_PREVIEW_MODE = 0;
 	public static final int DEFAULT_PREVIEW_MIN_FPS = 1;
 	public static final int DEFAULT_PREVIEW_MAX_FPS = 31;
 	public static final float DEFAULT_BANDWIDTH = 1.0f;
-
-	public static final int FRAME_FORMAT_YUYV = 0;
-	public static final int FRAME_FORMAT_MJPEG = 1;
+	public static final int DEFAULT_PREVIEW_MODE = FRAME_FORMAT_MJPEG;
 
 	public static final int PIXEL_FORMAT_RAW = 0;
 	public static final int PIXEL_FORMAT_YUV = 1;
@@ -220,6 +220,9 @@ public class UVCCamera {
     	if (mNativePtr != 0 && TextUtils.isEmpty(mSupportedSize)) {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
     	}
+    	if (USBMonitor.DEBUG) {
+    		XLogWrapper.i(TAG, "open camera status: " + mNativePtr +", size: " + mSupportedSize);
+		}
     	List<Size> supportedSizes = getSupportedSizeList();
 		if (!supportedSizes.isEmpty()) {
 			mCurrentWidth = supportedSizes.get(0).width;
@@ -353,13 +356,11 @@ public class UVCCamera {
 	}
 
 	public List<Size> getSupportedSizeList() {
-		final int type = (mCurrentFrameFormat > 0) ? 6 : 4;
-		return getSupportedSize(type, mSupportedSize);
+		return getSupportedSize((mCurrentFrameFormat > 0) ? 6 : 4, getSupportedSize());
 	}
 
 	public List<Size> getSupportedSizeList(int frameFormat) {
-		final int type = (frameFormat > 0) ? 6 : 4;
-		return getSupportedSize(type, mSupportedSize);
+		return getSupportedSize((frameFormat > 0) ? 6 : 4, getSupportedSize());
 	}
 
 	public List<Size> getSupportedSize(final int type, final String supportedSize) {
