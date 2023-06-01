@@ -29,12 +29,12 @@ import com.jiangdg.ausbc.MultiCameraClient.Companion.MAX_NV21_DATA
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
+import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
-import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.uvc.IFrameCallback
 import com.jiangdg.uvc.UVCCamera
 import java.io.File
@@ -77,7 +77,8 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
 
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
         val previewSizeList = arrayListOf<PreviewSize>()
-        if (mUvcCamera?.supportedSizeList?.isNotEmpty() == true) {
+        val isMjpegFormat = mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_MJPEG
+        if (isMjpegFormat && (mUvcCamera?.supportedSizeList?.isNotEmpty() == true)) {
             mUvcCamera?.supportedSizeList
         }  else {
             mUvcCamera?.getSupportedSizeList(UVCCamera.FRAME_FORMAT_YUYV)
@@ -134,6 +135,11 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             mCameraRequest!!.previewWidth = width
             mCameraRequest!!.previewHeight = height
         }
+        val previewFormat = if (mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_YUYV) {
+            UVCCamera.FRAME_FORMAT_YUYV
+        } else {
+            UVCCamera.FRAME_FORMAT_MJPEG
+        }
         try {
             Logger.i(TAG, "getSuitableSize: $previewSize")
             if (! isPreviewSizeSupported(previewSize)) {
@@ -150,7 +156,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 previewSize.height,
                 MIN_FS,
                 MAX_FPS,
-                UVCCamera.FRAME_FORMAT_MJPEG,
+                previewFormat,
                 UVCCamera.DEFAULT_BANDWIDTH
             )
         } catch (e: Exception) {
@@ -165,13 +171,17 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                     Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
                     return
                 }
-                Logger.e(TAG, " setPreviewSize failed, try to use yuv format...")
+                Logger.e(TAG, " setPreviewSize failed(format is $previewFormat), try to use other format...")
                 mUvcCamera?.setPreviewSize(
                     previewSize.width,
                     previewSize.height,
                     MIN_FS,
                     MAX_FPS,
-                    UVCCamera.FRAME_FORMAT_YUYV,
+                    if (previewFormat == UVCCamera.FRAME_FORMAT_YUYV) {
+                        UVCCamera.FRAME_FORMAT_MJPEG
+                    } else {
+                        UVCCamera.FRAME_FORMAT_YUYV
+                    },
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
             } catch (e: Exception) {

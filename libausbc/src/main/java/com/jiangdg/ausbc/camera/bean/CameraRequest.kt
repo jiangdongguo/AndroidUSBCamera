@@ -35,6 +35,7 @@ class CameraRequest private constructor() {
     var defaultEffect: AbstractEffect? = null
     var defaultRotateType: RotateType = RotateType.ANGLE_0
     var audioSource: AudioSource = AudioSource.SOURCE_AUTO
+    var previewFormat: PreviewFormat = PreviewFormat.FORMAT_MJPEG
 
     @kotlin.Deprecated("Deprecated since version 3.3.0")
     var cameraId: String = ""
@@ -177,6 +178,17 @@ class CameraRequest private constructor() {
         }
 
         /**
+         * Set preview format
+         *
+         * @param format preview format, default is [PreviewFormat.FORMAT_MJPEG]
+         * @return see [Builder]
+         */
+        fun setPreviewFormat(format: PreviewFormat): Builder {
+            mRequest.previewFormat = format
+            return this
+        }
+
+        /**
          * Create a CameraRequest
          *
          * @return see [CameraRequest]
@@ -211,6 +223,17 @@ class CameraRequest private constructor() {
         SOURCE_SYS_MIC,
         SOURCE_DEV_MIC,
         SOURCE_AUTO
+    }
+
+    /**
+     * Preview format
+     *
+     * FORMAT_MJPEG: default format with high frame rate
+     * FORMAT_YUYV: yuv format with lower frame rate
+     */
+    enum class PreviewFormat {
+        FORMAT_MJPEG,
+        FORMAT_YUYV
     }
 
     companion object {
