@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-	<string name="scale_type_none">無し</string>
-	<string name="scale_type_inch">インチ</string>
-	<string name="scale_type_mm">ミリ</string>
-</resources>

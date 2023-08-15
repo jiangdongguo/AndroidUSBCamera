@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="service_name">バックグラウンドサービス</string>
-    <string name="service_start">開始しました</string>
-    <string name="service_stop">終了しました</string>
-</resources>

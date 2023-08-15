@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-	<item type="id" name="anim_type" />
-	<item type="id" name="anim_duration" />
-	<item type="id" name="anim_listener" />
-</resources>
