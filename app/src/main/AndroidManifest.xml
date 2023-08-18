@@ -38,6 +38,7 @@
         </activity>
 
         <activity android:name="com.jiangdg.demo.MainActivity"
+            android:exported="true"
             android:theme="@style/Theme.ClinkCameraDemo.NoActionBar" />
     </application>
 
