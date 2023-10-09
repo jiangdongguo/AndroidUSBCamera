@@ -50,7 +50,7 @@ abstract class BaseBottomDialog: BottomSheetDialogFragment()  {
         super.onStart()
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         val sheetDialog = dialog as BottomSheetDialog
-        sheetDialog.delegate.findViewById<FrameLayout>(R.id.design_bottom_sheet)?.apply {
+        sheetDialog.delegate.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)?.apply {
             background = ColorDrawable(Color.TRANSPARENT)
             val params = layoutParams as CoordinatorLayout.LayoutParams
             params.height = getPeekHeight()

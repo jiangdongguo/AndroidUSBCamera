@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
@@ -36,8 +37,9 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:${constraintlayoutVersion}"
     implementation "com.google.android.material:material:${materialVersion}"
     api 'com.elvishew:xlog:1.11.0'
-//    implementation fileTree("libs")
+    api fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation project(path: ':libuvc')
     api project(path: ':libnative')
+    implementation 'androidx.core:core-ktx:+'
 }

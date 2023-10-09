@@ -137,7 +137,10 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
         }
         val previewFormat = if (mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_YUYV) {
             UVCCamera.FRAME_FORMAT_YUYV
-        } else {
+        } else if (mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_UYVY) {
+            UVCCamera.FRAME_FORMAT_UYVY
+        }
+        else {
             UVCCamera.FRAME_FORMAT_MJPEG
         }
         try {
@@ -148,6 +151,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 Logger.e(TAG, "open camera failed, preview size($previewSize) unsupported-> ${mUvcCamera?.supportedSizeList}")
                 return
             }
+            Logger.i(TAG, "proceeding with getSuitableSize: $previewSize")
             initEncodeProcessor(previewSize.width, previewSize.height)
             // if give custom minFps or maxFps or unsupported preview size
             // this method will fail
@@ -177,11 +181,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                     previewSize.height,
                     MIN_FS,
                     MAX_FPS,
-                    if (previewFormat == UVCCamera.FRAME_FORMAT_YUYV) {
-                        UVCCamera.FRAME_FORMAT_MJPEG
-                    } else {
-                        UVCCamera.FRAME_FORMAT_YUYV
-                    },
+                    UVCCamera.FRAME_FORMAT_YUYV,
                     UVCCamera.DEFAULT_BANDWIDTH
                 )
             } catch (e: Exception) {

@@ -660,7 +660,7 @@ static void _uvc_delete_transfer(struct libusb_transfer *transfer) {
 	EXIT();
 }
 
-#define USE_EOF
+#define USE_EOF 1
 
 /** @internal
  * @brief Process a payload transfer

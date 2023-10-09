@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <linux/time.h>
 #include <unistd.h>
+#include <android/log.h>
 
 #if 1	// set 1 if you don't need debug log
 	#ifndef LOG_NDEBUG
@@ -176,10 +177,24 @@ void UVCPreview::clear_pool() {
 
 inline const bool UVCPreview::isRunning() const {return mIsRunning; }
 
+uvc_frame_format UVCPreview::previewModeToPreviewModeUVC(int mode) {
+	switch(mode) {
+		case 0:
+			return UVC_FRAME_FORMAT_YUYV;
+		case 1:
+			return UVC_FRAME_FORMAT_MJPEG;
+		case 2:
+			return UVC_FRAME_FORMAT_UYVY;
+		default:
+			return UVC_FRAME_FORMAT_YUYV;
+	}
+}
+
 int UVCPreview::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth) {
 	ENTER();
 	
 	int result = 0;
+	LOGI("UVCPreview::setPreviewSize()");
 	if ((requestWidth != width) || (requestHeight != height) || (requestMode != mode)) {
 		requestWidth = width;
 		requestHeight = height;
@@ -189,9 +204,9 @@ int UVCPreview::setPreviewSize(int width, int height, int min_fps, int max_fps, 
 		requestBandwidth = bandwidth;
 
 		uvc_stream_ctrl_t ctrl;
-		result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, &ctrl,
-			!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
-			requestWidth, requestHeight, requestMinFps, requestMaxFps);
+
+		result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, &ctrl, previewModeToPreviewModeUVC(mode), requestWidth, requestHeight, min_fps, max_fps);
+		LOGI("uvc_get_stream_ctrl_format_size_fps (width=%d, height=%d, min_fps=%d, max_fps=%d) result=%d", requestWidth, requestHeight, min_fps, max_fps, result);
 	}
 	
 	RETURN(result, int);
@@ -370,10 +385,12 @@ int UVCPreview::stopPreview() {
         // because of capture_thread may null when called do_preview()
 		if (mHasCapturing) {
             pthread_cond_signal(&capture_sync);
+            LOGE("Closing capture thread");
             if (capture_thread && pthread_join(capture_thread, NULL) != EXIT_SUCCESS) {
                 LOGW("UVCPreview::terminate capture thread: pthread_join failed");
             }
 		}
+        LOGE("Closing preview thread");
 		if (preview_thread && pthread_join(preview_thread, NULL) != EXIT_SUCCESS) {
 			LOGW("UVCPreview::terminate preview thread: pthread_join failed");
 		}
@@ -483,6 +500,8 @@ void *UVCPreview::preview_thread_func(void *vptr_args) {
 		result = preview->prepare_preview(&ctrl);
 		if (LIKELY(!result)) {
 			preview->do_preview(&ctrl);
+		} else {
+			preview->mHasCapturing = false;
 		}
 	}
 	PRE_EXIT();
@@ -493,10 +512,8 @@ int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	uvc_error_t result;
 
 	ENTER();
-	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
-		!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
-		requestWidth, requestHeight, requestMinFps, requestMaxFps
-	);
+	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl, previewModeToPreviewModeUVC(requestMode), requestWidth, requestHeight, requestMinFps, requestMaxFps);
+	LOGI("uvc_get_stream_ctrl_format_size (width=%d, height=%d, max_fps=%d, mode=%d) result=%d", requestWidth, requestHeight, requestMaxFps, previewModeToPreviewModeUVC(requestMode), result);
 	if (LIKELY(!result)) {
 #if LOCAL_DEBUG
 		uvc_print_stream_ctrl(ctrl, stderr);
@@ -506,7 +523,8 @@ int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 		if (LIKELY(!result)) {
 			frameWidth = frame_desc->wWidth;
 			frameHeight = frame_desc->wHeight;
-			LOGI("frameSize=(%d,%d)@%s", frameWidth, frameHeight, (!requestMode ? "YUYV" : "MJPEG"));
+			LOGI("frameSize=(%d,%d)uvc_frame_format = %d", frameWidth, frameHeight,
+				 previewModeToPreviewModeUVC(requestMode));
 			pthread_mutex_lock(&preview_mutex);
 			if (LIKELY(mPreviewWindow)) {
 				ANativeWindow_setBuffersGeometry(mPreviewWindow,
@@ -518,7 +536,11 @@ int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 			frameHeight = requestHeight;
 		}
 		frameMode = requestMode;
-		frameBytes = frameWidth * frameHeight * (!requestMode ? 2 : 4);
+		int multiplier = 2;
+		if (requestMode == 1) {
+			multiplier = 4;
+		}
+		frameBytes = frameWidth * frameHeight * multiplier;
 		previewBytes = frameWidth * frameHeight * PREVIEW_PIXEL_BYTES;
 	} else {
 		LOGE("could not negotiate with camera:err=%d", result);
@@ -545,7 +567,7 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 #if LOCAL_DEBUG
 		LOGI("Streaming...");
 #endif
-		if (frameMode) {
+		if (frameMode == 1) {
 			// MJPEG mode
 			for ( ; LIKELY(isRunning()) ; ) {
 				frame_mjpeg = waitPreviewFrame();
@@ -592,6 +614,7 @@ static void copyFrame(const uint8_t *src, uint8_t *dest, const int width, int he
 		memcpy(dest, src, width);
 		dest += stride_dest; src += stride_src;
 	}
+	//for (int i = 0; i < height-h8; i += 8) {
 	for (int i = 0; i < height; i += 8) {
 		memcpy(dest, src, width);
 		dest += stride_dest; src += stride_src;
@@ -897,7 +920,7 @@ void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
 					int b = mFrameCallbackFunc(frame, callback_frame);
 					recycle_frame(frame);
 					if (UNLIKELY(b)) {
-						LOGW("failed to convert for callback frame");
+						LOGW("failed to convert for callback frame %d", b);
 						goto SKIP;
 					}
 				} else {

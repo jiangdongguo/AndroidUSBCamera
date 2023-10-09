@@ -233,11 +233,22 @@ class CameraRequest private constructor() {
      */
     enum class PreviewFormat {
         FORMAT_MJPEG,
-        FORMAT_YUYV
+        FORMAT_YUYV,
+        FORMAT_UYVY
     }
 
     companion object {
         private const val DEFAULT_WIDTH = 640
         private const val DEFAULT_HEIGHT = 480
+
+        val PreviewFormatStrings: Array<String> = arrayOf("MJPEG", "YUYV", "UYVY")
+
+        fun stringFromPreviewFormat(format: PreviewFormat): String {
+            if (format.ordinal > PreviewFormatStrings.size - 1) {
+                return "Unknown"
+            }
+
+            return PreviewFormatStrings[format.ordinal]
+        }
     }
 }

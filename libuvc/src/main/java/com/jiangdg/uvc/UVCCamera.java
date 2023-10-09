@@ -26,6 +26,7 @@ package com.jiangdg.uvc;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -47,6 +48,7 @@ public class UVCCamera {
 	private static final String DEFAULT_USBFS = "/dev/bus/usb";
 	public static final int FRAME_FORMAT_YUYV = 0;
 	public static final int FRAME_FORMAT_MJPEG = 1;
+	public static final int FRAME_FORMAT_UYVY = 2;
 
 	public static final int DEFAULT_PREVIEW_MIN_FPS = 1;
 	public static final int DEFAULT_PREVIEW_MAX_FPS = 31;
@@ -127,7 +129,7 @@ public class UVCCamera {
     protected long mControlSupports;			// カメラコントロールでサポートしている機能フラグ
     protected long mProcSupports;				// プロセッシングユニットでサポートしている機能フラグ
     protected int mCurrentFrameFormat = FRAME_FORMAT_MJPEG;
-	protected int mCurrentWidth = 640, mCurrentHeight = 480;
+	protected int mCurrentWidth = 160, mCurrentHeight = 120;
 	protected float mCurrentBandwidthFactor = DEFAULT_BANDWIDTH;
     protected String mSupportedSize;
     protected List<Size> mCurrentSizeList;
@@ -345,9 +347,12 @@ public class UVCCamera {
 		if ((width == 0) || (height == 0))
 			throw new IllegalArgumentException("invalid preview size");
 		if (mNativePtr != 0) {
+			Log.i("UVCCamera", "nativeSetPreviewSize() width=" + width + " height=" + height +  " min_fps=" + min_fps + "max_fps=" + max_fps + "bandwidth=" + bandwidthFactor);
 			final int result = nativeSetPreviewSize(mNativePtr, width, height, min_fps, max_fps, frameFormat, bandwidthFactor);
-			if (result != 0)
+			if (result != 0) {
+				Log.i("UVCCamera", "failed with result=" + result);
 				throw new IllegalArgumentException("Failed to set preview size");
+			}
 			mCurrentFrameFormat = frameFormat;
 			mCurrentWidth = width;
 			mCurrentHeight = height;

@@ -3,73 +3,63 @@ apply plugin: 'com.android.library'
 import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
-	compileSdkVersion rootProject.ext.versionCompiler
-	buildToolsVersion rootProject.ext.versionBuildTool
+	compileSdkVersion versionCompiler
+	buildToolsVersion versionBuildTool
 
 	compileOptions {
-		sourceCompatibility rootProject.ext.javaSourceCompatibility
-		targetCompatibility rootProject.ext.javaTargetCompatibility
+		sourceCompatibility javaSourceCompatibility
+		targetCompatibility javaTargetCompatibility
 	}
 
-    defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-		targetSdkVersion rootProject.ext.versionTarget
-    }
+	defaultConfig {
+		minSdkVersion 14
+		targetSdkVersion versionTarget
 
-	lintOptions {
-		checkReleaseBuilds false
-		// Or, if you prefer, you can continue to check for errors in release builds,
-		// but continue the build even when errors are found:
-		abortOnError false
-		// The demo app does not have translations.
-		disable 'MissingTranslation'
+		// This block is different from the one you use to link Gradle
+		// to your CMake or ndk-build script.
+		externalNativeBuild {
+
+			// For ndk-build, instead use the ndkBuild block.
+			ndkBuild {
+
+				// Passes optional arguments to CMake.
+				//arguments += listOf("-DANDROID_ARM_NEON=TRUE", "-DANDROID_TOOLCHAIN=clang")
+
+				// Sets a flag to enable format macro constants for the C compiler.
+				//cFlags += listOf("-D__STDC_FORMAT_MACROS")
+
+				// Sets optional flags for the C++ compiler.
+				//cppFlags += listOf("-fexceptions", "-frtti")
+			}
+		}
 	}
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
-}
-
-tasks.withType(JavaCompile) {
-	compileTask -> compileTask.dependsOn ndkBuild
-}
-
-String getNdkBuildPath() {
-	def ndkBuildingDir = System.getenv("NDK_HOME")
-	if (ndkBuildingDir==null || ndkBuildingDir.isEmpty()) {
-		Properties properties = new Properties()
-		properties.load(project.rootProject.file('local.properties').newDataInputStream())
-		ndkBuildingDir = properties.getProperty("ndk.dir")
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+		}
 	}
-	def ndkBuildPath = ndkBuildingDir
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		ndkBuildPath = ndkBuildingDir + '/ndk-build.cmd'
-	} else {
-		ndkBuildPath = ndkBuildingDir + '/ndk-build'
+	// Use this block to link Gradle to your CMake or ndk-build script.
+	externalNativeBuild {
+		ndkBuild {
+			path = file("src/main/jni/Android.mk")
+		}
 	}
-	return ndkBuildPath
+	sourceSets {
+		main {
+			jniLibs.srcDir 'src/main/libs'
+			jni.srcDirs = []
+		}
+	}
 }
-
-task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
-	println('executing ndkBuild')
-	def ndkBuildPath = getNdkBuildPath();
-	commandLine ndkBuildPath, '-j8', '-C', file('src/main').absolutePath
-}
-
-task ndkClean(type: Exec, description: 'clean JNI libraries') {
-	println('executing ndkBuild clean')
-	def ndkBuildPath = getNdkBuildPath();
-	commandLine ndkBuildPath, 'clean', '-C', file('src/main').absolutePath
-}
-
-clean.dependsOn 'ndkClean'
 
 dependencies {
     implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 	implementation "androidx.appcompat:appcompat:${androidXVersion}"
 	implementation 'com.elvishew:xlog:1.11.0'
-//	implementation project(path: ':libuvccommon')
+	implementation project(path: ':libuvccommon')
+//	implementation("com.serenegiant:common:${commonLibVersion}") {
+//		exclude module: 'support-v4'
+//	}
 }
