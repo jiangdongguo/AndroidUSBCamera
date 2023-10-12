@@ -21,7 +21,6 @@
   ~  may have a different license, see the respective files.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.jiangdg.uvccamera">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
 </manifest>

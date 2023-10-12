@@ -37,6 +37,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.jiangdg.demo'
 
     // libuvc module should need set local.properties
     // eg: ndk.dir=D\:\\Developer\\Environment\\AndroidSdks\\ndk\\21.0.6113669

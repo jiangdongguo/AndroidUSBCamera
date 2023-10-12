@@ -4,9 +4,8 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 android {
 	compileSdkVersion versionCompiler
-	buildToolsVersion versionBuildTool
 
-	compileOptions {
+    compileOptions {
 		sourceCompatibility javaSourceCompatibility
 		targetCompatibility javaTargetCompatibility
 	}
@@ -49,9 +48,9 @@ android {
 	sourceSets {
 		main {
 			jniLibs.srcDir 'src/main/libs'
-			jni.srcDirs = []
-		}
+        }
 	}
+    namespace 'com.jiangdg.uvccamera'
 }
 
 dependencies {
