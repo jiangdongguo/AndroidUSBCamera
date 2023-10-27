@@ -33,16 +33,17 @@ import java.nio.FloatBuffer
 abstract class AbstractRender(context: Context) {
     private var mFragmentShader: Int = 0
     private var mVertexShader: Int = 0
-    protected var mProgram: Int = 0
     private var mContext: Context? = null
-    private var mWidth: Int = 0
-    private var mHeight: Int = 0
-    private var mPositionLocation = 0
-    private var mTextureCoordLocation = 0
     private var mStMatrixHandle = 0
     private var mMVPMatrixHandle = 0
+    protected var mWidth: Int = 0
+    protected var mHeight: Int = 0
+    protected var mProgram: Int = 0
+    protected var mPositionLocation = 0
+    protected var mTextureCoordLocation = 0
+    protected var mTextureSampler = 0
 
-    private var mTriangleVertices: FloatBuffer = ByteBuffer.allocateDirect(
+    var mTriangleVertices: FloatBuffer = ByteBuffer.allocateDirect(
         mTriangleVerticesData.size * FLOAT_SIZE_BYTES
     ).order(ByteOrder.nativeOrder()).asFloatBuffer()
 
@@ -60,10 +61,9 @@ abstract class AbstractRender(context: Context) {
     open fun drawFrame(textureId: Int): Int {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT or GLES20.GL_COLOR_BUFFER_BIT)
+        GLES20.glViewport(0, 0, mWidth, mHeight)
         // 1. 激活程序，绑定纹理
         GLES20.glUseProgram(mProgram)
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(getBindTextureType(), textureId)
 
         // 2. 链接顶点属性
         mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET)
@@ -78,6 +78,9 @@ abstract class AbstractRender(context: Context) {
         beforeDraw()
 
         // 3. 绘制
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glBindTexture(getBindTextureType(), textureId)
+        GLES20.glUniform1i(mTextureSampler, 0)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
         GLES20.glBindTexture(getBindTextureType(), 0)
         return textureId
@@ -100,6 +103,7 @@ abstract class AbstractRender(context: Context) {
         }
         mPositionLocation = GLES20.glGetAttribLocation(mProgram, "aPosition")
         mTextureCoordLocation = GLES20.glGetAttribLocation(mProgram, "aTextureCoordinate")
+        mTextureSampler = GLES20.glGetAttribLocation(mProgram, "uTextureSampler")
         if (isGLESStatusError()) {
             Logger.e(TAG, "create external texture failed, err = ${GLES20.glGetError()}")
             return
@@ -194,9 +198,9 @@ abstract class AbstractRender(context: Context) {
     companion object {
         private const val TAG = "AbstractRender"
         private const val FLOAT_SIZE_BYTES = 4
-        private const val TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES
-        private const val TRIANGLE_VERTICES_DATA_POS_OFFSET = 0
-        private const val TRIANGLE_VERTICES_DATA_UV_OFFSET = 3
+        const val TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES
+        const val TRIANGLE_VERTICES_DATA_POS_OFFSET = 0
+        const val TRIANGLE_VERTICES_DATA_UV_OFFSET = 3
 
         private val mTriangleVerticesData = floatArrayOf(
             // 坐标            纹理

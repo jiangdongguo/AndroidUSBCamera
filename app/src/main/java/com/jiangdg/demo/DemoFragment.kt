@@ -679,7 +679,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
                             override fun onLoadedFailed(error: Exception?) {
                                 lifecycleScope.launch(Dispatchers.Main) {
-                                    ToastUtils.show("Capture image error.${error?.localizedMessage}")
                                     mViewBinding.albumPreviewIv.cancelAnimation()
                                 }
                             }

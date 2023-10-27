@@ -12,6 +12,16 @@ import javax.microedition.khronos.opengles.GL10
 object OpenGLUtils {
     private const val TAG = "OpenGLUtils"
 
+    fun glGenTextures(textures: IntArray) {
+        GLES20.glGenTextures(1, textures, 0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        Logger.i(TAG, "create texture, id = ${textures[0]}")
+    }
+
     fun isGlEsSupported(context: Context): Boolean {
         return (context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)?.let {
             try {

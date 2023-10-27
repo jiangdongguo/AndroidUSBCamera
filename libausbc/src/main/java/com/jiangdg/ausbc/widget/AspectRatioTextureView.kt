@@ -49,9 +49,9 @@ class AspectRatioTextureView: TextureView, IAspectRatio {
 
     }
 
-    override fun getSurfaceWidth(): Int  = width
+    override fun getSurfaceWidth(): Int  = measuredWidth
 
-    override fun getSurfaceHeight(): Int  = height
+    override fun getSurfaceHeight(): Int  = measuredHeight
 
     override fun getSurface(): Surface? {
         return try {

@@ -58,7 +58,9 @@ class Mp4Muxer(
     private var mContext: Context? = null
     private var mMediaMuxer: MediaMuxer? = null
     private var mFileSubIndex: Int = 0
+    @Volatile
     private var mVideoTrackerIndex = -1
+    @Volatile
     private var mAudioTrackerIndex = -1
     private var mVideoFormat: MediaFormat? = null
     private var mAudioFormat: MediaFormat? = null
@@ -106,6 +108,9 @@ class Mp4Muxer(
         try {
             mMediaMuxer?.apply {
                 val tracker = addTrack(mediaFormat)
+                if (Utils.debugCamera) {
+                    Logger.i(TAG, "addTracker index = $tracker isVideo = $isVideo")
+                }
                 if (isVideo) {
                     mVideoFormat = mediaFormat
                     mVideoTrackerIndex = tracker
@@ -132,9 +137,6 @@ class Mp4Muxer(
                             Logger.i(TAG, "start media muxer")
                         }
                     }
-                }
-                if (Utils.debugCamera) {
-                    Logger.i(TAG, "addTracker index = $tracker isVideo = $isVideo")
                 }
             }
         } catch (e: Exception) {
@@ -224,6 +226,7 @@ class Mp4Muxer(
             mMediaMuxer?.stop()
             mMediaMuxer?.release()
             insertDCIM(mContext, path, true)
+            Logger.i(TAG, "stop media muxer")
         } catch (e: Exception) {
             mMainHandler.post {
                 mCaptureCallBack?.onError(e.localizedMessage)

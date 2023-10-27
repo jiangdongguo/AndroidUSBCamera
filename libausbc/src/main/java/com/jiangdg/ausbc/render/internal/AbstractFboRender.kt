@@ -43,10 +43,14 @@ abstract class AbstractFboRender(context: Context) : AbstractRender(context) {
     // glBindFramebuffer()
     fun getFrameBufferId() = mFrameBuffers[0]
 
+    fun getFrameBufferTexture() = mFBOTextures[0]
+
     override fun drawFrame(textureId: Int): Int {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, mFrameBuffers[0])
         super.drawFrame(textureId)
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+        // Convenient reuse of FBO
+        afterDrawFBO()
         return mFBOTextures[0]
     }
 
@@ -54,6 +58,8 @@ abstract class AbstractFboRender(context: Context) : AbstractRender(context) {
         super.setSize(width, height)
         loadFBO(width, height)
     }
+
+    protected open fun afterDrawFBO() {}
 
     private fun loadFBO(width: Int, height: Int) {
         destroyFrameBuffers()

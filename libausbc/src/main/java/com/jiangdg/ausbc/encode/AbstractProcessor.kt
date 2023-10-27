@@ -20,11 +20,11 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
-import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.callback.IEncodeDataCallBack
 import com.jiangdg.ausbc.encode.bean.RawData
 import com.jiangdg.ausbc.encode.muxer.Mp4Muxer
 import com.jiangdg.ausbc.utils.Logger
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.Exception
@@ -34,16 +34,19 @@ import kotlin.Exception
  *
  * @author Created by jiangdg on 2022/2/10
  */
-abstract class AbstractProcessor() {
+abstract class AbstractProcessor(private val isVideo: Boolean) {
     private var mEncodeThread: HandlerThread? = null
     private var mEncodeHandler: Handler? = null
+    private var mStartTimeStamps: Long = 0L
     protected var mMediaCodec: MediaCodec? = null
     private var mMp4Muxer: Mp4Muxer? = null
-    private var isVideo: Boolean = false
     private var mEncodeDataCb: IEncodeDataCallBack? = null
     protected val mRawDataQueue: ConcurrentLinkedQueue<RawData> = ConcurrentLinkedQueue()
     protected var mBitRate: Int? = null
-    protected var mMainHandler: Handler = Handler(Looper.getMainLooper())
+    private var isExit = true
+    protected val mMainHandler: Handler by lazy {
+        Handler(Looper.getMainLooper())
+    }
 
     protected val mEncodeState: AtomicBoolean by lazy {
         AtomicBoolean(false)
@@ -73,13 +76,14 @@ abstract class AbstractProcessor() {
             true
         }
         mEncodeHandler?.obtainMessage(MSG_START)?.sendToTarget()
+        isExit = false
     }
 
     /**
      * Stop encode
      */
     fun stopEncode() {
-        mEncodeState.set(false)
+        isExit = true
         mEncodeHandler?.obtainMessage(MSG_STOP)?.sendToTarget()
         mEncodeThread?.quitSafely()
         mEncodeThread = null
@@ -93,7 +97,6 @@ abstract class AbstractProcessor() {
      */
     fun updateBitRate(bitRate: Int) {
         this.mBitRate = bitRate
-        mEncodeState.set(false)
         mEncodeHandler?.obtainMessage(MSG_STOP)?.sendToTarget()
         mEncodeHandler?.obtainMessage(MSG_START)?.sendToTarget()
     }
@@ -111,12 +114,20 @@ abstract class AbstractProcessor() {
      * Set mp4muxer
      *
      * @param muxer mp4 media muxer
-     * @param isVideo data type, audio or video
      */
     @Synchronized
-    fun setMp4Muxer(muxer: Mp4Muxer, isVideo: Boolean) {
+    fun setMp4Muxer(muxer: Mp4Muxer) {
         this.mMp4Muxer = muxer
-        this.isVideo = isVideo
+        // Set muxer if record midway when encoding
+        // if not encoding, cancel it
+        if (! isEncoding()) {
+            return
+        }
+        try {
+            mMp4Muxer?.addTracker(mMediaCodec?.outputFormat, isVideo)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     /**
@@ -137,7 +148,7 @@ abstract class AbstractProcessor() {
     /**
      * Is encoding
      */
-    fun isEncoding() = mEncodeState.get()
+    fun isEncoding() = mEncodeState.get() && !isExit
 
     /**
      * Get thread name
@@ -167,13 +178,13 @@ abstract class AbstractProcessor() {
     /**
      * Is lower lollipop
      */
-    protected fun isLowerLollipop() = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
+    private fun isLowerLollipop() = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
 
     /**
      * Do encode data
      */
     protected fun doEncodeData() {
-        while (mEncodeState.get()) {
+        while (isEncoding()) {
             try {
                 queueFrameIfNeed()
                 var outputIndex = 0
@@ -189,23 +200,27 @@ abstract class AbstractProcessor() {
                                 if (outputIndex < 0) {
                                     return@let
                                 }
+                                if (mStartTimeStamps == 0L) {
+                                    mStartTimeStamps = mBufferInfo.presentationTimeUs / 1000L
+                                }
                                 try {
                                     val outputBuffer = if (isLowerLollipop()) {
                                         codec.outputBuffers[outputIndex]
                                     } else {
                                         codec.getOutputBuffer(outputIndex)
                                     }
-                                    if (outputBuffer != null) {
-                                        outputBuffer.position(mBufferInfo.offset)
-                                        outputBuffer.limit(mBufferInfo.offset + mBufferInfo.size)
-                                        val encodeData = ByteArray(mBufferInfo.size)
-                                        outputBuffer.get(encodeData)
-                                        mMp4Muxer?.pumpStream(outputBuffer, mBufferInfo, isVideo)
-
-                                        processOutputData(mBufferInfo, encodeData).apply {
-                                            mEncodeDataCb?.onEncodeData(second,second.size, first, mBufferInfo.presentationTimeUs / 1000)
-                                        }
+                                    outputBuffer ?: return@let
+                                    processOutputData(outputBuffer, mBufferInfo)?.apply {
+                                        mEncodeDataCb?.onEncodeData(
+                                            first,
+                                            outputBuffer,
+                                            mBufferInfo.offset,
+                                            mBufferInfo.size,
+                                            mBufferInfo.presentationTimeUs / 1000L - mStartTimeStamps
+                                        )
                                     }
+                                    // muxer data
+                                    mMp4Muxer?.pumpStream(outputBuffer, mBufferInfo, isVideo)
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 } finally {
@@ -246,7 +261,11 @@ abstract class AbstractProcessor() {
         }
     }
 
-    protected abstract fun processOutputData(bufferInfo: MediaCodec.BufferInfo, encodeData: ByteArray): Pair<IEncodeDataCallBack.DataType, ByteArray>
+    protected abstract fun processOutputData(
+        encodeData: ByteBuffer,
+        bufferInfo: MediaCodec.BufferInfo
+    ): Pair<IEncodeDataCallBack.DataType, ByteBuffer>?
+
     protected abstract fun processInputData(data: ByteArray): ByteArray?
 
     companion object {

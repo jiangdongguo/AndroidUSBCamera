@@ -414,7 +414,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         mMediaMuxer = Mp4Muxer(mCtx, callBack,  path, durationInSec)
         (mVideoProcess as? H264EncodeProcessor)?.apply {
             startEncode()
-            setMp4Muxer(mMediaMuxer!!, true)
+            setMp4Muxer(mMediaMuxer!!)
             setOnEncodeReadyListener(object : H264EncodeProcessor.OnEncodeReadyListener {
                 override fun onReady(surface: Surface?) {
                     if (! isEnableGLEs) {
@@ -430,7 +430,7 @@ class CameraClient internal constructor(builder: Builder) : IPreviewDataCallBack
         }
         (mAudioProcess as? AACEncodeProcessor)?.apply {
             startEncode()
-            setMp4Muxer(mMediaMuxer!!, false)
+            setMp4Muxer(mMediaMuxer!!)
         }
     }
 

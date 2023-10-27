@@ -16,6 +16,7 @@
 package com.jiangdg.ausbc.utils
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -23,6 +24,7 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Process
+
 
 /** App operator utils
  *
@@ -62,5 +64,27 @@ object AppUtils {
             e.printStackTrace()
         }
         return null
+    }
+
+    /**
+     * Determine if the service is running
+     *
+     * @ param context: Service name determined by
+     * @ param className: package name + class name
+     *@ return true is running, false is not running
+     */
+    fun isServiceRunning(context: Context, className: String): Boolean {
+        var isRunning = false
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val services = activityManager.getRunningServices(Int.MAX_VALUE)
+        if (services != null && services.size > 0) {
+            for (service in services) {
+                if (className == service.service.className) {
+                    isRunning = true
+                    break
+                }
+            }
+        }
+        return isRunning
     }
 }

@@ -16,16 +16,20 @@
 package com.jiangdg.ausbc.utils
 
 import android.Manifest
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import androidx.annotation.RawRes
 import androidx.core.content.ContextCompat
 import java.io.InputStream
@@ -105,5 +109,26 @@ object Utils  {
                 e.printStackTrace()
             }
         }
+    }
+
+    /**
+     * Check if application have overlays permission
+     */
+    fun canDrawOverlays(context: Context) = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        true
+    } else {
+        Settings.canDrawOverlays(context)
+    }
+
+    /**
+     * Request overlays permission
+     */
+    fun requestOverlaysPermission(activity: Activity, requestCode: Int) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return
+        }
+        val uri = Uri.parse("package:${activity.packageName}" )
+        val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri)
+        activity.startActivityForResult(intent, requestCode)
     }
 }

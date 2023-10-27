@@ -36,6 +36,25 @@ object MediaUtils {
 
     private const val TAG = "MediaUtils"
 
+    private val AUDIO_SAMPLING_RATES = intArrayOf(
+        96000,  // 0
+        88200,  // 1
+        64000,  // 2
+        48000,  // 3
+        44100,  // 4
+        32000,  // 5
+        24000,  // 6
+        22050,  // 7
+        16000,  // 8
+        12000,  // 9
+        11025,  // 10
+        8000,  // 11
+        7350,  // 12
+        -1,  // 13
+        -1,  // 14
+        -1
+    )
+
     fun readRawTextFile(context: Context, rawId: Int): String {
         val inputStream = context.resources.openRawResource(rawId)
         val br = BufferedReader(InputStreamReader(inputStream))
@@ -165,6 +184,23 @@ object MediaUtils {
         return result
     }
 
+    fun transformYuv2Jpeg(data: ByteArray, width: Int, height: Int): ByteArray? {
+        val yuvImage = try {
+            YuvImage(data, ImageFormat.NV21, width, height, null)
+        } catch (e: Exception) {
+            Logger.e(TAG, "create YuvImage failed.", e)
+            null
+        } ?: return null
+        val bos = ByteArrayOutputStream(data.size)
+        return try {
+            yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, bos)
+            bos.toByteArray()
+        } catch (e: Exception) {
+            Logger.e(TAG, "compressToJpeg failed.", e)
+            null
+        }
+    }
+
     fun transferByte2Short(data: ByteArray, readBytes: Int): ShortArray {
         // byte[] to short[], the length of the array is reduced by half
         val shortLen = readBytes / 2
@@ -181,4 +217,16 @@ object MediaUtils {
     fun isAboveQ(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
     }
+    fun addADTStoPacket(packet: ByteArray, packetLen: Int, sampleRate: Int) {
+        val packetWithAdts = ByteArray(packetLen + 7)
+        packetWithAdts[0] = 0xFF.toByte()
+        packetWithAdts[1] = 0xF1.toByte()
+        packetWithAdts[2] = (((2 - 1 shl 6) + (AUDIO_SAMPLING_RATES.indexOf(sampleRate) shl 2) + (1 shr 2)).toByte())
+        packetWithAdts[3] = ((1 and 3 shl 6) + (packetLen shr 11)).toByte()
+        packetWithAdts[4] = (packetLen and 0x7FF shr 3).toByte()
+        packetWithAdts[5] = ((packetLen and 7 shl 5) + 0x1F).toByte()
+        packetWithAdts[6] = 0xFC.toByte()
+        System.arraycopy(packet, 0, packetWithAdts, 7, packetLen)
+    }
+
 }
