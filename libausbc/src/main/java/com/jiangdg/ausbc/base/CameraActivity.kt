@@ -53,7 +53,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
         AtomicBoolean(false)
     }
 
-    override fun initData() {
+    override fun initView() {
         when (val cameraView = getCameraView()) {
             is TextureView -> {
                 handleTextureView(cameraView)
@@ -73,7 +73,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
                 registerMultiCamera()
                 return
             }
-        }.also { view->
+        }?.also { view->
             getCameraViewContainer()?.apply {
                 removeAllViews()
                 addView(view, getViewLayoutParams(this))
@@ -115,7 +115,12 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
                     setUsbControlBlock(null)
                 }
                 mRequestPermission.set(false)
-                mCurrentCamera = null
+                try {
+                    mCurrentCamera?.cancel(true)
+                    mCurrentCamera = null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
             override fun onConnectDev(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
@@ -124,6 +129,12 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
                 mCameraMap[device.deviceId]?.apply {
                     setUsbControlBlock(ctrlBlock)
                 }?.also { camera ->
+                    try {
+                        mCurrentCamera?.cancel(true)
+                        mCurrentCamera = null
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                     mCurrentCamera = SettableFuture()
                     mCurrentCamera?.set(camera)
                     openCamera(mCameraView)
@@ -134,12 +145,16 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
             override fun onDisConnectDec(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 closeCamera()
                 mRequestPermission.set(false)
-                mCurrentCamera = null
             }
 
             override fun onCancelDev(device: UsbDevice?) {
                 mRequestPermission.set(false)
-                mCurrentCamera = null
+                try {
+                    mCurrentCamera?.cancel(true)
+                    mCurrentCamera = null
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         })
         mCameraClient?.register()
@@ -226,8 +241,8 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
      * @param device see [UsbDevice]
      */
     protected fun requestPermission(device: UsbDevice?) {
-        mCameraClient?.requestPermission(device)
         mRequestPermission.set(true)
+        mCameraClient?.requestPermission(device)
     }
 
     /**
@@ -257,6 +272,7 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
     protected fun captureImage(callBack: ICaptureCallBack, savePath: String? = null) {
         getCurrentCamera()?.captureImage(callBack, savePath)
     }
+
 
     /**
      * Get default effect
@@ -839,7 +855,6 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
 
     protected fun closeCamera() {
         getCurrentCamera()?.closeCamera()
-        getCurrentCamera()?.setCameraStateCallBack(null)
     }
 
     private fun surfaceSizeChanged(surfaceWidth: Int, surfaceHeight: Int) {
@@ -908,19 +923,19 @@ abstract class CameraActivity: BaseActivity(), ICameraStateCallBack {
 
     protected open fun getCameraRequest(): CameraRequest {
         return CameraRequest.Builder()
-            .setPreviewWidth(1280)
-            .setPreviewHeight(720)
+            .setPreviewWidth(640)
+            .setPreviewHeight(480)
             .setRenderMode(CameraRequest.RenderMode.OPENGL)
             .setDefaultRotateType(RotateType.ANGLE_0)
-            .setAudioSource(CameraRequest.AudioSource.SOURCE_AUTO)
-            .setAspectRatioShow(false)
+            .setAudioSource(CameraRequest.AudioSource.SOURCE_SYS_MIC)
+            .setPreviewFormat(CameraRequest.PreviewFormat.FORMAT_MJPEG)
+            .setAspectRatioShow(true)
             .setCaptureRawImage(false)
             .setRawPreviewData(false)
-            .setDefaultEffect(EffectBlackWhite(this))
-            .create();
+            .create()
     }
 
     companion object {
-        private const val TAG = "CameraActivity"
+        private const val TAG = "CameraFragment"
     }
 }
