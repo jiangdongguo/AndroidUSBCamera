@@ -686,7 +686,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 }
             } catch (e: Exception) {
                 activity?.runOnUiThread {
-                    ToastUtils.show("${e.localizedMessage}")
+                    ToastUtils.show(e.localizedMessage)
                 }
                 Logger.e(TAG, "showRecentMedia failed", e)
             }
