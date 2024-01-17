@@ -990,6 +990,7 @@ static void _uvc_stream_callback(struct libusb_transfer *transfer) {
 		// pass through to following lines
 	case LIBUSB_TRANSFER_CANCELLED:
 	case LIBUSB_TRANSFER_ERROR:
+		libusb_clear_halt(strmh->devh->usb_devh, strmh->stream_if->bEndpointAddress);
 		UVC_DEBUG("not retrying transfer, status = %d", transfer->status);
 //		MARK("not retrying transfer, status = %d", transfer->status);
 //		_uvc_delete_transfer(transfer);
