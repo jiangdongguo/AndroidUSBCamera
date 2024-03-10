@@ -66,6 +66,8 @@ public final class USBMonitor {
 
 	public static final String ACTION_USB_DEVICE_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
 
+	private static final int RECEIVER_NOT_EXPORTED = 4;
+
 	/**
 	 * openしているUsbControlBlock
 	 */
@@ -186,7 +188,11 @@ public final class USBMonitor {
 				// ACTION_USB_DEVICE_ATTACHED never comes on some devices so it should not be added here
 				filter.addAction(ACTION_USB_DEVICE_ATTACHED);
 				filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-				context.registerReceiver(mUsbReceiver, filter);
+				if (Build.VERSION.SDK_INT >= 34) {
+					context.registerReceiver(mUsbReceiver, filter, RECEIVER_NOT_EXPORTED);
+				} else {
+					context.registerReceiver(mUsbReceiver, filter);
+				}
 			}
 			// start connection check
 			mDeviceCounts = 0;
