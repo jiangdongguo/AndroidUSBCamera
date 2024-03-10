@@ -66,8 +66,6 @@ public final class USBMonitor {
 
 	public static final String ACTION_USB_DEVICE_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
 
-	private static final int RECEIVER_NOT_EXPORTED = 4;
-
 	/**
 	 * openしているUsbControlBlock
 	 */
@@ -189,6 +187,8 @@ public final class USBMonitor {
 				filter.addAction(ACTION_USB_DEVICE_ATTACHED);
 				filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
 				if (Build.VERSION.SDK_INT >= 34) {
+					// RECEIVER_NOT_EXPORTED is required on Android 14
+					int RECEIVER_NOT_EXPORTED = 4;
 					context.registerReceiver(mUsbReceiver, filter, RECEIVER_NOT_EXPORTED);
 				} else {
 					context.registerReceiver(mUsbReceiver, filter);
