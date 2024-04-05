@@ -23,14 +23,3 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-ext {
-    minSdkVersion = 19
-    versionCode = 126
-    versionNameString = '3.3.3'
-    supportLibVersion = '27.1.1'
-    versionBuildTool = '27.0.3'
-    kotlinCoreVersion = '1.3.2'
-    kotlinCoroutines = '1.3.9'
-    constraintlayoutVersion = '2.0.4'
-}
