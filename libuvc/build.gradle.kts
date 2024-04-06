@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-	compileSdk = 29
+	compileSdk = libs.versions.compileSdk.get().toInt()
 	namespace = "com.jiangdg.uvccamera"
 
 	defaultConfig {
-		minSdk = 19
-		targetSdk = 27
+		minSdk = libs.versions.minSdk.get().toInt()
+		targetSdk = libs.versions.targetSdk.get().toInt()
 		ndk.abiFilters.addAll(listOf("armeabi-v7a","arm64-v8a", "x86", "x86_64"))
 	}
 

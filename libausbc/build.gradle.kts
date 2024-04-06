@@ -4,13 +4,12 @@ plugins {
 }
 
 android {
-    compileSdk = 29
+    compileSdk = libs.versions.compileSdk.get().toInt()
     namespace = "com.jiangdg.ausbc"
 
     defaultConfig {
-        minSdk = 19
-        targetSdk = 27
-
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -25,7 +24,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = libs.versions.jvmTarget.get()
     }
 }
 
