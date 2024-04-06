@@ -25,7 +25,7 @@
 #include "_onload.h"
 #include "utilbase.h"
 
-#define LOCAL_DEBUG 0
+#define LOCAL_DEBUG 1
 
 extern int register_uvccamera(JNIEnv *env);
 
@@ -33,7 +33,6 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 #if LOCAL_DEBUG
     LOGD("JNI_OnLoad");
 #endif
-
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
