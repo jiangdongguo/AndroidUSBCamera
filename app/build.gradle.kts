@@ -5,6 +5,8 @@ plugins {
 
 android {
     compileSdk = 29
+    namespace = "com.jiangdg.demo"
+
     defaultConfig {
         applicationId = "com.jiangdg.ausbc"
         minSdk = 19
@@ -36,22 +38,22 @@ android {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.core:core-ktx:1.3.2")
-    implementation("com.google.android.material:material:1.3.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.2.0")
-    implementation("com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.50")
-    implementation("com.afollestad.material-dialogs:core:3.2.1")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.baseRecyclerViewAdapterHelper)
+    implementation(libs.core)
 
-    api("com.gyf.immersionbar:immersionbar:3.0.0")
-    implementation("com.github.bumptech.glide:glide:4.10.0")
-    implementation("com.github.bumptech.glide:okhttp3-integration:4.10.0")
-    implementation("com.zlc.glide:webpdecoder:1.6.4.9.0")
-    implementation("com.tencent:mmkv:1.2.12")
+    api(libs.immersionbar)
+    implementation(libs.glide)
+    implementation(libs.okhttp3.integration)
+    implementation(libs.webpdecoder)
+    implementation(libs.mmkv)
 
     // For debug online
     implementation(project(":libausbc"))

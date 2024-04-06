@@ -5,13 +5,13 @@ plugins {
 
 android {
     compileSdk = 29
+    namespace = "com.jiangdg.ausbc"
 
     defaultConfig {
         minSdk = 19
         targetSdk = 27
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-//        consumerProguardFiles = "consumer-rules.pro"
     }
 
     buildTypes {
@@ -30,10 +30,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.4")
-    implementation("com.google.android.material:material:1.3.0")
-    api("com.elvishew:xlog:1.11.0")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.material)
     implementation(project(":libuvc"))
     api(project(":libnative"))
 }

@@ -5,6 +5,7 @@ plugins {
 
 android {
 	compileSdk = 29
+	namespace = "com.jiangdg.uvccamera"
 
 	defaultConfig {
 		minSdk = 19
@@ -32,6 +33,6 @@ android {
 }
 
 dependencies {
-	implementation("androidx.appcompat:appcompat:1.3.1")
-	implementation("com.elvishew:xlog:1.11.0")
+	implementation(libs.androidx.appcompat)
+	implementation(libs.xlog)
 }
