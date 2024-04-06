@@ -1,4 +1,7 @@
-apply plugin: "com.android.library"
+plugins {
+	id("com.android.library")
+	id("kotlin-android")
+}
 
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -67,7 +70,6 @@ task ndkClean(type: Exec, description: "clean JNI libraries") {
 clean.dependsOn "ndkClean"
 
 dependencies {
-    implementation fileTree(dir: new File(buildDir, "libs"), include: "*.jar")
 	implementation("androidx.appcompat:appcompat:1.3.1")
 	implementation("com.elvishew:xlog:1.11.0")
 }
