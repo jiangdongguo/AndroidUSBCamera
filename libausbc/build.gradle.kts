@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.material)
+    implementation(libs.timber)
     implementation(project(":libuvc"))
     api(project(":libnative"))
 }

@@ -414,6 +414,7 @@ public class USBVendorId {
 		IDS.put(1300, "FCI Electronics");
 		IDS.put(1302, "Longwell Electronics/Longwell Company");
 		IDS.put(1305, "Star Micronics Co., LTD");
+		IDS.put(13081, "Mevo Inc");
 		IDS.put(1309, "American Power Conversion");
 		IDS.put(1314, "ACON, Advanced-Connectek, Inc.");
 		IDS.put(1343, "Synopsys, Inc.");

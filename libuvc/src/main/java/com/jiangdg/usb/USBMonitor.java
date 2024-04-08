@@ -43,18 +43,18 @@ import androidx.annotation.RequiresApi;
 
 import com.jiangdg.utils.BuildCheck;
 import com.jiangdg.utils.HandlerThreadHandler;
-import com.jiangdg.utils.XLogWrapper;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import timber.log.Timber;
 
 public final class USBMonitor {
 
@@ -118,7 +118,7 @@ public final class USBMonitor {
 	}
 
 	public USBMonitor(final Context context, final OnDeviceConnectListener listener) {
-		if (DEBUG) XLogWrapper.v(TAG, "USBMonitor:Constructor");
+		Timber.v("USBMonitor:Constructor");
 		if (listener == null)
 			throw new IllegalArgumentException("OnDeviceConnectListener should not null.");
 		mWeakContext = new WeakReference<Context>(context);
@@ -126,7 +126,7 @@ public final class USBMonitor {
 		mOnDeviceConnectListener = listener;
 		mAsyncHandler = HandlerThreadHandler.createHandler(TAG);
 		destroyed = false;
-		if (DEBUG) XLogWrapper.v(TAG, "USBMonitor:mUsbManager=" + mUsbManager);
+		Timber.v("USBMonitor:mUsbManager=" + mUsbManager);
 	}
 
 	/**
@@ -134,7 +134,7 @@ public final class USBMonitor {
 	 * never reuse again
 	 */
 	public void destroy() {
-		if (DEBUG) XLogWrapper.i(TAG, "destroy:");
+		Timber.i("destroy:");
 		unregister();
 		if (!destroyed) {
 			destroyed = true;
@@ -150,14 +150,14 @@ public final class USBMonitor {
 						}
 					}
 				} catch (final Exception e) {
-					XLogWrapper.e(TAG, "destroy:", e);
+					Timber.e(e);
 				}
 			}
 			mCtrlBlocks.clear();
 			try {
 				mAsyncHandler.getLooper().quit();
 			} catch (final Exception e) {
-				XLogWrapper.e(TAG, "destroy:", e);
+				Timber.e(e);
 			}
 		}
 	}
@@ -170,7 +170,7 @@ public final class USBMonitor {
 	public synchronized void register() throws IllegalStateException {
 		if (destroyed) throw new IllegalStateException("already destroyed");
 		if (mPermissionIntent == null) {
-			if (DEBUG) XLogWrapper.i(TAG, "register:");
+			Timber.i("register:");
 			final Context context = mWeakContext.get();
 			if (context != null) {
 				if (Build.VERSION.SDK_INT >= 31) {
@@ -205,14 +205,14 @@ public final class USBMonitor {
 			mAsyncHandler.removeCallbacks(mDeviceCheckRunnable);
 		}
 		if (mPermissionIntent != null) {
-//			if (DEBUG) XLogWrapper.i(TAG, "unregister:");
+//			if (DEBUG) Timber.i("unregister:");
 			final Context context = mWeakContext.get();
 			try {
 				if (context != null) {
 					context.unregisterReceiver(mUsbReceiver);
 				}
 			} catch (final Exception e) {
-				XLogWrapper.w(TAG, e);
+				Timber.e(e);
 			}
 			mPermissionIntent = null;
 		}
@@ -385,13 +385,13 @@ public final class USBMonitor {
 					for (int i = 0; i < num_interface; i++) {
 						sb.append(String.format(Locale.US, "interface%d:%s", i, device.getInterface(i).toString()));
 					}
-					XLogWrapper.i(TAG, "key=" + key + ":" + device + ":" + sb.toString());
+					Timber.i("key=" + key + ":" + device + ":" + sb.toString());
 				}
 			} else {
-				XLogWrapper.i(TAG, "no device");
+				Timber.i("no device");
 			}
 		} else {
-			XLogWrapper.i(TAG, "no device");
+			Timber.i("no device");
 		}
 	}
 
@@ -403,7 +403,7 @@ public final class USBMonitor {
 	 */
 	public final boolean hasPermission(final UsbDevice device) throws IllegalStateException {
 		if (destroyed) {
-			XLogWrapper.w(TAG, "hasPermission failed, camera destroyed!");
+			Timber.w("hasPermission failed, camera destroyed!");
 			return false;
 		}
 		return updatePermission(device, device != null && mUsbManager.hasPermission(device));
@@ -429,7 +429,7 @@ public final class USBMonitor {
 				}
 			}
 		} catch (SecurityException e) {
-			XLogWrapper.w("jiangdg", e.getLocalizedMessage());
+			Timber.e(e);
 		}
 
 		return hasPermission;
@@ -441,35 +441,35 @@ public final class USBMonitor {
 	 * @return true if fail to request permission
 	 */
 	public synchronized boolean requestPermission(final UsbDevice device) {
-//		if (DEBUG) XLogWrapper.v(TAG, "requestPermission:device=" + device);
+//		Timber.v("requestPermission:device=" + device);
 		boolean result = false;
 		if (isRegistered()) {
 			if (device != null) {
-				if (DEBUG) XLogWrapper.i(TAG,"request permission, has permission: " + mUsbManager.hasPermission(device));
+				Timber.i("request permission, has permission: " + mUsbManager.hasPermission(device));
 				if (mUsbManager.hasPermission(device)) {
 					// call onConnect if app already has permission
 					processConnect(device);
 				} else {
 					try {
 						// パーミッションがなければ要求する
-						if (DEBUG) XLogWrapper.i(TAG, "start request permission...");
+						if (DEBUG) Timber.i("start request permission...");
 						mUsbManager.requestPermission(device, mPermissionIntent);
 					} catch (final Exception e) {
 						// Android5.1.xのGALAXY系でandroid.permission.sec.MDM_APP_MGMTという意味不明の例外生成するみたい
-						XLogWrapper.w(TAG,"request permission failed, e = " + e.getLocalizedMessage() ,e);
+						Timber.w("request permission failed, e = " + e.getLocalizedMessage() ,e);
 						processCancel(device);
 						result = true;
 					}
 				}
 			} else {
 				if (DEBUG)
-					XLogWrapper.w(TAG,"request permission failed, device is null?");
+					Timber.w("request permission failed, device is null?");
 				processCancel(device);
 				result = true;
 			}
 		} else {
 			if (DEBUG)
-				XLogWrapper.w(TAG,"request permission failed, not registered?");
+				Timber.w("request permission failed, not registered?");
 			processCancel(device);
 			result = true;
 		}
@@ -512,13 +512,13 @@ public final class USBMonitor {
 						if (device != null) {
 							// get permission, call onConnect
 							if (DEBUG)
-								XLogWrapper.w(TAG, "get permission success in mUsbReceiver");
+								Timber.w("get permission success in mUsbReceiver");
 							processConnect(device);
 						}
 					} else {
 						// failed to get permission
 						if (DEBUG)
-							XLogWrapper.w(TAG, "get permission failed in mUsbReceiver");
+							Timber.w("get permission failed in mUsbReceiver");
 						processCancel(device);
 					}
 				}
@@ -589,7 +589,7 @@ public final class USBMonitor {
 		if (destroyed) return;
 		updatePermission(device, true);
 		mAsyncHandler.post(() -> {
-			if (DEBUG) XLogWrapper.v(TAG, "processConnect:device=" + device.getDeviceName());
+			Timber.v("processConnect:device=" + device.getDeviceName());
 			UsbControlBlock ctrlBlock;
 			final boolean createNew;
 			ctrlBlock = mCtrlBlocks.get(device);
@@ -602,7 +602,7 @@ public final class USBMonitor {
 			}
 			if (mOnDeviceConnectListener != null) {
 				if (ctrlBlock.getConnection() == null) {
-					XLogWrapper.e(TAG, "processConnect: Open device failed");
+					Timber.e("processConnect: Open device failed");
 					mOnDeviceConnectListener.onCancel(device);
 					return;
 				}
@@ -613,7 +613,7 @@ public final class USBMonitor {
 
 	private void processCancel(final UsbDevice device) {
 		if (destroyed) return;
-		if (DEBUG) XLogWrapper.v(TAG, "processCancel:");
+		Timber.v("processCancel:");
 		updatePermission(device, false);
 		if (mOnDeviceConnectListener != null) {
 			mAsyncHandler.post(new Runnable() {
@@ -627,7 +627,7 @@ public final class USBMonitor {
 
 	private void processAttach(final UsbDevice device) {
 		if (destroyed) return;
-		if (DEBUG) XLogWrapper.v(TAG, "processAttach:");
+		Timber.v("processAttach:");
 		if (mOnDeviceConnectListener != null) {
 			mAsyncHandler.post(new Runnable() {
 				@Override
@@ -640,7 +640,7 @@ public final class USBMonitor {
 
 	private void processDettach(final UsbDevice device) {
 		if (destroyed) return;
-		if (DEBUG) XLogWrapper.v(TAG, "processDettach:");
+		Timber.v("processDettach:");
 		if (mOnDeviceConnectListener != null) {
 			mAsyncHandler.post(new Runnable() {
 				@Override
@@ -707,7 +707,7 @@ public final class USBMonitor {
 				sb.append(device.getVersion());			sb.append("#");	// API >= 23
 			}
 		}
-//		if (DEBUG) XLogWrapper.v(TAG, "getDeviceKeyName:" + sb.toString());
+//		Timber.v("getDeviceKeyName:" + sb.toString());
 		return sb.toString();
 	}
 
@@ -1010,12 +1010,12 @@ public final class USBMonitor {
 		 * @param device
 		 */
 		private UsbControlBlock(final USBMonitor monitor, final UsbDevice device) {
-			if (DEBUG) XLogWrapper.i(TAG, "UsbControlBlock:constructor");
+			if (DEBUG) Timber.i("UsbControlBlock:constructor");
 			mWeakMonitor = new WeakReference<USBMonitor>(monitor);
 			mWeakDevice = new WeakReference<UsbDevice>(device);
 			mConnection = monitor.mUsbManager.openDevice(device);
 			if (mConnection == null) {
-				XLogWrapper.w(TAG, "openDevice failed in UsbControlBlock11, wait and try again");
+				Timber.w("openDevice failed in UsbControlBlock11, wait and try again");
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -1038,9 +1038,9 @@ public final class USBMonitor {
 				if (mConnection != null) {
 					final int desc = mConnection.getFileDescriptor();
 					final byte[] rawDesc = mConnection.getRawDescriptors();
-					XLogWrapper.i(TAG, String.format(Locale.US, "name=%s,desc=%d,busnum=%d,devnum=%d,rawDesc=", name, desc, busnum, devnum));
+					Timber.i(String.format(Locale.US, "name=%s,desc=%d,busnum=%d,devnum=%d,rawDesc=", name, desc, busnum, devnum));
 				} else {
-					XLogWrapper.e(TAG, "could not connect to device(mConnection=null) " + name);
+					Timber.e("could not connect to device(mConnection=null) " + name);
 				}
 			}
 		}
@@ -1058,7 +1058,7 @@ public final class USBMonitor {
 			}
 			mConnection = monitor.mUsbManager.openDevice(device);
 			if (mConnection == null) {
-				XLogWrapper.w(TAG, "openDevice failed in UsbControlBlock, wait and try again");
+				Timber.w("openDevice failed in UsbControlBlock, wait and try again");
 				try {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
@@ -1351,7 +1351,7 @@ public final class USBMonitor {
 		 * This also close interfaces if they are opened in Java side
 		 */
 		public synchronized void close() {
-			if (DEBUG) XLogWrapper.i(TAG, "UsbControlBlock#close:");
+			if (DEBUG) Timber.i("UsbControlBlock#close:");
 
 			if (mConnection != null) {
 				final int n = mInterfaces.size();

@@ -34,5 +34,5 @@ android {
 
 dependencies {
 	implementation(libs.androidx.appcompat)
-	implementation(libs.xlog)
+	implementation(libs.timber)
 }

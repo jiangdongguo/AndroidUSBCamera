@@ -16,36 +16,6 @@ import com.jiangdg.usb.DeviceFilter
  */
 object CameraUtils {
 
-    fun transferYUV420ToNV21(image: Image, width: Int, height: Int): ByteArray {
-        val nv21 = ByteArray(width * height * 3 / 2)
-        val planes = image.planes
-        // Y通道
-        val yBuffer = planes[0].buffer
-        val yLen = width * height
-        yBuffer.get(nv21, 0, yLen)
-        // V通道
-        val vBuffer = planes[2].buffer
-        val vPixelStride = planes[2].pixelStride
-        for ((index, i) in (0 until vBuffer.remaining() step vPixelStride).withIndex()) {
-            val vIndex = yLen + 2 * index
-            if (vIndex >= nv21.size) {
-                break
-            }
-            nv21[vIndex] = vBuffer.get(i)
-        }
-        // U通道
-        val uBuffer = planes[1].buffer
-        val uPixelStride = planes[1].pixelStride
-        for ((index, i) in (0 until uBuffer.remaining() step uPixelStride).withIndex()) {
-            val uIndex = yLen + (2 * index + 1)
-            if (uIndex >= nv21.size) {
-                break
-            }
-            nv21[yLen + (2 * index + 1)] = uBuffer.get(i)
-        }
-        return nv21
-    }
-
     /**
      * check is usb camera
      *

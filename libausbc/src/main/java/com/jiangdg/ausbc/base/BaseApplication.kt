@@ -29,7 +29,6 @@ open class BaseApplication: Application() {
     override fun onCreate() {
         super.onCreate()
         CrashUtils.init(this)
-        Logger.init(this)
         ToastUtils.init(this)
     }
 }

@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.baseRecyclerViewAdapterHelper)
     implementation(libs.core)
+    implementation(libs.timber)
 
     api(libs.immersionbar)
     implementation(libs.glide)

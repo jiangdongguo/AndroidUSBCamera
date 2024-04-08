@@ -16,7 +16,7 @@
 package com.jiangdg.ausbc.utils
 
 import android.app.Application
-import com.jiangdg.utils.XLogWrapper
+import timber.log.Timber
 
 /** Logger utils
  *
@@ -26,35 +26,31 @@ import com.jiangdg.utils.XLogWrapper
  * @author Created by jiangdg on 2022/1/24
  */
 object Logger {
-    fun init(application: Application, folderPath: String? = null) {
-        XLogWrapper.init(application, folderPath)
-    }
-
     fun i(flag: String, msg: String) {
-        XLogWrapper.i(flag, msg)
+        Timber.tag(flag).i(msg)
     }
 
     fun d(flag: String, msg: String) {
-        XLogWrapper.d(flag, msg)
+        Timber.tag(flag).d(msg)
     }
 
     fun w(flag: String, msg: String) {
-        XLogWrapper.w(flag, msg)
+        Timber.tag(flag).w(msg)
     }
 
     fun w(flag: String, throwable: Throwable?) {
-        XLogWrapper.w(flag, throwable)
+        Timber.tag(flag).w(throwable)
     }
 
     fun w(flag: String, msg: String, throwable: Throwable?) {
-        XLogWrapper.w(flag, msg, throwable)
+        Timber.tag(flag).w(throwable, msg)
     }
 
     fun e(flag: String, msg: String) {
-        XLogWrapper.e(flag, msg)
+        Timber.tag(flag).e(msg)
     }
 
     fun e(flag: String, msg: String, throwable: Throwable?) {
-        XLogWrapper.e(flag, msg, throwable)
+        Timber.tag(flag).e(throwable, msg)
     }
 }

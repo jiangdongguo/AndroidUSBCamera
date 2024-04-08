@@ -32,7 +32,6 @@ import android.view.SurfaceHolder;
 import com.jiangdg.usb.USBMonitor;
 import com.jiangdg.usb.USBMonitor.UsbControlBlock;
 import com.jiangdg.utils.Size;
-import com.jiangdg.utils.XLogWrapper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,6 +39,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import timber.log.Timber;
 
 public class UVCCamera {
 	public static boolean DEBUG = false;	// TODO set false when releasing
@@ -200,7 +201,7 @@ public class UVCCamera {
 			sb.append("调用nativeConnect返回值："+result);
 //			long id_camera, int venderId, int productId, int fileDescriptor, int busNum, int devAddr, String usbfs
 		} catch (final Exception e) {
-			XLogWrapper.w(TAG, e);
+			Timber.e(e);
 			for(int i = 0; i< e.getStackTrace().length; i++){
 				sb.append(e.getStackTrace()[i].toString());
 				sb.append("\n");
@@ -221,7 +222,7 @@ public class UVCCamera {
     		mSupportedSize = nativeGetSupportedSize(mNativePtr);
     	}
     	if (USBMonitor.DEBUG) {
-    		XLogWrapper.i(TAG, "open camera status: " + mNativePtr +", size: " + mSupportedSize);
+    		Timber.i("open camera status: " + mNativePtr +", size: " + mSupportedSize);
 		}
     	List<Size> supportedSizes = getSupportedSizeList();
 		if (!supportedSizes.isEmpty()) {
@@ -270,7 +271,7 @@ public class UVCCamera {
 		mCurrentBandwidthFactor = 0;
 		mSupportedSize = null;
 		mCurrentSizeList = null;
-    	if (DEBUG) XLogWrapper.v(TAG, "close:finished");
+    	Timber.v("close:finished");
     }
 
 	public UsbDevice getDevice() {
@@ -976,16 +977,16 @@ public class UVCCamera {
     	    	if (false) {
 					dumpControls(mControlSupports);
 					dumpProc(mProcSupports);
-					XLogWrapper.v(TAG, String.format("Brightness:min=%d,max=%d,def=%d", mBrightnessMin, mBrightnessMax, mBrightnessDef));
-					XLogWrapper.v(TAG, String.format("Contrast:min=%d,max=%d,def=%d", mContrastMin, mContrastMax, mContrastDef));
-					XLogWrapper.v(TAG, String.format("Sharpness:min=%d,max=%d,def=%d", mSharpnessMin, mSharpnessMax, mSharpnessDef));
-					XLogWrapper.v(TAG, String.format("Gain:min=%d,max=%d,def=%d", mGainMin, mGainMax, mGainDef));
-					XLogWrapper.v(TAG, String.format("Gamma:min=%d,max=%d,def=%d", mGammaMin, mGammaMax, mGammaDef));
-					XLogWrapper.v(TAG, String.format("Saturation:min=%d,max=%d,def=%d", mSaturationMin, mSaturationMax, mSaturationDef));
-					XLogWrapper.v(TAG, String.format("Hue:min=%d,max=%d,def=%d", mHueMin, mHueMax, mHueDef));
-					XLogWrapper.v(TAG, String.format("Zoom:min=%d,max=%d,def=%d", mZoomMin, mZoomMax, mZoomDef));
-					XLogWrapper.v(TAG, String.format("WhiteBlance:min=%d,max=%d,def=%d", mWhiteBlanceMin, mWhiteBlanceMax, mWhiteBlanceDef));
-					XLogWrapper.v(TAG, String.format("Focus:min=%d,max=%d,def=%d", mFocusMin, mFocusMax, mFocusDef));
+					Timber.v(String.format("Brightness:min=%d,max=%d,def=%d", mBrightnessMin, mBrightnessMax, mBrightnessDef));
+					Timber.v(String.format("Contrast:min=%d,max=%d,def=%d", mContrastMin, mContrastMax, mContrastDef));
+					Timber.v(String.format("Sharpness:min=%d,max=%d,def=%d", mSharpnessMin, mSharpnessMax, mSharpnessDef));
+					Timber.v(String.format("Gain:min=%d,max=%d,def=%d", mGainMin, mGainMax, mGainDef));
+					Timber.v(String.format("Gamma:min=%d,max=%d,def=%d", mGammaMin, mGammaMax, mGammaDef));
+					Timber.v(String.format("Saturation:min=%d,max=%d,def=%d", mSaturationMin, mSaturationMax, mSaturationDef));
+					Timber.v(String.format("Hue:min=%d,max=%d,def=%d", mHueMin, mHueMax, mHueDef));
+					Timber.v(String.format("Zoom:min=%d,max=%d,def=%d", mZoomMin, mZoomMax, mZoomDef));
+					Timber.v(String.format("WhiteBlance:min=%d,max=%d,def=%d", mWhiteBlanceMin, mWhiteBlanceMax, mWhiteBlanceDef));
+					Timber.v(String.format("Focus:min=%d,max=%d,def=%d", mFocusMin, mFocusMax, mFocusDef));
 				}
 			}
     	} else {
@@ -1048,16 +1049,16 @@ public class UVCCamera {
 	};
 
     private static final void dumpControls(final long controlSupports) {
-    	XLogWrapper.i(TAG, String.format("controlSupports=%x", controlSupports));
+    	Timber.i(String.format("controlSupports=%x", controlSupports));
     	for (int i = 0; i < SUPPORTS_CTRL.length; i++) {
-    		XLogWrapper.i(TAG, SUPPORTS_CTRL[i] + ((controlSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
+    		Timber.i(SUPPORTS_CTRL[i] + ((controlSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
     	}
     }
 
 	private static final void dumpProc(final long procSupports) {
-    	XLogWrapper.i(TAG, String.format("procSupports=%x", procSupports));
+    	Timber.i(String.format("procSupports=%x", procSupports));
     	for (int i = 0; i < SUPPORTS_PROC.length; i++) {
-    		XLogWrapper.i(TAG, SUPPORTS_PROC[i] + ((procSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
+    		Timber.i(SUPPORTS_PROC[i] + ((procSupports & (0x1 << i)) != 0 ? "=enabled" : "=disabled"));
     	}
     }
 
@@ -1072,7 +1073,7 @@ public class UVCCamera {
 			result = sb.toString();
 		}
 		if (TextUtils.isEmpty(result)) {
-			XLogWrapper.w(TAG, "failed to get USBFS path, try to use default path:" + name);
+			Timber.w("failed to get USBFS path, try to use default path:" + name);
 			result = DEFAULT_USBFS;
 		}
 		return result;
