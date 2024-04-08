@@ -1,5 +1,6 @@
 /*
  * Copyright 2017-2022 Jiangdg
+ * Copyright 2024 vshcryabets@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +27,7 @@ import android.graphics.Bitmap
 import android.graphics.Typeface
 import android.hardware.usb.UsbDevice
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -83,12 +85,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private var mRecMinute = 0
     private var mRecHours = 0
 
-    private val mCameraModeTabMap = mapOf(
-        CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC to R.id.takePictureModeTv,
-        CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO to R.id.recordVideoModeTv,
-        CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO to R.id.recordAudioModeTv
-    )
-
     private val mEffectDataList by lazy {
         arrayListOf(
             CameraEffect.NONE_FILTER,
@@ -136,7 +132,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                     mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
                     mViewBinding.toolbarGroup.visibility = View.VISIBLE
                     mViewBinding.albumPreviewIv.visibility = View.VISIBLE
-                    mViewBinding.lensFacingBtn1.visibility = View.VISIBLE
                     mViewBinding.recTimerLayout.visibility = View.GONE
                     mViewBinding.recTimeTv.text = calculateTime(0, 0)
                 }
@@ -151,7 +146,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
 
     override fun initView() {
         super.initView()
-        mViewBinding.lensFacingBtn1.setOnClickListener(this)
         mViewBinding.effectsBtn.setOnClickListener(this)
         mViewBinding.cameraTypeBtn.setOnClickListener(this)
         mViewBinding.settingsBtn.setOnClickListener(this)
@@ -280,27 +274,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     }
 
     private fun switchLayoutClick() {
-        mViewBinding.takePictureModeTv.setOnClickListener {
-            if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC) {
-                return@setOnClickListener
-            }
-            mCameraMode = CaptureMediaView.CaptureMode.MODE_CAPTURE_PIC
-            updateCameraModeSwitchUI()
-        }
-        mViewBinding.recordVideoModeTv.setOnClickListener {
-            if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO) {
-                return@setOnClickListener
-            }
-            mCameraMode = CaptureMediaView.CaptureMode.MODE_CAPTURE_VIDEO
-            updateCameraModeSwitchUI()
-        }
-        mViewBinding.recordAudioModeTv.setOnClickListener {
-            if (mCameraMode == CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO) {
-                return@setOnClickListener
-            }
-            mCameraMode = CaptureMediaView.CaptureMode.MODE_CAPTURE_AUDIO
-            updateCameraModeSwitchUI()
-        }
         updateCameraModeSwitchUI()
         showRecentMedia()
     }
@@ -350,7 +323,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.modeSwitchLayout.visibility = View.GONE
                 mViewBinding.toolbarGroup.visibility = View.GONE
                 mViewBinding.albumPreviewIv.visibility = View.GONE
-                mViewBinding.lensFacingBtn1.visibility = View.GONE
                 mViewBinding.recTimerLayout.visibility = View.VISIBLE
                 startMediaTimer()
             }
@@ -368,7 +340,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
                 mViewBinding.toolbarGroup.visibility = View.VISIBLE
                 mViewBinding.albumPreviewIv.visibility = View.VISIBLE
-                mViewBinding.lensFacingBtn1.visibility = View.VISIBLE
                 mViewBinding.recTimerLayout.visibility = View.GONE
                 stopMediaTimer()
                 ToastUtils.show(path ?: "error")
@@ -389,7 +360,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.modeSwitchLayout.visibility = View.GONE
                 mViewBinding.toolbarGroup.visibility = View.GONE
                 mViewBinding.albumPreviewIv.visibility = View.GONE
-                mViewBinding.lensFacingBtn1.visibility = View.GONE
                 mViewBinding.recTimerLayout.visibility = View.VISIBLE
                 startMediaTimer()
             }
@@ -408,7 +378,6 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.modeSwitchLayout.visibility = View.VISIBLE
                 mViewBinding.toolbarGroup.visibility = View.VISIBLE
                 mViewBinding.albumPreviewIv.visibility = View.VISIBLE
-                mViewBinding.lensFacingBtn1.visibility = View.VISIBLE
                 mViewBinding.recTimerLayout.visibility = View.GONE
                 showRecentMedia(false)
                 stopMediaTimer()
@@ -451,14 +420,14 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         clickAnimation(v!!, object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 when (v) {
-                    mViewBinding.lensFacingBtn1 -> {
-                        getCurrentCamera()?.let { strategy ->
-                            if (strategy is CameraUVC) {
-                                showUsbDevicesDialog(getDeviceList(), strategy.getUsbDevice())
-                                return
-                            }
-                        }
-                    }
+//                    mViewBinding.lensFacingBtn1 -> {
+//                        getCurrentCamera()?.let { strategy ->
+//                            if (strategy is CameraUVC) {
+//                                showUsbDevicesDialog(getDeviceList(), strategy.getUsbDevice())
+//                                return
+//                            }
+//                        }
+//                    }
                     mViewBinding.effectsBtn -> {
                         showEffectDialog()
                     }
@@ -592,7 +561,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         mMultiCameraDialog = MultiCameraDialog()
         mMultiCameraDialog?.setOnDismissListener(object : BaseBottomDialog.OnDismissListener {
             override fun onDismiss() {
-                registerMultiCamera()
+                registerMultiCamera(getSelectedDeviceId())
             }
         })
         mMultiCameraDialog?.show(childFragmentManager, "multiRoadCameras")
@@ -696,7 +665,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private fun updateCameraModeSwitchUI() {
         mViewBinding.modeSwitchLayout.children.forEach { it ->
             val tabTv = it as TextView
-            val isSelected = tabTv.id == mCameraModeTabMap[mCameraMode]
+            val isSelected = false
             val typeface = if (isSelected) Typeface.BOLD else Typeface.NORMAL
             tabTv.typeface = Typeface.defaultFromStyle(typeface)
             if (isSelected) {
@@ -873,9 +842,19 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
         return mBuilder.toString()
     }
 
+    override fun getSelectedDeviceId(): Int = requireArguments().getInt(MainActivity.KEY_USB_DEVICE)
+
     companion object {
         private const val TAG  = "DemoFragment"
         private const val WHAT_START_TIMER = 0x00
         private const val WHAT_STOP_TIMER = 0x01
+
+        fun newInstance(usbDeviceId: Int): DemoFragment {
+            val fragment = DemoFragment()
+            fragment.arguments = Bundle().apply {
+                putInt(MainActivity.KEY_USB_DEVICE, usbDeviceId)
+            }
+            return fragment
+        }
     }
 }

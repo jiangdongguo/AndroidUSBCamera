@@ -413,21 +413,21 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              *
              * @param device usb device info,see [UsbDevice]
              */
-            override fun onDetach(device: UsbDevice?) {
+            override fun onDetach(device: UsbDevice) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onDetach device = ${device?.deviceName}")
+                    Logger.i(TAG, "onDetach device = ${device.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
                 }
-                mCameraInfoMap.remove(device?.deviceId)
+                mCameraInfoMap.remove(device.deviceId)
                 mDevConnectCallBack?.onDetachDec(device)
                 if (mCacheDeviceList.contains(device)) {
                     mCacheDeviceList.remove(device)
                 }
                 // 重置正在打开的设备
                 val dev = mDevSettableFuture?.get()
-                if (dev?.deviceId == device?.deviceId) {
+                if (dev?.deviceId == device.deviceId) {
                     mRequestPermission.set(false)
                 }
             }
@@ -438,12 +438,12 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              * @param device usb device info,see [UsbDevice]
              */
             override fun onConnect(
-                device: UsbDevice?,
+                device: UsbDevice,
                 ctrlBlock: USBMonitor.UsbControlBlock?,
                 createNew: Boolean
             ) {
                 if (Utils.debugCamera) {
-                    Logger.i(TAG, "onConnect device = ${device?.deviceName}")
+                    Logger.i(TAG, "onConnect device = ${device.deviceName}")
                 }
                 if (!isUsbCamera(device) && !isFilterDevice(getContext(), device) && !mCacheDeviceList.contains(device)) {
                     return
@@ -467,7 +467,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              *
              * @param device usb device info,see [UsbDevice]
              */
-            override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+            override fun onDisconnect(device: UsbDevice, ctrlBlock: USBMonitor.UsbControlBlock?) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onDisconnect device = ${device?.deviceName}")
                 }
@@ -488,7 +488,7 @@ class CameraUvcStrategy(ctx: Context) : ICameraStrategy(ctx) {
              *
              * @param device usb device info,see [UsbDevice]
              */
-            override fun onCancel(device: UsbDevice?) {
+            override fun onCancel(device: UsbDevice) {
                 if (Utils.debugCamera) {
                     Logger.i(TAG, "onCancel device = ${device?.deviceName}")
                 }

@@ -37,7 +37,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
-        replaceDemoFragment(DemoFragment())
+        val usbDeviceId = intent.getIntExtra(KEY_USB_DEVICE, -1)
+        replaceDemoFragment(DemoFragment.newInstance(usbDeviceId))
     }
 
     override fun onStart() {

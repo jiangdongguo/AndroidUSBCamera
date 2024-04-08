@@ -9,6 +9,7 @@ import android.media.Image
 import androidx.core.content.ContextCompat
 import com.jiangdg.ausbc.R
 import com.jiangdg.usb.DeviceFilter
+import timber.log.Timber
 
 /** Camera tools
  *
@@ -22,8 +23,13 @@ object CameraUtils {
      * @param device see [UsbDevice]
      * @return true usb camera
      */
-    fun isUsbCamera(device: UsbDevice?): Boolean {
-        return when (device?.deviceClass) {
+    fun isUsbCamera(device: UsbDevice): Boolean {
+        return true
+        /*Thread.currentThread().stackTrace.forEach {
+            Timber.d("ASD $it")
+        }
+        Timber.d("ASD isUsbCamera $device")
+        return when (device.deviceClass) {
             UsbConstants.USB_CLASS_VIDEO -> {
                 true
             }
@@ -41,7 +47,7 @@ object CameraUtils {
             else -> {
                 false
             }
-        }
+        }*/
     }
 
     /**

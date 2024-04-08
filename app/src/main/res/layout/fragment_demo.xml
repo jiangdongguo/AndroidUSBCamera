@@ -124,17 +124,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/captureBtn" />
 
-    <ImageView
-        android:id="@+id/lensFacingBtn1"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:scaleType="centerCrop"
-        android:src="@mipmap/camera_switch"
-        app:layout_constraintBottom_toBottomOf="@+id/captureBtn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/captureBtn"
-        app:layout_constraintTop_toTopOf="@+id/captureBtn" />
-
     <ViewStub
         android:id="@+id/takePictureTipViewStub"
         android:layout_width="0dp"
@@ -153,49 +142,6 @@
         app:layout_constraintEnd_toEndOf="@+id/controlPanelLayout"
         app:layout_constraintStart_toStartOf="@+id/controlPanelLayout"
         app:layout_constraintTop_toTopOf="@+id/controlPanelLayout">
-
-        <TextView
-            android:id="@+id/takePictureModeTv"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:drawableBottom="@drawable/camera_bottom_dot_transparent"
-            android:drawablePadding="1dp"
-            android:gravity="center"
-            android:text="photo"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/recordVideoModeTv"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/recordVideoModeTv"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="20dp"
-            android:drawableBottom="@drawable/camera_bottom_dot_transparent"
-            android:gravity="center"
-            android:text="video"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/takePictureModeTv"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/recordAudioModeTv"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="20dp"
-            android:drawableBottom="@drawable/camera_bottom_dot_transparent"
-            android:gravity="center"
-            android:text="audio"
-            android:textColor="@color/white"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/recordVideoModeTv"
-            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

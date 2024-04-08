@@ -18,10 +18,12 @@ package com.jiangdg.ausbc.base
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
+import androidx.activity.ComponentActivity
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.camera.bean.CameraRequest
@@ -33,6 +35,7 @@ import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.SettableFuture
 import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.usb.USBMonitor
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -49,6 +52,8 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     private val mRequestPermission: AtomicBoolean by lazy {
         AtomicBoolean(false)
     }
+
+    open fun getSelectedDeviceId(): Int = -1
 
     override fun initView() {
         when (val cameraView = getCameraView()) {
@@ -67,7 +72,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             mCameraView = this
             // offscreen render
             if (this == null) {
-                registerMultiCamera()
+                registerMultiCamera(getSelectedDeviceId())
                 return
             }
         }?.also { view->
@@ -82,31 +87,11 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
         unRegisterMultiCamera()
     }
 
-    protected fun registerMultiCamera() {
+    protected fun registerMultiCamera(deviceId: Int) {
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
-                device ?: return
-                context?.let {
-                    if (mCameraMap.containsKey(device.deviceId)) {
-                        return
-                    }
-                    generateCamera(it, device).apply {
-                        mCameraMap[device.deviceId] = this
-                    }
-                    // Initiate permission request when device insertion is detected
-                    // If you want to open the specified camera, you need to override getDefaultCamera()
-                    if (mRequestPermission.get()) {
-                        return@let
-                    }
-                    getDefaultCamera()?.apply {
-                        if (vendorId == device.vendorId && productId == device.productId) {
-                            Logger.i(TAG, "default camera pid: $productId, vid: $vendorId")
-                            requestPermission(device)
-                        }
-                        return@let
-                    }
-                    requestPermission(device)
-                }
+                return
+
             }
 
             override fun onDetachDec(device: UsbDevice?) {
@@ -158,6 +143,35 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             }
         })
         mCameraClient?.register()
+        openCamera(deviceId)
+    }
+
+    fun openCamera(deviceId: Int) {
+        Timber.d("ASD open $deviceId")
+        val usbManager = requireActivity().getSystemService(ComponentActivity.USB_SERVICE) as UsbManager
+        val device = usbManager.deviceList.values.find { it.deviceId == deviceId } ?: return
+        Timber.d("ASD open 2 $deviceId = $device")
+        context?.let {
+            if (mCameraMap.containsKey(device.deviceId)) {
+                return
+            }
+            generateCamera(it, device).apply {
+                mCameraMap[device.deviceId] = this
+            }
+            // Initiate permission request when device insertion is detected
+            // If you want to open the specified camera, you need to override getDefaultCamera()
+            if (mRequestPermission.get()) {
+                return@let
+            }
+            getDefaultCamera()?.apply {
+                if (vendorId == device.vendorId && productId == device.productId) {
+                    Logger.i(TAG, "default camera pid: $productId, vid: $vendorId")
+                    requestPermission(device)
+                }
+                return@let
+            }
+            requestPermission(device)
+        }
     }
 
     protected fun unRegisterMultiCamera() {
@@ -170,8 +184,6 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
         mCameraClient = null
     }
 
-    protected fun getDeviceList() = mCameraClient?.getDeviceList()
-
     private fun handleTextureView(textureView: TextureView) {
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(
@@ -179,7 +191,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
                 width: Int,
                 height: Int
             ) {
-                registerMultiCamera()
+                registerMultiCamera(getSelectedDeviceId())
             }
 
             override fun onSurfaceTextureSizeChanged(
@@ -203,7 +215,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
     private fun handleSurfaceView(surfaceView: SurfaceView) {
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) {
-                registerMultiCamera()
+                registerMultiCamera(getSelectedDeviceId())
             }
 
             override fun surfaceChanged(
