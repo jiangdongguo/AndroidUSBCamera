@@ -26,7 +26,7 @@ class MultiCameraDialog : BaseBottomDialog() {
         setTopOffset(200)
     }
 
-    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View? {
+    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {
         mViewBinding = DialogMultiCamerasBinding.inflate(inflater, container, false)
         return mViewBinding.root
     }

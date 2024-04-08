@@ -34,6 +34,10 @@ android {
 
     buildFeatures {
         viewBinding = true
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.5"
     }
 }
 
@@ -50,12 +54,13 @@ dependencies {
     implementation(libs.core)
     implementation(libs.timber)
 
-    api(libs.immersionbar)
     implementation(libs.glide)
-    implementation(libs.okhttp3.integration)
-    implementation(libs.webpdecoder)
     implementation(libs.mmkv)
-
-    // For debug online
+    implementation(platform(libs.androidx.compose.bom))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.foundation:foundation")
+    implementation(libs.androidx.activity.compose)
     implementation(project(":libausbc"))
+    implementation(project(":libuvc"))
 }

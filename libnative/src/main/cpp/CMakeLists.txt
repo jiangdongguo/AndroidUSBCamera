@@ -1,6 +1,4 @@
-
 cmake_minimum_required(VERSION 3.10.2)
-
 
 project("nativelib")
 
@@ -8,12 +6,8 @@ project("nativelib")
 include_directories(${CMAKE_SOURCE_DIR}/module/mp3/lame)
 aux_source_directory(${CMAKE_SOURCE_DIR}/module/mp3/lame SRC_LAME)
 
-add_library(
-        nativelib
-        SHARED
-
+add_library(nativelib SHARED
         ${SRC_LAME}
-        utils/logger.cpp
         module/yuv/yuv.cpp
         module/mp3/mp3.cpp
         proxy/proxy_yuv.cpp

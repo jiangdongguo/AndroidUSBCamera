@@ -26,8 +26,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import com.bumptech.glide.integration.webp.decoder.WebpDrawable
-import com.bumptech.glide.integration.webp.decoder.WebpDrawableTransformation
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.engine.GlideException
@@ -64,7 +62,6 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
     override fun load(imageView: ImageView, url: String?, placeHolder: Int) {
         val centerCrop: Transformation<Bitmap> = CenterCrop()
         mRequestManager!!.load(url).optionalTransform(centerCrop)
-            .optionalTransform(WebpDrawable::class.java, WebpDrawableTransformation(centerCrop))
             .placeholder(placeHolder)
             .into(imageView)
     }
@@ -72,7 +69,6 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
     override fun load(imageView: ImageView, url: String?) {
         val centerCrop: Transformation<Bitmap> = CenterCrop()
         mRequestManager!!.load(url).optionalTransform(centerCrop)
-            .optionalTransform(WebpDrawable::class.java, WebpDrawableTransformation(centerCrop))
             .placeholder(R.drawable.imageloader_default_cover_bg)
             .into(imageView)
     }
@@ -80,7 +76,6 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
     override fun load(imageView: ImageView, resId: Int) {
         val centerCrop: Transformation<Bitmap> = CenterCrop()
         mRequestManager!!.load(resId).optionalTransform(centerCrop)
-            .optionalTransform(WebpDrawable::class.java, WebpDrawableTransformation(centerCrop))
             .placeholder(R.drawable.imageloader_default_cover_bg)
             .into(imageView)
     }
@@ -92,10 +87,6 @@ class GlideLoader<T>(target: T) : ILoader<ImageView> {
         bitmapTransformation: BitmapTransformation?
     ) {
         mRequestManager!!.load(url).optionalTransform(bitmapTransformation!!)
-            .optionalTransform(
-                WebpDrawable::class.java,
-                WebpDrawableTransformation(bitmapTransformation)
-            )
             .placeholder(placeHolder).into(imageView)
     }
 

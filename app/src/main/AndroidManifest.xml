@@ -24,15 +24,19 @@
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true">
         <activity
-            android:name="com.jiangdg.demo.MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.ClinkCameraDemo.NoActionBar"
-            android:screenOrientation="fullSensor">
+            android:name="com.vshcryabets.activity.DevicesActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.jiangdg.demo.MainActivity"
+            android:theme="@style/Theme.ClinkCameraDemo.NoActionBar"
+            android:screenOrientation="fullSensor">
         </activity>
 
     </application>

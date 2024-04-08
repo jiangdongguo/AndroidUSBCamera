@@ -979,7 +979,7 @@ public final class USBMonitor {
 				}
 			}
 			if (TextUtils.isEmpty(info.manufacturer)) {
-				info.manufacturer = USBVendorId.vendorName(device.getVendorId());
+				info.manufacturer = USBVendorId.INSTANCE.vendorName(device.getVendorId());
 			}
 			if (TextUtils.isEmpty(info.manufacturer)) {
 				info.manufacturer = String.format("%04x", device.getVendorId());

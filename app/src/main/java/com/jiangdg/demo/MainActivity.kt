@@ -1,5 +1,6 @@
 /*
  * Copyright 2017-2022 Jiangdg
+ * Copyright 2024 vshcryabets@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +17,24 @@
 package com.jiangdg.demo
 
 import android.Manifest.permission.*
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.PowerManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
 import androidx.fragment.app.Fragment
-import com.gyf.immersionbar.ImmersionBar
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.demo.databinding.ActivityMainBinding
 
-/**
- * Demos of camera usage
- *
- * @author Created by jiangdg on 2021/12/27
- */
 class MainActivity : AppCompatActivity() {
     private var mWakeLock: PowerManager.WakeLock? = null
-    private var immersionBar: ImmersionBar? = null
     private lateinit var viewBinding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStatusBar()
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
         replaceDemoFragment(DemoFragment())
@@ -90,9 +85,7 @@ class MainActivity : AppCompatActivity() {
                     ToastUtils.show(R.string.permission_tip)
                     return
                 }
-//                replaceDemoFragment(DemoMultiCameraFragment())
                 replaceDemoFragment(DemoFragment())
-//                replaceDemoFragment(GlSurfaceFragment())
             }
             REQUEST_STORAGE -> {
                 val hasCameraPermission =
@@ -108,23 +101,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        immersionBar= null
-    }
-
-    private fun setStatusBar() {
-        immersionBar = ImmersionBar.with(this)
-            .statusBarDarkFont(false)
-            .statusBarColor(R.color.black)
-            .navigationBarColor(R.color.black)
-            .fitsSystemWindows(true)
-            .keyboardEnable(true)
-        immersionBar?.init()
-    }
-
     companion object {
         private const val REQUEST_CAMERA = 0
         private const val REQUEST_STORAGE = 1
+        const val KEY_USB_DEVICE = "usbDeviceId"
+
+        fun newInstance(context: Context, usbDeviceId: Int) = Intent(context, MainActivity::class.java).apply {
+            putExtra(KEY_USB_DEVICE, usbDeviceId)
+        }
     }
 }
