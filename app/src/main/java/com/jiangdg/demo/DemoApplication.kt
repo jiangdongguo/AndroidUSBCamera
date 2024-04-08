@@ -15,7 +15,6 @@
  */
 package com.jiangdg.demo
 
-import android.content.Context
 import com.jiangdg.ausbc.base.BaseApplication
 import com.jiangdg.utils.MMKVUtils
 
