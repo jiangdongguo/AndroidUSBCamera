@@ -1060,9 +1060,6 @@ uvc_error_t uvc_uyvy2bgr(uvc_frame_t *in, uvc_frame_t *out) {
 }
 
 int uvc_yuyv2yuv420P(uvc_frame_t *in, uvc_frame_t *out) {
-
-	ENTER();
-	
 	if (UNLIKELY(in->frame_format != UVC_FRAME_FORMAT_YUYV))
 		RETURN(UVC_ERROR_INVALID_PARAM, uvc_error_t);
 
@@ -1105,7 +1102,7 @@ int uvc_yuyv2yuv420P(uvc_frame_t *in, uvc_frame_t *out) {
 //--------------------------------------------------------------------------------
 int uvc_yuyv2iyuv420P(uvc_frame_t *in, uvc_frame_t *out) {
 
-	ENTER();
+	
 	
 	if (UNLIKELY(in->frame_format != UVC_FRAME_FORMAT_YUYV))
 		RETURN(UVC_ERROR_INVALID_PARAM, uvc_error_t);
@@ -1147,7 +1144,7 @@ int uvc_yuyv2iyuv420P(uvc_frame_t *in, uvc_frame_t *out) {
 }
 
 uvc_error_t uvc_yuyv2yuv420SP(uvc_frame_t *in, uvc_frame_t *out) {
-	ENTER();
+	
 	
 	if (UNLIKELY(in->frame_format != UVC_FRAME_FORMAT_YUYV))
 		RETURN(UVC_ERROR_INVALID_PARAM, uvc_error_t);
@@ -1192,7 +1189,7 @@ uvc_error_t uvc_yuyv2yuv420SP(uvc_frame_t *in, uvc_frame_t *out) {
 }
 
 uvc_error_t uvc_yuyv2iyuv420SP(uvc_frame_t *in, uvc_frame_t *out) {
-	ENTER();
+	
 	
 	if (UNLIKELY(in->frame_format != UVC_FRAME_FORMAT_YUYV))
 		RETURN(UVC_ERROR_INVALID_PARAM, uvc_error_t);

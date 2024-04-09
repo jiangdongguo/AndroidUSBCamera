@@ -202,8 +202,7 @@
 
 #endif
 
-#define		ENTER()				LOGD("begin")
-#define		RETURN(code,type)	{type RESULT = code; LOGD("end (%d)", (int)RESULT); return RESULT;}
+#define		RETURN(code,type)	{type RESULT = code; return RESULT;}
 #define		RET(code)			{LOGD("end"); return code;}
 #define		EXIT()				{LOGD("end"); return;}
 #define		PRE_EXIT()			LOGD("end")

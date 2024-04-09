@@ -105,7 +105,7 @@ static int set_fd_cloexec_nb (int fd)
 
 int android_netlink_start_event_monitor(void)
 {
-	ENTER();
+	
 	int socktype = SOCK_RAW;
 	int ret;
 

@@ -293,7 +293,7 @@ static const char *_uvc_name_for_subtype(const uint8_t subtype) {
  * @param stream Output stream (stderr if NULL)
  */
 void uvc_print_diag(uvc_device_handle_t *devh, FILE *stream) {
-	UVC_ENTER();
+	
 
 	if (stream == NULL)
 		stream = stderr;
@@ -402,7 +402,7 @@ void uvc_print_format_desc_one(uvc_format_desc_t *format_desc, FILE *stream) {
 }
 
 void uvc_print_format_desc(uvc_format_desc_t *format_descriptors, FILE *stream) {
-	ENTER();
+	
 
 	if (stream == NULL)
 		stream = stderr;
@@ -419,7 +419,7 @@ void uvc_print_format_desc(uvc_format_desc_t *format_descriptors, FILE *stream) 
 }
 
 void uvc_print_device_desc(uvc_device_handle_t *devh, FILE *stream) {
-	ENTER();
+	
 
 	if (stream == NULL)
 		stream = stderr;
@@ -457,7 +457,7 @@ void uvc_print_endpoint_desc(
 	const struct libusb_endpoint_descriptor *endpoint, const int num_endpoint,
 	const char *prefix, FILE *stream) {
 
-//	ENTER();
+//	
 
 	if (stream == NULL)
 		stream = stderr;
@@ -487,7 +487,7 @@ void uvc_print_interface_desc(
 	const struct libusb_interface *interface, const int num_interface,
 	const char *prefix, FILE *stream) {
 
-//	ENTER();
+//	
 
 	if (stream == NULL)
 		stream = stderr;
@@ -526,7 +526,7 @@ void uvc_print_interface_desc(
 }
 
 void uvc_print_configuration_desc(uvc_device_handle_t *devh, FILE *stream) {
-	ENTER();
+	
 
 	if (stream == NULL)
 		stream = stderr;

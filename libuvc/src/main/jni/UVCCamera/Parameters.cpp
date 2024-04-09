@@ -256,7 +256,7 @@ char *UVCDiags::getDescriptions(const uvc_device_handle_t *deviceHandle) {
 	Writer<StringBuffer> writer(buffer);
 	char work[256];
 
-	ENTER();
+	
 	writer.StartObject();
 	{
 		writer.String(DESCRIPTION);
@@ -312,14 +312,13 @@ char *UVCDiags::getDescriptions(const uvc_device_handle_t *deviceHandle) {
 		writer.EndObject();	// end of DESCRIPTION
 	}
 	writer.EndObject();
-	RETURN(strdup(buffer.GetString()), char *);
+    return strdup(buffer.GetString());
 }
 
 char *UVCDiags::getCurrentStream(const uvc_stream_ctrl_t *ctrl) {
 	StringBuffer buffer;
 	Writer<StringBuffer> writer(buffer);
 
-	ENTER();
 	writer.StartObject();
 	{
 		write(writer, "hint", ctrl->bmHint);
@@ -344,7 +343,7 @@ char *UVCDiags::getSupportedSize(const uvc_device_handle_t *deviceHandle) {
 	Writer<StringBuffer> writer(buffer);
 	char buf[256];
 
-	ENTER();
+	
 	writer.StartObject();
 	{
 		if (deviceHandle->info->stream_ifs) {

@@ -11,7 +11,7 @@ UVCButtonCallback::UVCButtonCallback(uvc_device_handle_t *devh)
 :	mDeviceHandle(devh),
 	mButtonCallbackObj(NULL) {
 
-	ENTER();
+	
 	pthread_mutex_init(&button_mutex, NULL);
 
 	uvc_set_button_callback(mDeviceHandle, uvc_button_callback, (void *)this);
@@ -20,14 +20,14 @@ UVCButtonCallback::UVCButtonCallback(uvc_device_handle_t *devh)
 
 UVCButtonCallback::~UVCButtonCallback() {
 
-	ENTER();
+	
 	pthread_mutex_destroy(&button_mutex);
 	EXIT();
 }
 
 int UVCButtonCallback::setCallback(JNIEnv *env, jobject button_callback_obj) {
 	
-	ENTER();
+	
 	pthread_mutex_lock(&button_mutex);
 	{
 		if (!env->IsSameObject(mButtonCallbackObj, button_callback_obj)) {

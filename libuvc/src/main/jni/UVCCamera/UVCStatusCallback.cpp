@@ -11,7 +11,7 @@ UVCStatusCallback::UVCStatusCallback(uvc_device_handle_t *devh)
 :	mDeviceHandle(devh),
 	mStatusCallbackObj(NULL) {
 
-	ENTER();
+	
 	pthread_mutex_init(&status_mutex, NULL);
 
 	uvc_set_status_callback(mDeviceHandle, uvc_status_callback, (void *)this);
@@ -20,14 +20,14 @@ UVCStatusCallback::UVCStatusCallback(uvc_device_handle_t *devh)
 
 UVCStatusCallback::~UVCStatusCallback() {
 
-	ENTER();
+	
 	pthread_mutex_destroy(&status_mutex);
 	EXIT();
 }
 
 int UVCStatusCallback::setCallback(JNIEnv *env, jobject status_callback_obj) {
 	
-	ENTER();
+	
 	pthread_mutex_lock(&status_mutex);
 	{
 		if (!env->IsSameObject(mStatusCallbackObj, status_callback_obj)) {

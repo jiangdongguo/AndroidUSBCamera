@@ -117,7 +117,7 @@ static int parse_endpoint(struct libusb_context *ctx,
 	struct libusb_endpoint_descriptor *endpoint, unsigned char *buffer,
 	int size, int host_endian)
 {
-	ENTER();
+	
 
 	struct usb_descriptor_header header;
 	unsigned char *extra;
@@ -230,7 +230,7 @@ static int parse_interface(libusb_context *ctx,
 	struct libusb_interface *usb_interface, unsigned char *buffer, int size,
 	int host_endian)
 {
-	ENTER();
+	
 
 	int i;
 	int len;
@@ -388,7 +388,7 @@ static int parse_association(struct libusb_context *ctx,
 		struct libusb_config_descriptor *config, unsigned char *buffer,
 	int size, int host_endian) {
 
-	ENTER();
+	
 
 	struct usb_descriptor_header header;
 	struct libusb_association_descriptor *association, *temp;
@@ -527,7 +527,7 @@ static int parse_configuration(struct libusb_context *ctx,
 	struct libusb_config_descriptor *config, unsigned char *buffer,
 	int size, int host_endian) {
 
-	ENTER();
+	
 
 	int parsed_if;
 	int r;
@@ -785,7 +785,7 @@ static int raw_desc_to_config(struct libusb_context *ctx,
 	unsigned char *buf, int size, int host_endian,
 	struct libusb_config_descriptor **config)
 {
-	ENTER();
+	
 
 	struct libusb_config_descriptor *_config = malloc(sizeof(*_config));
 	int r;

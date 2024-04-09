@@ -422,7 +422,7 @@ static int op_init2(struct libusb_context *ctx, const char *usbfs) {	// XXX
 	struct stat statbuf;
 	int r;
 
-	ENTER();
+	
 	if (!usbfs || !strlen(usbfs)) {
 		usbfs_path = find_usbfs_path();
 	} else {
@@ -618,7 +618,7 @@ static int op_init(struct libusb_context *ctx) {
 
 
 static void op_exit(void) {
-	ENTER();
+	
 
 	usbi_mutex_static_lock(&android_hotplug_startstop_lock);
 	assert(init_count != 0);
@@ -632,7 +632,7 @@ static void op_exit(void) {
 }
 
 static int android_start_event_monitor(void) {
-	ENTER();
+	
 #ifdef __ANDROID__
 	// do nothing
 	RETURN(LIBUSB_SUCCESS, int);
@@ -646,7 +646,7 @@ static int android_start_event_monitor(void) {
 }
 
 static int android_stop_event_monitor(void) {
-	ENTER();
+	
 #ifdef __ANDROID__
 	RETURN(LIBUSB_SUCCESS, int);
 #else
@@ -659,7 +659,7 @@ static int android_stop_event_monitor(void) {
 }
 
 static int android_scan_devices(struct libusb_context *ctx) {
-	ENTER();
+	
 	int ret = LIBUSB_SUCCESS;
 
 #ifdef __ANDROID__
@@ -679,7 +679,7 @@ static int android_scan_devices(struct libusb_context *ctx) {
 }
 
 static void op_hotplug_poll(void) {
-	ENTER();
+	
 #ifdef __ANDROID__
 	// do nothing
 #else
@@ -1295,7 +1295,7 @@ retry:
 static int android_initialize_device(struct libusb_device *dev,
 	uint8_t busnum, uint8_t devaddr, int fd) {
 
-	ENTER();
+	
 
 	struct android_device_priv *priv = _device_priv(dev);
 	struct libusb_context *ctx = DEVICE_CTX(dev);
@@ -1377,7 +1377,7 @@ static int android_initialize_device(struct libusb_device *dev,
 int android_generate_device(struct libusb_context *ctx, struct libusb_device **dev,
 	int vid, int pid, const char *serial, int fd, int busnum, int devaddr) {
 
-	ENTER();
+	
 
 	unsigned long session_id;
 	int r = 0;
@@ -1740,7 +1740,7 @@ static int op_set_configuration(struct libusb_device_handle *handle, int config)
 
 static int claim_interface(struct libusb_device_handle *handle, int iface) {
 
-	ENTER();
+	
 
 	const int fd = _device_handle_priv(handle)->fd;
 	LOGD("interface=%d, fd=%d", iface, fd);
@@ -1763,7 +1763,7 @@ static int claim_interface(struct libusb_device_handle *handle, int iface) {
 
 static int release_interface(struct libusb_device_handle *handle, int iface) {
 
-	ENTER();
+	
 
 	const int fd = _device_handle_priv(handle)->fd;
 	LOGD("interface=%d, fd=%d", iface, fd);
@@ -1782,7 +1782,7 @@ static int release_interface(struct libusb_device_handle *handle, int iface) {
 
 static int op_set_interface(struct libusb_device_handle *handle, int iface, int altsetting) {
 
-	ENTER();
+	
 
 	const int fd = _device_handle_priv(handle)->fd;
 	struct usbfs_setinterface setintf;
@@ -2011,7 +2011,7 @@ static int op_attach_kernel_driver(struct libusb_device_handle *handle, int inte
 
 static int detach_kernel_driver_and_claim(struct libusb_device_handle *handle, int interface) {
 
-	ENTER();
+	
 
 	const int fd = _device_handle_priv(handle)->fd;
 	struct usbfs_disconnect_claim dc;
@@ -2080,7 +2080,7 @@ static void op_destroy_device(struct libusb_device *dev) {
 
 /* URBs are discarded in reverse order of submission to avoid races. */
 static int discard_urbs(struct usbi_transfer *itransfer, int first, int last_plus_one) {
-	ENTER();
+	
 
 	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
 	struct android_transfer_priv *tpriv = usbi_transfer_get_os_priv(itransfer);
@@ -2521,7 +2521,7 @@ static int op_submit_transfer(struct usbi_transfer *itransfer) {
 }
 
 static int op_cancel_transfer(struct usbi_transfer *itransfer) {
-	ENTER();
+	
 	struct android_transfer_priv *tpriv = usbi_transfer_get_os_priv(itransfer);
 	struct libusb_transfer *transfer = USBI_TRANSFER_TO_LIBUSB_TRANSFER(itransfer);
 

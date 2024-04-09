@@ -688,7 +688,7 @@ struct libusb_device *usbi_get_device_by_session_id(struct libusb_context *ctx,
 ssize_t API_EXPORTED libusb_get_device_list(libusb_context *ctx,
 		libusb_device ***list) {
 
-	ENTER();
+	
 
 	struct discovered_devs *discdevs = discovered_devs_alloc();
 	struct libusb_device **ret;
@@ -764,7 +764,7 @@ out:
 libusb_device *libusb_find_device(libusb_context *ctx, const int vid,
 		const int pid, const char* sn, int fd) {
 
-	ENTER();
+	
 
 	libusb_device **devs;
 	// get list of devices
@@ -1249,7 +1249,7 @@ int API_EXPORTED libusb_set_device_fd(libusb_device *dev, int fd) {
 libusb_device * LIBUSB_CALL libusb_get_device_with_fd(libusb_context *ctx,
 	int vid, int pid, const char *serial, int fd, int busnum, int devaddr) {
 
-	ENTER();
+	
 
 	struct libusb_device *device = NULL;
 	// android_generate_device内でusbi_alloc_deviceが呼ばれた時に参照カウンタは1
@@ -1602,7 +1602,7 @@ int API_EXPORTED libusb_set_configuration(libusb_device_handle *dev,
 int API_EXPORTED libusb_claim_interface(libusb_device_handle *dev,
 		int interface_number) {
 
-	ENTER();
+	
 
 	int r = LIBUSB_SUCCESS;
 
@@ -1663,7 +1663,7 @@ int API_EXPORTED libusb_claim_interface(libusb_device_handle *dev,
 int API_EXPORTED libusb_release_interface(libusb_device_handle *dev,
 		int interface_number) {
 
-	ENTER();
+	
 
 	int r;
 
@@ -1841,7 +1841,7 @@ int API_EXPORTED libusb_alloc_streams(libusb_device_handle *dev,
 int API_EXPORTED libusb_free_streams(libusb_device_handle *dev,
 	unsigned char *endpoints, int num_endpoints)
 {
-	ENTER();
+	
 
 	LOGD("eps %d", num_endpoints);
 	usbi_dbg("eps %d", num_endpoints);
@@ -1877,7 +1877,7 @@ int API_EXPORTED libusb_free_streams(libusb_device_handle *dev,
 int API_EXPORTED libusb_kernel_driver_active(libusb_device_handle *dev,
 		int interface_number) {
 
-	ENTER();
+	
 
 	LOGD("interface %d", interface_number);
 	usbi_dbg("interface %d", interface_number);
@@ -1951,7 +1951,7 @@ int API_EXPORTED libusb_detach_kernel_driver(libusb_device_handle *dev,
 int API_EXPORTED libusb_attach_kernel_driver(libusb_device_handle *dev,
 		int interface_number) {
 
-	ENTER();
+	
 
 	LOGD("interface %d", interface_number);
 	usbi_dbg("interface %d", interface_number);
@@ -1992,7 +1992,7 @@ int API_EXPORTED libusb_attach_kernel_driver(libusb_device_handle *dev,
 int API_EXPORTED libusb_set_auto_detach_kernel_driver(libusb_device_handle *dev,
 		int enable) {
 
-	ENTER();
+	
 
 	LOGD("enable=%d", enable);
 	if (!(usbi_backend->caps & USBI_CAP_SUPPORTS_DETACH_KERNEL_DRIVER)) {
@@ -2037,7 +2037,7 @@ void API_EXPORTED libusb_set_debug(libusb_context *ctx, int level) {
 }
 
 int API_EXPORTED libusb_init2(libusb_context **context, const char *usbfs) {
-	ENTER();
+	
 	struct libusb_device *dev, *next;
 	char *dbg = getenv("LIBUSB_DEBUG");
 	struct libusb_context *ctx;

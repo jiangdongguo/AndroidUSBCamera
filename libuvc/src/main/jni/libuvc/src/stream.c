@@ -413,7 +413,7 @@ static uvc_error_t _uvc_get_stream_ctrl_format(uvc_device_handle_t *devh,
 	const int width, const int height,
 	const int min_fps, const int max_fps) {
 
-	ENTER();
+	
 
 	int i;
 	uvc_frame_desc_t *frame;
@@ -541,7 +541,7 @@ uvc_error_t uvc_get_stream_ctrl_format_size_fps(uvc_device_handle_t *devh,
 		uvc_stream_ctrl_t *ctrl, enum uvc_frame_format cf, int width,
 		int height, int min_fps, int max_fps) {
 
-	ENTER();
+	
 
 	uvc_streaming_interface_t *stream_if;
 	uvc_error_t result;
@@ -630,7 +630,7 @@ static void _uvc_swap_buffers(uvc_stream_handle_t *strmh) {
 }
 
 static void _uvc_delete_transfer(struct libusb_transfer *transfer) {
-	ENTER();
+	
 
 //	MARK("");
 	uvc_stream_handle_t *strmh = transfer->user_data;
@@ -1305,7 +1305,7 @@ uvc_error_t uvc_stream_open_ctrl(uvc_device_handle_t *devh,
 	uvc_streaming_interface_t *stream_if;
 	uvc_error_t ret;
 
-	UVC_ENTER();
+	
 
 	if (UNLIKELY(_uvc_get_stream_by_interface(devh, ctrl->bInterfaceNumber) != NULL)) {
 		ret = UVC_ERROR_BUSY; /* Stream is already opened */
@@ -1398,7 +1398,7 @@ uvc_error_t uvc_stream_start_bandwidth(uvc_stream_handle_t *strmh,
 
 	ctrl = &strmh->cur_ctrl;
 
-	UVC_ENTER();
+	
 
 	if (UNLIKELY(strmh->running)) {
 		UVC_EXIT(UVC_ERROR_BUSY);
@@ -1784,7 +1784,7 @@ uvc_error_t uvc_stream_get_frame(uvc_stream_handle_t *strmh,
 void uvc_stop_streaming(uvc_device_handle_t *devh) {
 	uvc_stream_handle_t *strmh, *strmh_tmp;
 
-	UVC_ENTER();
+	
 	DL_FOREACH_SAFE(devh->streams, strmh, strmh_tmp)
 	{
 		uvc_stream_close(strmh);
@@ -1802,7 +1802,7 @@ void uvc_stop_streaming(uvc_device_handle_t *devh) {
 uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
 
 	int i;
-	ENTER();
+	
 
 	if (!strmh) RETURN(UVC_SUCCESS, uvc_error_t);
 
@@ -1884,7 +1884,7 @@ uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
  * @param strmh UVC stream handle
  */
 void uvc_stream_close(uvc_stream_handle_t *strmh) {
-	UVC_ENTER();
+	
 
 	if (!strmh) { UVC_EXIT_VOID() };
 
