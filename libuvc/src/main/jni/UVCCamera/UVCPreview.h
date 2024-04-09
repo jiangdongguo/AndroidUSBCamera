@@ -70,7 +70,6 @@ private:
 	std::list<uvc_frame_t *> previewFrames;
 	int previewFormat;
 	size_t previewBytes;
-//
 	volatile bool mIsCapturing;
 	volatile bool mHasCapturing;
 	ANativeWindow *mCaptureWindow;

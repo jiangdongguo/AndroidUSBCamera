@@ -61,15 +61,12 @@ UVCPreview::UVCPreview(uvc_device_handle_t *devh)
           mFrameCallbackObj(NULL),
           mFrameCallbackFunc(NULL),
           callbackPixelBytes(2) {
-    LOGD("ASD test UVCPreview::UVCPreview");
     // 初始化并关联 capture_clock_attr
     //pthread_condattr_init(&capture_clock_attr);
     //pthread_condattr_setclock(&capture_clock_attr, CLOCK_MONOTONIC);
 	pthread_cond_init(&capture_sync, NULL);
 	pthread_mutex_init(&capture_mutex, NULL);
-
 	pthread_mutex_init(&pool_mutex, NULL);
-	EXIT();
 }
 
 UVCPreview::~UVCPreview() {
@@ -91,7 +88,7 @@ UVCPreview::~UVCPreview() {
 	// 释放 capture_clock_aatr
     // pthread_condattr_destroy(&capture_clock_attr);
 	pthread_mutex_destroy(&pool_mutex);
-	EXIT();
+	
 }
 
 /**
@@ -137,7 +134,6 @@ void UVCPreview::clear_pool() {
 		mFramePool.clear();
 	}
 	pthread_mutex_unlock(&pool_mutex);
-	EXIT();
 }
 
 inline const bool UVCPreview::isRunning() const {return mIsRunning; }
@@ -289,8 +285,6 @@ void UVCPreview::clearDisplay() {
 		}
 	}
 	pthread_mutex_unlock(&preview_mutex);
-
-	EXIT();
 }
 
 int UVCPreview::startPreview() {
@@ -391,7 +385,6 @@ void UVCPreview::uvc_preview_frame_callback(uvc_frame_t *frame, void *vptr_args)
 }
 
 void UVCPreview::addPreviewFrame(uvc_frame_t *frame) {
-
 	pthread_mutex_lock(&preview_mutex);
 	if (isRunning() && (previewFrames.size() < MAX_FRAME)) {
 		previewFrames.push_back(frame);
@@ -411,7 +404,7 @@ uvc_frame_t *UVCPreview::waitPreviewFrame() {
 		if (!previewFrames.size()) {
 			pthread_cond_wait(&preview_sync, &preview_mutex);
 		}
-		if (LIKELY(isRunning() && previewFrames.size() > 0)) {
+		if (LIKELY(isRunning() && !previewFrames.empty())) {
 			frame = previewFrames.front();
             previewFrames.pop_front();
 		}
@@ -433,7 +426,6 @@ void UVCPreview::clearPreviewFrame() {
 
 void *UVCPreview::preview_thread_func(void *vptr_args) {
 	int result;
-
 	UVCPreview *preview = reinterpret_cast<UVCPreview *>(vptr_args);
 	if (LIKELY(preview)) {
 		uvc_stream_ctrl_t ctrl;
@@ -442,7 +434,6 @@ void *UVCPreview::preview_thread_func(void *vptr_args) {
 			preview->do_preview(&ctrl);
 		}
 	}
-	PRE_EXIT();
 	pthread_exit(NULL);
 }
 
@@ -487,7 +478,10 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 	uvc_frame_t *frame = NULL;
 	uvc_frame_t *frame_mjpeg = NULL;
 	uvc_error_t result = uvc_start_streaming_bandwidth(
-		mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
+		mDeviceHandle,
+        ctrl,
+        uvc_preview_frame_callback,
+        (void *)this, requestBandwidth, 0);
     // jiangdg:fix stopview crash
     // use mHasCapturing flag confirm capture_thread was be created
     mHasCapturing = false;
@@ -539,7 +533,7 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 		uvc_perror(result, "failed start_streaming");
 	}
 
-	EXIT();
+	
 }
 
 static void copyFrame(const uint8_t *src, uint8_t *dest, const int width, int height, const int stride_src, const int stride_dest) {
@@ -742,7 +736,6 @@ void UVCPreview::clearCaptureFrame() {
  */
 // static
 void *UVCPreview::capture_thread_func(void *vptr_args) {
-	int result;
 	UVCPreview *preview = reinterpret_cast<UVCPreview *>(vptr_args);
 	if (LIKELY(preview)) {
 		JavaVM *vm = getVM();
@@ -754,7 +747,6 @@ void *UVCPreview::capture_thread_func(void *vptr_args) {
 		vm->DetachCurrentThread();
 		MARK("DetachCurrentThread");
 	}
-	PRE_EXIT();
 	pthread_exit(NULL);
 }
 
@@ -773,7 +765,7 @@ void UVCPreview::do_capture(JNIEnv *env) {
 		}
 		pthread_cond_broadcast(&capture_sync);
 	}	// end of for (; isRunning() ;)
-	EXIT();
+	
 }
 
 void UVCPreview::do_capture_idle_loop(JNIEnv *env) {
@@ -783,7 +775,7 @@ void UVCPreview::do_capture_idle_loop(JNIEnv *env) {
 		do_capture_callback(env, waitCaptureFrame());
 	}
 	
-	EXIT();
+	
 }
 
 /**
@@ -824,7 +816,7 @@ void UVCPreview::do_capture_surface(JNIEnv *env) {
 		mCaptureWindow = NULL;
 	}
 
-	EXIT();
+	
 }
 
 /**
@@ -861,5 +853,5 @@ void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
  SKIP:
 		recycle_frame(callback_frame);
 	}
-	EXIT();
+	
 }

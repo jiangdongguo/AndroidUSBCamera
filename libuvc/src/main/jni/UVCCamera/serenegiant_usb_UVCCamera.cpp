@@ -213,28 +213,29 @@ static jobject nativeGetSupportedSize(JNIEnv *env, jobject thiz,
 	RETURN(result, jobject);
 }
 
-//======================================================================
-// プレビュー画面の大きさをセット
 static jint nativeSetPreviewSize(JNIEnv *env, jobject thiz,
-	ID_TYPE id_camera, jint width, jint height, jint min_fps, jint max_fps, jint mode, jfloat bandwidth) {
-
-	
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		return camera->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
-	}
-	RETURN(JNI_ERR, jint);
+                                 ID_TYPE id_camera,
+                                 jint width,
+                                 jint height,
+                                 jint min_fps,
+                                 jint max_fps,
+                                 jint mode,
+                                 jfloat bandwidth) {
+    UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+    if (LIKELY(camera)) {
+        return camera->getPreviewOldObject()->setPreviewSize(width, height, min_fps, max_fps, mode, bandwidth);
+    }
+    return JNI_ERR;
 }
 
-static jint nativeStartPreview(JNIEnv *env, jobject thiz,
-	ID_TYPE id_camera) {
-
-	
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		return camera->startPreview();
-	}
-	RETURN(JNI_ERR, jint);
+static jint nativeStartPreview(JNIEnv *env,
+                               jobject thiz,
+                               ID_TYPE id_camera) {
+    UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+    if (LIKELY(camera)) {
+        return camera->getPreviewOldObject()->startPreview();
+    }
+    return JNI_ERR;
 }
 
 // プレビューを停止
@@ -245,7 +246,7 @@ static jint nativeStopPreview(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->stopPreview();
+		result = camera->getPreviewOldObject()->stopPreview();
 	}
 	RETURN(result, jint);
 }
@@ -258,35 +259,31 @@ static jint nativeSetPreviewDisplay(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		ANativeWindow *preview_window = jSurface ? ANativeWindow_fromSurface(env, jSurface) : NULL;
-		result = camera->setPreviewDisplay(preview_window);
+		result = camera->getPreviewOldObject()->setPreviewDisplay(preview_window);
 	}
 	RETURN(result, jint);
 }
 
 static jint nativeSetFrameCallback(JNIEnv *env, jobject thiz,
 	ID_TYPE id_camera, jobject jIFrameCallback, jint pixel_format) {
-
 	jint result = JNI_ERR;
-	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		jobject frame_callback_obj = env->NewGlobalRef(jIFrameCallback);
 		result = camera->setFrameCallback(env, frame_callback_obj, pixel_format);
 	}
-	RETURN(result, jint);
+    return result;
 }
 
 static jint nativeSetCaptureDisplay(JNIEnv *env, jobject thiz,
 	ID_TYPE id_camera, jobject jSurface) {
-
 	jint result = JNI_ERR;
-	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		ANativeWindow *capture_window = jSurface ? ANativeWindow_fromSurface(env, jSurface) : NULL;
-		result = camera->setCaptureDisplay(capture_window);
+		result = camera->getPreviewOldObject()->setCaptureDisplay(capture_window);
 	}
-	RETURN(result, jint);
+    return result;
 }
 
 //======================================================================
@@ -331,7 +328,7 @@ static jint nativeUpdateScanningModeLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateScanningModeLimit(min, max, def);
+		result = camera->getAdjustments()->updateScanningModeLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mScanningModeMin", min);
@@ -349,7 +346,7 @@ static jint nativeSetScanningMode(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setScanningMode(scanningMode);
+		result = camera->getAdjustments()->setScanningMode(scanningMode);
 	}
 	RETURN(result, jint);
 }
@@ -361,7 +358,7 @@ static jint nativeGetScanningMode(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getScanningMode();
+		result = camera->getAdjustments()->getScanningMode();
 	}
 	RETURN(result, jint);
 }
@@ -375,7 +372,7 @@ static jint nativeUpdateExposureModeLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateExposureModeLimit(min, max, def);
+		result = camera->getAdjustments()->updateExposureModeLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mExposureModeMin", min);
@@ -393,7 +390,7 @@ static jint nativeSetExposureMode(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setExposureMode(exposureMode);
+		result = camera->getAdjustments()->setExposureMode(exposureMode);
 	}
 	RETURN(result, jint);
 }
@@ -405,7 +402,7 @@ static jint nativeGetExposureMode(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getExposureMode();
+		result = camera->getAdjustments()->getExposureMode();
 	}
 	RETURN(result, jint);
 }
@@ -419,7 +416,7 @@ static jint nativeUpdateExposurePriorityLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateExposurePriorityLimit(min, max, def);
+		result = camera->getAdjustments()->updateExposurePriorityLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mExposurePriorityMin", min);
@@ -437,7 +434,7 @@ static jint nativeSetExposurePriority(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setExposurePriority(priority);
+		result = camera->getAdjustments()->setExposurePriority(priority);
 	}
 	RETURN(result, jint);
 }
@@ -449,7 +446,7 @@ static jint nativeGetExposurePriority(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getExposurePriority();
+		result = camera->getAdjustments()->getExposurePriority();
 	}
 	RETURN(result, jint);
 }
@@ -463,7 +460,7 @@ static jint nativeUpdateExposureLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateExposureLimit(min, max, def);
+		result = camera->getAdjustments()->updateExposureLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mExposureMin", min);
@@ -481,7 +478,7 @@ static jint nativeSetExposure(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setExposure(exposure);
+		result = camera->getAdjustments()->setExposure(exposure);
 	}
 	RETURN(result, jint);
 }
@@ -493,7 +490,7 @@ static jint nativeGetExposure(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getExposure();
+		result = camera->getAdjustments()->getExposure();
 	}
 	RETURN(result, jint);
 }
@@ -507,7 +504,7 @@ static jint nativeUpdateExposureRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateExposureRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateExposureRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mExposureRelMin", min);
@@ -525,7 +522,7 @@ static jint nativeSetExposureRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setExposureRel(exposure_rel);
+		result = camera->getAdjustments()->setExposureRel(exposure_rel);
 	}
 	RETURN(result, jint);
 }
@@ -537,7 +534,7 @@ static jint nativeGetExposureRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getExposureRel();
+		result = camera->getAdjustments()->getExposureRel();
 	}
 	RETURN(result, jint);
 }
@@ -551,7 +548,7 @@ static jint nativeUpdateAutoFocusLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAutoFocusLimit(min, max, def);
+		result = camera->getAdjustments()->updateAutoFocusLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAutoFocusMin", min);
@@ -569,7 +566,7 @@ static jint nativeSetAutoFocus(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAutoFocus(autofocus);
+		result = camera->getAdjustments()->setAutoFocus(autofocus);
 	}
 	RETURN(result, jint);
 }
@@ -581,7 +578,7 @@ static jint nativeGetAutoFocus(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAutoFocus();
+		result = camera->getAdjustments()->getAutoFocus();
 	}
 	RETURN(result, jint);
 }
@@ -595,7 +592,7 @@ static jint nativeUpdateAutoWhiteBlanceLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAutoWhiteBlanceLimit(min, max, def);
+		result = camera->getAdjustments()->updateAutoWhiteBlanceLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAutoWhiteBlanceMin", min);
@@ -613,7 +610,7 @@ static jint nativeSetAutoWhiteBlance(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAutoWhiteBlance(autofocus);
+		result = camera->getAdjustments()->setAutoWhiteBlance(autofocus);
 	}
 	RETURN(result, jint);
 }
@@ -625,7 +622,7 @@ static jint nativeGetAutoWhiteBlance(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAutoWhiteBlance();
+		result = camera->getAdjustments()->getAutoWhiteBlance();
 	}
 	RETURN(result, jint);
 }
@@ -639,7 +636,7 @@ static jint nativeUpdateAutoWhiteBlanceCompoLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAutoWhiteBlanceCompoLimit(min, max, def);
+		result = camera->getAdjustments()->updateAutoWhiteBlanceCompoLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAutoWhiteBlanceCompoMin", min);
@@ -657,7 +654,7 @@ static jint nativeSetAutoWhiteBlanceCompo(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAutoWhiteBlanceCompo(autofocus_compo);
+		result = camera->getAdjustments()->setAutoWhiteBlanceCompo(autofocus_compo);
 	}
 	RETURN(result, jint);
 }
@@ -669,7 +666,7 @@ static jint nativeGetAutoWhiteBlanceCompo(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAutoWhiteBlanceCompo();
+		result = camera->getAdjustments()->getAutoWhiteBlanceCompo();
 	}
 	RETURN(result, jint);
 }
@@ -683,7 +680,7 @@ static jint nativeUpdateBrightnessLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateBrightnessLimit(min, max, def);
+		result = camera->getAdjustments()->updateBrightnessLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mBrightnessMin", min);
@@ -701,7 +698,7 @@ static jint nativeSetBrightness(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setBrightness(brightness);
+		result = camera->getAdjustments()->setBrightness(brightness);
 	}
 	RETURN(result, jint);
 }
@@ -713,7 +710,7 @@ static jint nativeGetBrightness(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getBrightness();
+		result = camera->getAdjustments()->getBrightness();
 	}
 	RETURN(result, jint);
 }
@@ -727,7 +724,7 @@ static jint nativeUpdateFocusLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateFocusLimit(min, max, def);
+		result = camera->getAdjustments()->updateFocusLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mFocusMin", min);
@@ -745,7 +742,7 @@ static jint nativeSetFocus(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setFocus(focus);
+		result = camera->getAdjustments()->setFocus(focus);
 	}
 	RETURN(result, jint);
 }
@@ -757,7 +754,7 @@ static jint nativeGetFocus(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getFocus();
+		result = camera->getAdjustments()->getFocus();
 	}
 	RETURN(result, jint);
 }
@@ -771,7 +768,7 @@ static jint nativeUpdateFocusRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateFocusRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateFocusRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mFocusRelMin", min);
@@ -789,7 +786,7 @@ static jint nativeSetFocusRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setFocusRel(focus_rel);
+		result = camera->getAdjustments()->setFocusRel(focus_rel);
 	}
 	RETURN(result, jint);
 }
@@ -801,7 +798,7 @@ static jint nativeGetFocusRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getFocusRel();
+		result = camera->getAdjustments()->getFocusRel();
 	}
 	RETURN(result, jint);
 }
@@ -815,7 +812,7 @@ static jint nativeUpdateIrisLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateIrisLimit(min, max, def);
+		result = camera->getAdjustments()->updateIrisLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mIrisMin", min);
@@ -833,7 +830,7 @@ static jint nativeSetIris(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setIris(iris);
+		result = camera->getAdjustments()->setIris(iris);
 	}
 	RETURN(result, jint);
 }
@@ -845,7 +842,7 @@ static jint nativeGetIris(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getIris();
+		result = camera->getAdjustments()->getIris();
 	}
 	RETURN(result, jint);
 }
@@ -859,7 +856,7 @@ static jint nativeUpdateIrisRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateIrisRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateIrisRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mIrisRelMin", min);
@@ -877,7 +874,7 @@ static jint nativeSetIrisRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setIrisRel(iris_rel);
+		result = camera->getAdjustments()->setIrisRel(iris_rel);
 	}
 	RETURN(result, jint);
 }
@@ -889,7 +886,7 @@ static jint nativeGetIrisRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getIrisRel();
+		result = camera->getAdjustments()->getIrisRel();
 	}
 	RETURN(result, jint);
 }
@@ -903,7 +900,7 @@ static jint nativeUpdatePanLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updatePanLimit(min, max, def);
+		result = camera->getAdjustments()->updatePanLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mPanMin", min);
@@ -921,7 +918,7 @@ static jint nativeSetPan(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setPan(pan);
+		result = camera->getAdjustments()->setPan(pan);
 	}
 	RETURN(result, jint);
 }
@@ -933,7 +930,7 @@ static jint nativeGetPan(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getPan();
+		result = camera->getAdjustments()->getPan();
 	}
 	RETURN(result, jint);
 }
@@ -947,7 +944,7 @@ static jint nativeUpdateTiltLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateTiltLimit(min, max, def);
+		result = camera->getAdjustments()->updateTiltLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mTiltMin", min);
@@ -965,7 +962,7 @@ static jint nativeSetTilt(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setTilt(tilt);
+		result = camera->getAdjustments()->setTilt(tilt);
 	}
 	RETURN(result, jint);
 }
@@ -977,7 +974,7 @@ static jint nativeGetTilt(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getTilt();
+		result = camera->getAdjustments()->getTilt();
 	}
 	RETURN(result, jint);
 }
@@ -991,7 +988,7 @@ static jint nativeUpdateRollLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateRollLimit(min, max, def);
+		result = camera->getAdjustments()->updateRollLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mRollMin", min);
@@ -1009,7 +1006,7 @@ static jint nativeSetRoll(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setRoll(roll);
+		result = camera->getAdjustments()->setRoll(roll);
 	}
 	RETURN(result, jint);
 }
@@ -1021,7 +1018,7 @@ static jint nativeGetRoll(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getRoll();
+		result = camera->getAdjustments()->getRoll();
 	}
 	RETURN(result, jint);
 }
@@ -1035,7 +1032,7 @@ static jint nativeUpdatePanRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updatePanRelLimit(min, max, def);
+		result = camera->getAdjustments()->updatePanRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mPanRelMin", min);
@@ -1053,7 +1050,7 @@ static jint nativeSetPanRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setPanRel(pan_rel);
+		result = camera->getAdjustments()->setPanRel(pan_rel);
 	}
 	RETURN(result, jint);
 }
@@ -1065,7 +1062,7 @@ static jint nativeGetPanRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getPanRel();
+		result = camera->getAdjustments()->getPanRel();
 	}
 	RETURN(result, jint);
 }
@@ -1079,7 +1076,7 @@ static jint nativeUpdateTiltRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateTiltRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateTiltRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mTiltRelMin", min);
@@ -1097,7 +1094,7 @@ static jint nativeSetTiltRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setTiltRel(tilt_rel);
+		result = camera->getAdjustments()->setTiltRel(tilt_rel);
 	}
 	RETURN(result, jint);
 }
@@ -1109,7 +1106,7 @@ static jint nativeGetTiltRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getTiltRel();
+		result = camera->getAdjustments()->getTiltRel();
 	}
 	RETURN(result, jint);
 }
@@ -1123,7 +1120,7 @@ static jint nativeUpdateRollRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateRollRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateRollRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mRollRelMin", min);
@@ -1141,7 +1138,7 @@ static jint nativeSetRollRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setRollRel(roll_rel);
+		result = camera->getAdjustments()->setRollRel(roll_rel);
 	}
 	RETURN(result, jint);
 }
@@ -1153,7 +1150,7 @@ static jint nativeGetRollRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getRollRel();
+		result = camera->getAdjustments()->getRollRel();
 	}
 	RETURN(result, jint);
 }
@@ -1167,7 +1164,7 @@ static jint nativeUpdateContrastLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateContrastLimit(min, max, def);
+		result = camera->getAdjustments()->updateContrastLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mContrastMin", min);
@@ -1185,7 +1182,7 @@ static jint nativeSetContrast(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setContrast(contrast);
+		result = camera->getAdjustments()->setContrast(contrast);
 	}
 	RETURN(result, jint);
 }
@@ -1197,7 +1194,7 @@ static jint nativeGetContrast(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getContrast();
+		result = camera->getAdjustments()->getContrast();
 	}
 	RETURN(result, jint);
 }
@@ -1211,7 +1208,7 @@ static jint nativeUpdateAutoContrastLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAutoContrastLimit(min, max, def);
+		result = camera->getAdjustments()->updateAutoContrastLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAutoContrastMin", min);
@@ -1229,7 +1226,7 @@ static jint nativeSetAutoContrast(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAutoContrast(autocontrast);
+		result = camera->getAdjustments()->setAutoContrast(autocontrast);
 	}
 	RETURN(result, jint);
 }
@@ -1241,7 +1238,7 @@ static jint nativeGetAutoContrast(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAutoContrast();
+		result = camera->getAdjustments()->getAutoContrast();
 	}
 	RETURN(result, jint);
 }
@@ -1255,7 +1252,7 @@ static jint nativeUpdateSharpnessLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateSharpnessLimit(min, max, def);
+		result = camera->getAdjustments()->updateSharpnessLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mSharpnessMin", min);
@@ -1273,7 +1270,7 @@ static jint nativeSetSharpness(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setSharpness(sharpness);
+		result = camera->getAdjustments()->setSharpness(sharpness);
 	}
 	RETURN(result, jint);
 }
@@ -1285,7 +1282,7 @@ static jint nativeGetSharpness(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getSharpness();
+		result = camera->getAdjustments()->getSharpness();
 	}
 	RETURN(result, jint);
 }
@@ -1299,7 +1296,7 @@ static jint nativeUpdateGainLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateGainLimit(min, max, def);
+		result = camera->getAdjustments()->updateGainLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mGainMin", min);
@@ -1317,7 +1314,7 @@ static jint nativeSetGain(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setGain(gain);
+		result = camera->getAdjustments()->setGain(gain);
 	}
 	RETURN(result, jint);
 }
@@ -1329,7 +1326,7 @@ static jint nativeGetGain(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getGain();
+		result = camera->getAdjustments()->getGain();
 	}
 	RETURN(result, jint);
 }
@@ -1343,7 +1340,7 @@ static jint nativeUpdateGammaLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateGammaLimit(min, max, def);
+		result = camera->getAdjustments()->updateGammaLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mGammaMin", min);
@@ -1361,7 +1358,7 @@ static jint nativeSetGamma(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setGamma(gamma);
+		result = camera->getAdjustments()->setGamma(gamma);
 	}
 	RETURN(result, jint);
 }
@@ -1373,7 +1370,7 @@ static jint nativeGetGamma(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getGamma();
+		result = camera->getAdjustments()->getGamma();
 	}
 	RETURN(result, jint);
 }
@@ -1387,7 +1384,7 @@ static jint nativeUpdateWhiteBlanceLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateWhiteBlanceLimit(min, max, def);
+		result = camera->getAdjustments()->updateWhiteBlanceLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mWhiteBlanceMin", min);
@@ -1405,7 +1402,7 @@ static jint nativeSetWhiteBlance(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setWhiteBlance(whiteBlance);
+		result = camera->getAdjustments()->setWhiteBlance(whiteBlance);
 	}
 	RETURN(result, jint);
 }
@@ -1417,7 +1414,7 @@ static jint nativeGetWhiteBlance(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getWhiteBlance();
+		result = camera->getAdjustments()->getWhiteBlance();
 	}
 	RETURN(result, jint);
 }
@@ -1431,7 +1428,7 @@ static jint nativeUpdateWhiteBlanceCompoLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateWhiteBlanceCompoLimit(min, max, def);
+		result = camera->getAdjustments()->updateWhiteBlanceCompoLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mWhiteBlanceCompoMin", min);
@@ -1449,7 +1446,7 @@ static jint nativeSetWhiteBlanceCompo(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setWhiteBlanceCompo(whiteBlance_compo);
+		result = camera->getAdjustments()->setWhiteBlanceCompo(whiteBlance_compo);
 	}
 	RETURN(result, jint);
 }
@@ -1461,7 +1458,7 @@ static jint nativeGetWhiteBlanceCompo(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getWhiteBlanceCompo();
+		result = camera->getAdjustments()->getWhiteBlanceCompo();
 	}
 	RETURN(result, jint);
 }
@@ -1475,7 +1472,7 @@ static jint nativeUpdateBacklightCompLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateBacklightCompLimit(min, max, def);
+		result = camera->getAdjustments()->updateBacklightCompLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mBacklightCompMin", min);
@@ -1493,7 +1490,7 @@ static jint nativeSetBacklightComp(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setBacklightComp(backlight_comp);
+		result = camera->getAdjustments()->setBacklightComp(backlight_comp);
 	}
 	RETURN(result, jint);
 }
@@ -1505,7 +1502,7 @@ static jint nativeGetBacklightComp(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getBacklightComp();
+		result = camera->getAdjustments()->getBacklightComp();
 	}
 	RETURN(result, jint);
 }
@@ -1519,7 +1516,7 @@ static jint nativeUpdateSaturationLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateSaturationLimit(min, max, def);
+		result = camera->getAdjustments()->updateSaturationLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mSaturationMin", min);
@@ -1537,7 +1534,7 @@ static jint nativeSetSaturation(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setSaturation(saturation);
+		result = camera->getAdjustments()->setSaturation(saturation);
 	}
 	RETURN(result, jint);
 }
@@ -1549,7 +1546,7 @@ static jint nativeGetSaturation(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getSaturation();
+		result = camera->getAdjustments()->getSaturation();
 	}
 	RETURN(result, jint);
 }
@@ -1563,7 +1560,7 @@ static jint nativeUpdateHueLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateHueLimit(min, max, def);
+		result = camera->getAdjustments()->updateHueLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mHueMin", min);
@@ -1581,7 +1578,7 @@ static jint nativeSetHue(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setHue(hue);
+		result = camera->getAdjustments()->setHue(hue);
 	}
 	RETURN(result, jint);
 }
@@ -1593,7 +1590,7 @@ static jint nativeGetHue(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getHue();
+		result = camera->getAdjustments()->getHue();
 	}
 	RETURN(result, jint);
 }
@@ -1607,7 +1604,7 @@ static jint nativeUpdateAutoHueLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAutoHueLimit(min, max, def);
+		result = camera->getAdjustments()->updateAutoHueLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAutoHueMin", min);
@@ -1625,7 +1622,7 @@ static jint nativeSetAutoHue(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAutoHue(autohue);
+		result = camera->getAdjustments()->setAutoHue(autohue);
 	}
 	RETURN(result, jint);
 }
@@ -1637,7 +1634,7 @@ static jint nativeGetAutoHue(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAutoHue();
+		result = camera->getAdjustments()->getAutoHue();
 	}
 	RETURN(result, jint);
 }
@@ -1651,7 +1648,7 @@ static jint nativeUpdatePowerlineFrequencyLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updatePowerlineFrequencyLimit(min, max, def);
+		result = camera->getAdjustments()->updatePowerlineFrequencyLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mPowerlineFrequencyMin", min);
@@ -1669,7 +1666,7 @@ static jint nativeSetPowerlineFrequency(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setPowerlineFrequency(frequency);
+		result = camera->getAdjustments()->setPowerlineFrequency(frequency);
 	}
 	RETURN(result, jint);
 }
@@ -1681,7 +1678,7 @@ static jint nativeGetPowerlineFrequency(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getPowerlineFrequency();
+		result = camera->getAdjustments()->getPowerlineFrequency();
 	}
 	RETURN(result, jint);
 }
@@ -1695,7 +1692,7 @@ static jint nativeUpdateZoomLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateZoomLimit(min, max, def);
+		result = camera->getAdjustments()->updateZoomLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mZoomMin", min);
@@ -1713,7 +1710,7 @@ static jint nativeSetZoom(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setZoom(zoom);
+		result = camera->getAdjustments()->setZoom(zoom);
 	}
 	RETURN(result, jint);
 }
@@ -1725,7 +1722,7 @@ static jint nativeGetZoom(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getZoom();
+		result = camera->getAdjustments()->getZoom();
 	}
 	RETURN(result, jint);
 }
@@ -1738,7 +1735,7 @@ static jint nativeSendCommand(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->sendCommand(command);
+		result = camera->getAdjustments()->sendCommand(command);
 	}
 	RETURN(result, jint);
 }
@@ -1752,7 +1749,7 @@ static jint nativeUpdateZoomRelLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateZoomRelLimit(min, max, def);
+		result = camera->getAdjustments()->updateZoomRelLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mZoomRelMin", min);
@@ -1770,7 +1767,7 @@ static jint nativeSetZoomRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setZoomRel(zoom_rel);
+		result = camera->getAdjustments()->setZoomRel(zoom_rel);
 	}
 	RETURN(result, jint);
 }
@@ -1782,7 +1779,7 @@ static jint nativeGetZoomRel(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getZoomRel();
+		result = camera->getAdjustments()->getZoomRel();
 	}
 	RETURN(result, jint);
 }
@@ -1796,7 +1793,7 @@ static jint nativeUpdateDigitalMultiplierLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateDigitalMultiplierLimit(min, max, def);
+		result = camera->getAdjustments()->updateDigitalMultiplierLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mDigitalMultiplierMin", min);
@@ -1814,7 +1811,7 @@ static jint nativeSetDigitalMultiplier(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setDigitalMultiplier(multiplier);
+		result = camera->getAdjustments()->setDigitalMultiplier(multiplier);
 	}
 	RETURN(result, jint);
 }
@@ -1826,7 +1823,7 @@ static jint nativeGetDigitalMultiplier(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getDigitalMultiplier();
+		result = camera->getAdjustments()->getDigitalMultiplier();
 	}
 	RETURN(result, jint);
 }
@@ -1840,7 +1837,7 @@ static jint nativeUpdateDigitalMultiplierLimitLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateDigitalMultiplierLimitLimit(min, max, def);
+		result = camera->getAdjustments()->updateDigitalMultiplierLimitLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mDigitalMultiplierLimitMin", min);
@@ -1858,7 +1855,7 @@ static jint nativeSetDigitalMultiplierLimit(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setDigitalMultiplierLimit(multiplier_limit);
+		result = camera->getAdjustments()->setDigitalMultiplierLimit(multiplier_limit);
 	}
 	RETURN(result, jint);
 }
@@ -1870,7 +1867,7 @@ static jint nativeGetDigitalMultiplierLimit(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getDigitalMultiplierLimit();
+		result = camera->getAdjustments()->getDigitalMultiplierLimit();
 	}
 	RETURN(result, jint);
 }
@@ -1884,7 +1881,7 @@ static jint nativeUpdateAnalogVideoStandardLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAnalogVideoStandardLimit(min, max, def);
+		result = camera->getAdjustments()->updateAnalogVideoStandardLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAnalogVideoStandardMin", min);
@@ -1902,7 +1899,7 @@ static jint nativeSetAnalogVideoStandard(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAnalogVideoStandard(standard);
+		result = camera->getAdjustments()->setAnalogVideoStandard(standard);
 	}
 	RETURN(result, jint);
 }
@@ -1914,7 +1911,7 @@ static jint nativeGetAnalogVideoStandard(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAnalogVideoStandard();
+		result = camera->getAdjustments()->getAnalogVideoStandard();
 	}
 	RETURN(result, jint);
 }
@@ -1928,7 +1925,7 @@ static jint nativeUpdateAnalogVideoLockStateLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updateAnalogVideoLockStateLimit(min, max, def);
+		result = camera->getAdjustments()->updateAnalogVideoLockStateLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mAnalogVideoLockStateMin", min);
@@ -1946,7 +1943,7 @@ static jint nativeSetAnalogVideoLockState(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setAnalogVideoLockState(state);
+		result = camera->getAdjustments()->setAnalogVideoLockState(state);
 	}
 	RETURN(result, jint);
 }
@@ -1958,7 +1955,7 @@ static jint nativeGetAnalogVideoLockState(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getAnalogVideoLockState();
+		result = camera->getAdjustments()->getAnalogVideoLockState();
 	}
 	RETURN(result, jint);
 }
@@ -1972,7 +1969,7 @@ static jint nativeUpdatePrivacyLimit(JNIEnv *env, jobject thiz,
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
 		int min, max, def;
-		result = camera->updatePrivacyLimit(min, max, def);
+		result = camera->getAdjustments()->updatePrivacyLimit(min, max, def);
 		if (!result) {
 			// Java側へ書き込む
 			setField_int(env, thiz, "mPrivacyMin", min);
@@ -1990,7 +1987,7 @@ static jint nativeSetPrivacy(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->setPrivacy(privacy ? 1: 0);
+		result = camera->getAdjustments()->setPrivacy(privacy ? 1 : 0);
 	}
 	RETURN(result, jint);
 }
@@ -2002,7 +1999,7 @@ static jint nativeGetPrivacy(JNIEnv *env, jobject thiz,
 	
 	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
 	if (LIKELY(camera)) {
-		result = camera->getPrivacy();
+		result = camera->getAdjustments()->getPrivacy();
 	}
 	RETURN(result, jint);
 }

@@ -3,6 +3,7 @@
 # * library and sample to access to UVC web camera on non-rooted Android device
 # * 
 # * Copyright (c) 2014-2017 saki t_saki@serenegiant.com
+# * Copyright (c) 2024 vshcryabets@gmail.com
 # * 
 # * File name: Application.mk
 # * 
@@ -24,11 +25,8 @@
 
 # This is just for mips, if you really needs MSA, un-comment and build with GCC.
 # Note: Supporting GCC on NDK is already deprecated and GCC will be removed from NDK soon.
-#NDK_TOOLCHAIN_VERSION := 4.9
-
-APP_PLATFORM := android-14
-#APP_ABI :=arm64-v8a armeabi-v7a
-# /*if you want x86 or x86_64, please open it*/
+APP_STL := c++_static
+APP_PLATFORM := android-19
 APP_ABI :=arm64-v8a armeabi-v7a x86 x86_64
 #APP_OPTIM := debug
 APP_OPTIM := release
