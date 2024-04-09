@@ -1,5 +1,6 @@
 /*
  * Copyright 2017-2023 Jiangdg
+ * Copyright 2024 vschryabets@gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +20,27 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
-import android.view.*
+import android.view.Gravity
+import android.view.SurfaceHolder
+import android.view.SurfaceView
+import android.view.TextureView
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.activity.ComponentActivity
 import com.jiangdg.ausbc.MultiCameraClient
-import com.jiangdg.ausbc.camera.bean.PreviewSize
-import com.jiangdg.ausbc.camera.bean.CameraRequest
-import com.jiangdg.ausbc.callback.*
+import com.jiangdg.ausbc.callback.ICameraStateCallBack
+import com.jiangdg.ausbc.callback.ICaptureCallBack
+import com.jiangdg.ausbc.callback.IDeviceConnectCallBack
+import com.jiangdg.ausbc.callback.IEncodeDataCallBack
+import com.jiangdg.ausbc.callback.IPlayCallBack
+import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.CameraUVC
+import com.jiangdg.ausbc.camera.bean.CameraRequest
+import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.render.effect.AbstractEffect
 import com.jiangdg.ausbc.render.env.RotateType
-import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.SettableFuture
 import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.usb.USBMonitor
@@ -91,7 +100,6 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
         mCameraClient = MultiCameraClient(requireContext(), object : IDeviceConnectCallBack {
             override fun onAttachDev(device: UsbDevice?) {
                 return
-
             }
 
             override fun onDetachDec(device: UsbDevice?) {
@@ -123,7 +131,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
                     mCurrentCamera = SettableFuture()
                     mCurrentCamera?.set(camera)
                     openCamera(mCameraView)
-                    Logger.i(TAG, "camera connection. pid: ${device.productId}, vid: ${device.vendorId}")
+                    Timber.i("camera connection. pid: ${device.productId}, vid: ${device.vendorId}")
                 }
             }
 
@@ -165,7 +173,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             }
             getDefaultCamera()?.apply {
                 if (vendorId == device.vendorId && productId == device.productId) {
-                    Logger.i(TAG, "default camera pid: $productId, vid: $vendorId")
+                    Timber.i("default camera pid: $productId, vid: $vendorId")
                     requestPermission(device)
                 }
                 return@let
@@ -945,9 +953,5 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
             .setCaptureRawImage(false)
             .setRawPreviewData(false)
             .create()
-    }
-
-    companion object {
-        private const val TAG = "CameraFragment"
     }
 }
