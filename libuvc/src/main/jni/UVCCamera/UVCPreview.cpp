@@ -3,6 +3,7 @@
  * library and sample to access to UVC web camera on non-rooted Android device
  *
  * Copyright (c) 2014-2017 saki t_saki@serenegiant.com
+ * Copyright (c) 2024 vschryabets@gmail.com
  *
  * File name: UVCPreview.cpp
  *
@@ -25,21 +26,10 @@
 #include <stdlib.h>
 #include <linux/time.h>
 #include <unistd.h>
-
-#if 1	// set 1 if you don't need debug log
-	#ifndef LOG_NDEBUG
-		#define	LOG_NDEBUG		// w/o LOGV/LOGD/MARK
-	#endif
-	#undef USE_LOGALL
-#else
-	#define USE_LOGALL
-	#undef LOG_NDEBUG
-//	#undef NDEBUG
-#endif
-
 #include "utilbase.h"
 #include "UVCPreview.h"
 #include "libuvc_internal.h"
+#include <mutex>
 
 #define	LOCAL_DEBUG 0
 #define MAX_FRAME 4
@@ -50,31 +40,28 @@ struct timespec ts;
 struct timeval tv;
 
 UVCPreview::UVCPreview(uvc_device_handle_t *devh)
-:	mPreviewWindow(NULL),
-	mCaptureWindow(NULL),
-	mDeviceHandle(devh),
-	requestWidth(DEFAULT_PREVIEW_WIDTH),
-	requestHeight(DEFAULT_PREVIEW_HEIGHT),
-	requestMinFps(DEFAULT_PREVIEW_FPS_MIN),
-	requestMaxFps(DEFAULT_PREVIEW_FPS_MAX),
-	requestMode(DEFAULT_PREVIEW_MODE),
-	requestBandwidth(DEFAULT_BANDWIDTH),
-	frameWidth(DEFAULT_PREVIEW_WIDTH),
-	frameHeight(DEFAULT_PREVIEW_HEIGHT),
-	frameBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * 2),	// YUYV
-	frameMode(0),
-	previewBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * PREVIEW_PIXEL_BYTES),
-	previewFormat(WINDOW_FORMAT_RGBA_8888),
-	mIsRunning(false),
-	mIsCapturing(false),
-	captureQueu(NULL),
-	mFrameCallbackObj(NULL),
-	mFrameCallbackFunc(NULL),
-	callbackPixelBytes(2) {
-
-	ENTER();
-	pthread_cond_init(&preview_sync, NULL);
-	pthread_mutex_init(&preview_mutex, NULL);
+        : mPreviewWindow(NULL),
+          mCaptureWindow(NULL),
+          mDeviceHandle(devh),
+          requestWidth(DEFAULT_PREVIEW_WIDTH),
+          requestHeight(DEFAULT_PREVIEW_HEIGHT),
+          requestMinFps(DEFAULT_PREVIEW_FPS_MIN),
+          requestMaxFps(DEFAULT_PREVIEW_FPS_MAX),
+          requestMode(DEFAULT_PREVIEW_MODE),
+          requestBandwidth(DEFAULT_BANDWIDTH),
+          frameWidth(DEFAULT_PREVIEW_WIDTH),
+          frameHeight(DEFAULT_PREVIEW_HEIGHT),
+          frameBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * 2),    // YUYV
+          frameMode(0),
+          previewBytes(DEFAULT_PREVIEW_WIDTH * DEFAULT_PREVIEW_HEIGHT * PREVIEW_PIXEL_BYTES),
+          previewFormat(WINDOW_FORMAT_RGBA_8888),
+          mIsRunning(false),
+          mIsCapturing(false),
+          captureQueu(NULL),
+          mFrameCallbackObj(NULL),
+          mFrameCallbackFunc(NULL),
+          callbackPixelBytes(2) {
+    LOGD("ASD test UVCPreview::UVCPreview");
     // 初始化并关联 capture_clock_attr
     //pthread_condattr_init(&capture_clock_attr);
     //pthread_condattr_setclock(&capture_clock_attr, CLOCK_MONOTONIC);
@@ -86,8 +73,6 @@ UVCPreview::UVCPreview(uvc_device_handle_t *devh)
 }
 
 UVCPreview::~UVCPreview() {
-
-	ENTER();
 	if (mPreviewWindow)
 		ANativeWindow_release(mPreviewWindow);
 	mPreviewWindow = NULL;
@@ -143,25 +128,7 @@ void UVCPreview::recycle_frame(uvc_frame_t *frame) {
 	}
 }
 
-
-void UVCPreview::init_pool(size_t data_bytes) {
-	ENTER();
-
-	clear_pool();
-	pthread_mutex_lock(&pool_mutex);
-	{
-		for (int i = 0; i < FRAME_POOL_SZ; i++) {
-			mFramePool.put(uvc_allocate_frame(data_bytes));
-		}
-	}
-	pthread_mutex_unlock(&pool_mutex);
-
-	EXIT();
-}
-
 void UVCPreview::clear_pool() {
-	ENTER();
-
 	pthread_mutex_lock(&pool_mutex);
 	{
 		const int n = mFramePool.size();
@@ -177,8 +144,6 @@ void UVCPreview::clear_pool() {
 inline const bool UVCPreview::isRunning() const {return mIsRunning; }
 
 int UVCPreview::setPreviewSize(int width, int height, int min_fps, int max_fps, int mode, float bandwidth) {
-	ENTER();
-	
 	int result = 0;
 	if ((requestWidth != width) || (requestHeight != height) || (requestMode != mode)) {
 		requestWidth = width;
@@ -198,7 +163,6 @@ int UVCPreview::setPreviewSize(int width, int height, int min_fps, int max_fps, 
 }
 
 int UVCPreview::setPreviewDisplay(ANativeWindow *preview_window) {
-	ENTER();
 	pthread_mutex_lock(&preview_mutex);
 	{
 		if (mPreviewWindow != preview_window) {
@@ -216,8 +180,6 @@ int UVCPreview::setPreviewDisplay(ANativeWindow *preview_window) {
 }
 
 int UVCPreview::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pixel_format) {
-	
-	ENTER();
 	pthread_mutex_lock(&capture_mutex);
 	{
 		if (isRunning() && isCapturing()) {
@@ -295,8 +257,6 @@ void UVCPreview::callbackPixelFormatChanged() {
 }
 
 void UVCPreview::clearDisplay() {
-	ENTER();
-
 	ANativeWindow_Buffer buffer;
 	pthread_mutex_lock(&capture_mutex);
 	{
@@ -335,8 +295,6 @@ void UVCPreview::clearDisplay() {
 }
 
 int UVCPreview::startPreview() {
-	ENTER();
-
 	int result = EXIT_FAILURE;
 	if (!isRunning()) {
 		mIsRunning = true;
@@ -361,7 +319,6 @@ int UVCPreview::startPreview() {
 }
 
 int UVCPreview::stopPreview() {
-	ENTER();
 	bool b = isRunning();
 	if (LIKELY(b)) {
 		mIsRunning = false;
@@ -476,7 +433,6 @@ void UVCPreview::clearPreviewFrame() {
 void *UVCPreview::preview_thread_func(void *vptr_args) {
 	int result;
 
-	ENTER();
 	UVCPreview *preview = reinterpret_cast<UVCPreview *>(vptr_args);
 	if (LIKELY(preview)) {
 		uvc_stream_ctrl_t ctrl;
@@ -492,7 +448,7 @@ void *UVCPreview::preview_thread_func(void *vptr_args) {
 int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 	uvc_error_t result;
 
-	ENTER();
+	
 	result = uvc_get_stream_ctrl_format_size_fps(mDeviceHandle, ctrl,
 		!requestMode ? UVC_FRAME_FORMAT_YUYV : UVC_FRAME_FORMAT_MJPEG,
 		requestWidth, requestHeight, requestMinFps, requestMaxFps
@@ -527,8 +483,6 @@ int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 }
 
 void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
-	ENTER();
-
 	uvc_frame_t *frame = NULL;
 	uvc_frame_t *frame_mjpeg = NULL;
 	uvc_error_t result = uvc_start_streaming_bandwidth(
@@ -549,6 +503,7 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 			// MJPEG mode
 			for ( ; LIKELY(isRunning()) ; ) {
 				frame_mjpeg = waitPreviewFrame();
+                LOGD("ASD got frame");
 				if (LIKELY(frame_mjpeg)) {
 					frame = get_frame(frame_mjpeg->width * frame_mjpeg->height * 2);
 					result = uvc_mjpeg2yuyv(frame_mjpeg, frame);   // MJPEG => yuyv
@@ -612,11 +567,8 @@ static void copyFrame(const uint8_t *src, uint8_t *dest, const int width, int he
 	}
 }
 
-
 // transfer specific frame data to the Surface(ANativeWindow)
 int copyToSurface(uvc_frame_t *frame, ANativeWindow **window) {
-	// ENTER();
-	int result = 0;
 	if (LIKELY(*window)) {
 		ANativeWindow_Buffer buffer;
 		if (LIKELY(ANativeWindow_lock(*window, &buffer, NULL) == 0)) {
@@ -635,13 +587,10 @@ int copyToSurface(uvc_frame_t *frame, ANativeWindow **window) {
 			// transfer from frame data to the Surface
 			copyFrame(src, dest, w, h, src_step, dest_step);
 			ANativeWindow_unlockAndPost(*window);
-		} else {
-			result = -1;
+            return 0;
 		}
-	} else {
-		result = -1;
-	}
-	return result; //RETURN(result, int);
+    }
+	return -1;
 }
 
 // changed to return original frame instead of returning converted frame even if convert_func is not null.
@@ -684,7 +633,7 @@ uvc_frame_t *UVCPreview::draw_preview_one(uvc_frame_t *frame, ANativeWindow **wi
 inline const bool UVCPreview::isCapturing() const { return mIsCapturing; }
 
 int UVCPreview::setCaptureDisplay(ANativeWindow *capture_window) {
-	ENTER();
+	
 	pthread_mutex_lock(&capture_mutex);
 	{
 		if (isRunning() && isCapturing()) {
@@ -793,8 +742,6 @@ void UVCPreview::clearCaptureFrame() {
 // static
 void *UVCPreview::capture_thread_func(void *vptr_args) {
 	int result;
-
-	ENTER();
 	UVCPreview *preview = reinterpret_cast<UVCPreview *>(vptr_args);
 	if (LIKELY(preview)) {
 		JavaVM *vm = getVM();
@@ -814,9 +761,6 @@ void *UVCPreview::capture_thread_func(void *vptr_args) {
  * the actual function for capturing
  */
 void UVCPreview::do_capture(JNIEnv *env) {
-
-	ENTER();
-
 	clearCaptureFrame();
 	callbackPixelFormatChanged();
 	for (; isRunning() ;) {
@@ -832,7 +776,7 @@ void UVCPreview::do_capture(JNIEnv *env) {
 }
 
 void UVCPreview::do_capture_idle_loop(JNIEnv *env) {
-	ENTER();
+	
 	
 	for (; isRunning() && isCapturing() ;) {
 		do_capture_callback(env, waitCaptureFrame());
@@ -845,7 +789,7 @@ void UVCPreview::do_capture_idle_loop(JNIEnv *env) {
  * write frame data to Surface for capturing
  */
 void UVCPreview::do_capture_surface(JNIEnv *env) {
-	ENTER();
+	
 
 	uvc_frame_t *frame = NULL;
 	uvc_frame_t *converted = NULL;
@@ -886,7 +830,7 @@ void UVCPreview::do_capture_surface(JNIEnv *env) {
 * call IFrameCallback#onFrame if needs
  */
 void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
-	ENTER();
+	
 
 	if (LIKELY(frame)) {
 		uvc_frame_t *callback_frame = frame;

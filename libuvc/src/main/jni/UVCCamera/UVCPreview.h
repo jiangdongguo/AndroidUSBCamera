@@ -21,16 +21,15 @@
  * All files in the folder are under this Apache License, Version 2.0.
  * Files in the jni/libjpeg, jni/libusb, jin/libuvc, jni/rapidjson folder may have a different license, see the respective files.
 */
-
-#ifndef UVCPREVIEW_H_
-#define UVCPREVIEW_H_
+#pragma once
 
 #include "libUVCCamera.h"
 #include <pthread.h>
 #include <android/native_window.h>
 #include "objectarray.h"
-
-#pragma interface
+#include <stdint.h>
+#include <mutex>
+#include <condition_variable>
 
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
@@ -61,7 +60,7 @@ private:
 	int requestWidth, requestHeight, requestMode;
 	int requestMinFps, requestMaxFps;
 	float requestBandwidth;
-	int frameWidth, frameHeight;
+	uint16_t frameWidth, frameHeight;
 	int frameMode;
 	size_t frameBytes;
 	pthread_t preview_thread;
@@ -90,9 +89,7 @@ private:
 	ObjectArray<uvc_frame_t *> mFramePool;
 	uvc_frame_t *get_frame(size_t data_bytes);
 	void recycle_frame(uvc_frame_t *frame);
-	void init_pool(size_t data_bytes);
 	void clear_pool();
-//
 	void clearDisplay();
 	static void uvc_preview_frame_callback(uvc_frame_t *frame, void *vptr_args);
 	void addPreviewFrame(uvc_frame_t *frame);
@@ -125,5 +122,3 @@ public:
 	inline const bool isCapturing() const;
 	int setCaptureDisplay(ANativeWindow *capture_window);
 };
-
-#endif /* UVCPREVIEW_H_ */
