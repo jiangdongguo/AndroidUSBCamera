@@ -1114,12 +1114,13 @@ int UVCCameraAdjustments::updateBrightnessLimit(int &min, int &max, int &def) {
 }
 
 int UVCCameraAdjustments::setBrightness(int brightness) {
-
+    LOGE("ASD setBrightness 1  %d", brightness);
     int ret = UVC_ERROR_IO;
     if (mPUSupports & PU_BRIGHTNESS) {
         ret = internalSetCtrlValue(mBrightness, brightness, uvc_get_brightness, uvc_set_brightness);
     }
-    RETURN(ret, int);
+    LOGE("ASD setBrightness %d = %d", brightness, ret);
+    return ret;
 }
 
 // 明るさの現在値を取得

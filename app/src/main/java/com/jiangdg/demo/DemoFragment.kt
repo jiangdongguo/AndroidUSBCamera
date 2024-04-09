@@ -68,6 +68,7 @@ import com.jiangdg.demo.databinding.DialogMoreBinding
 import com.jiangdg.utils.MMKVUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.util.*
 
 /** CameraFragment Usage Demo
@@ -254,12 +255,13 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
     private fun handleCameraOpened() {
         mViewBinding.uvcLogoIv.visibility = View.GONE
         mViewBinding.frameRateTv.visibility = View.VISIBLE
-        mViewBinding.brightnessSb.max = (getCurrentCamera() as? CameraUVC)?.getBrightnessMax() ?: 100
-        mViewBinding.brightnessSb.progress = (getCurrentCamera() as? CameraUVC)?.getBrightness() ?: 0
-        Logger.i(TAG, "max = ${mViewBinding.brightnessSb.max}, progress = ${mViewBinding.brightnessSb.progress}")
+        mViewBinding.brightnessSb.max = 100 // (getCurrentCamera() as? CameraUVC)?.getBrightnessMax() ?: 100
+        mViewBinding.brightnessSb.progress = 0 //(getCurrentCamera() as? CameraUVC)?.getBrightness() ?: 0
+        Timber.i("max = ${mViewBinding.brightnessSb.max}, progress = ${mViewBinding.brightnessSb.progress}")
         mViewBinding.brightnessSb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 (getCurrentCamera() as? CameraUVC)?.setBrightness(progress)
+                (getCurrentCamera() as? CameraUVC)?.setAutoWhiteBalance(false)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

@@ -110,7 +110,7 @@ int UVCCamera::connect(int vid, int pid, int fd, int busnum, int devaddr, const 
                 mFd = fd;
                 mStatusCallback = new UVCStatusCallback(mDeviceHandle);
                 mButtonCallback = new UVCButtonCallback(mDeviceHandle);
-                mPreviewOld = std::shared_ptr<UVCPreview>(new UVCPreview(mDeviceHandle));
+                mPreviewOld = std::shared_ptr<UVCPreviewJni>(new UVCPreviewJni(mDeviceHandle));
             } else {
                 // open出来なかった時
                 LOGE("could not open camera:err=%d", result);
@@ -240,7 +240,7 @@ int UVCCamera::getProcSupports(uint64_t *supports) {
     RETURN(ret, int);
 }
 
-std::shared_ptr<UVCPreview> UVCCamera::getPreviewOldObject() {
+std::shared_ptr<UVCPreviewJni> UVCCamera::getPreviewOldObject() {
     return mPreviewOld;
 }
 

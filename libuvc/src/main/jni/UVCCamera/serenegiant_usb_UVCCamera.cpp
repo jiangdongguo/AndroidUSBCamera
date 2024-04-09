@@ -691,16 +691,17 @@ static jint nativeUpdateBrightnessLimit(JNIEnv *env, jobject thiz,
 	RETURN(result, jint);
 }
 
-static jint nativeSetBrightness(JNIEnv *env, jobject thiz,
-	ID_TYPE id_camera, jint brightness) {
-
-	jint result = JNI_ERR;
-	
-	UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
-	if (LIKELY(camera)) {
-		result = camera->getAdjustments()->setBrightness(brightness);
-	}
-	RETURN(result, jint);
+static jint nativeSetBrightness(JNIEnv *env,
+                                jobject thiz,
+                                ID_TYPE id_camera,
+                                jint brightness) {
+    jint result = JNI_ERR;
+    UVCCamera *camera = reinterpret_cast<UVCCamera *>(id_camera);
+    if (LIKELY(camera)) {
+        LOGE("ASD nativeSetBrightness  %d", brightness);
+        result = camera->getAdjustments()->setBrightness(brightness);
+    }
+    return result;
 }
 
 static jint nativeGetBrightness(JNIEnv *env, jobject thiz,

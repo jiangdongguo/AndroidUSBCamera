@@ -31,7 +31,7 @@
 #include "UVCStatusCallback.h"
 #include "UVCButtonCallback.h"
 #include "UVCCameraAdjustments.h"
-#include "UVCPreview.h"
+#include "UVCPreviewJni.h"
 #include <memory>
 #include <chrono>
 
@@ -44,14 +44,9 @@ private:
 	uvc_device_handle_t *mDeviceHandle;
 	UVCStatusCallback *mStatusCallback;
 	UVCButtonCallback *mButtonCallback;
-    std::shared_ptr<UVCPreview> mPreviewOld;
-    std::function<void(const UVCCamera *,
-            std::chrono::time_point<std::chrono::steady_clock>)> mPreviewReceiver = nullptr;
-
+    std::shared_ptr<UVCPreviewJni> mPreviewOld;
     std::shared_ptr<UVCCameraAdjustments> mCameraConfig;
-
 	void clearCameraParams();
-
 public:
 	UVCCamera();
 	~UVCCamera();
@@ -68,6 +63,6 @@ public:
 	int getCtrlSupports(uint64_t *supports);
 	int getProcSupports(uint64_t *supports);
 
-    std::shared_ptr<UVCPreview> getPreviewOldObject();
+    std::shared_ptr<UVCPreviewJni> getPreviewOldObject();
     std::shared_ptr<UVCCameraAdjustments> getAdjustments();
 };
