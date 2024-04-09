@@ -4,7 +4,6 @@
 #include "libUVCCamera.h"
 #include <pthread.h>
 #include <android/native_window.h>
-#include "objectarray.h"
 
 #pragma interface
 

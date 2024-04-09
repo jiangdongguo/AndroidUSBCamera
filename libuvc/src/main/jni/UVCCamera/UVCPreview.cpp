@@ -104,8 +104,9 @@ uvc_frame_t *UVCPreview::get_frame(size_t data_bytes) {
 	uvc_frame_t *frame = NULL;
 	pthread_mutex_lock(&pool_mutex);
 	{
-		if (!mFramePool.isEmpty()) {
-			frame = mFramePool.last();
+		if (!mFramePool.empty()) {
+			frame = mFramePool.back();
+            mFramePool.pop_back();
 		}
 	}
 	pthread_mutex_unlock(&pool_mutex);
@@ -119,7 +120,7 @@ uvc_frame_t *UVCPreview::get_frame(size_t data_bytes) {
 void UVCPreview::recycle_frame(uvc_frame_t *frame) {
 	pthread_mutex_lock(&pool_mutex);
 	if (LIKELY(mFramePool.size() < FRAME_POOL_SZ)) {
-		mFramePool.put(frame);
+		mFramePool.push_back(frame);
 		frame = NULL;
 	}
 	pthread_mutex_unlock(&pool_mutex);
@@ -131,10 +132,8 @@ void UVCPreview::recycle_frame(uvc_frame_t *frame) {
 void UVCPreview::clear_pool() {
 	pthread_mutex_lock(&pool_mutex);
 	{
-		const int n = mFramePool.size();
-		for (int i = 0; i < n; i++) {
-			uvc_free_frame(mFramePool[i]);
-		}
+        for (const auto& frame : mFramePool)
+            uvc_free_frame(frame);
 		mFramePool.clear();
 	}
 	pthread_mutex_unlock(&pool_mutex);
@@ -395,7 +394,7 @@ void UVCPreview::addPreviewFrame(uvc_frame_t *frame) {
 
 	pthread_mutex_lock(&preview_mutex);
 	if (isRunning() && (previewFrames.size() < MAX_FRAME)) {
-		previewFrames.put(frame);
+		previewFrames.push_back(frame);
 		frame = NULL;
 		pthread_cond_signal(&preview_sync);
 	}
@@ -413,7 +412,8 @@ uvc_frame_t *UVCPreview::waitPreviewFrame() {
 			pthread_cond_wait(&preview_sync, &preview_mutex);
 		}
 		if (LIKELY(isRunning() && previewFrames.size() > 0)) {
-			frame = previewFrames.remove(0);
+			frame = previewFrames.front();
+            previewFrames.pop_front();
 		}
 	}
 	pthread_mutex_unlock(&preview_mutex);
@@ -423,8 +423,9 @@ uvc_frame_t *UVCPreview::waitPreviewFrame() {
 void UVCPreview::clearPreviewFrame() {
 	pthread_mutex_lock(&preview_mutex);
 	{
-		for (int i = 0; i < previewFrames.size(); i++)
-			recycle_frame(previewFrames[i]);
+        for(const auto& frame: previewFrames) {
+            recycle_frame(frame);
+        }
 		previewFrames.clear();
 	}
 	pthread_mutex_unlock(&preview_mutex);

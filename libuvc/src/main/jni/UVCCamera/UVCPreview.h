@@ -3,6 +3,7 @@
  * library and sample to access to UVC web camera on non-rooted Android device
  *
  * Copyright (c) 2014-2017 saki t_saki@serenegiant.com
+ * Copyright (c) 2024 vshcryabets@gmail.com
  *
  * File name: UVCPreview.h
  *
@@ -26,10 +27,10 @@
 #include "libUVCCamera.h"
 #include <pthread.h>
 #include <android/native_window.h>
-#include "objectarray.h"
 #include <stdint.h>
 #include <mutex>
 #include <condition_variable>
+#include <list>
 
 #define DEFAULT_PREVIEW_WIDTH 640
 #define DEFAULT_PREVIEW_HEIGHT 480
@@ -66,7 +67,7 @@ private:
 	pthread_t preview_thread;
 	pthread_mutex_t preview_mutex;
 	pthread_cond_t preview_sync;
-	ObjectArray<uvc_frame_t *> previewFrames;
+	std::list<uvc_frame_t *> previewFrames;
 	int previewFormat;
 	size_t previewBytes;
 //
@@ -86,7 +87,7 @@ private:
 	size_t callbackPixelBytes;
 // improve performance by reducing memory allocation
 	pthread_mutex_t pool_mutex;
-	ObjectArray<uvc_frame_t *> mFramePool;
+    std::list<uvc_frame_t *> mFramePool;
 	uvc_frame_t *get_frame(size_t data_bytes);
 	void recycle_frame(uvc_frame_t *frame);
 	void clear_pool();
