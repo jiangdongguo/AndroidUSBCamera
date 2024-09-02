@@ -41,8 +41,8 @@ object CrashUtils : Thread.UncaughtExceptionHandler {
 
     fun init(application: Application) {
         this.mApplication = application
-        mDefaultHandler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(this);
+        mDefaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler(this)
     }
 
     override fun uncaughtException(t: Thread, e: Throwable) {

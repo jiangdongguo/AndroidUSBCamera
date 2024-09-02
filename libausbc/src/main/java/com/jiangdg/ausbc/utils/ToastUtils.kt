@@ -25,7 +25,7 @@ import androidx.annotation.MainThread
  */
 object ToastUtils {
 
-    private var applicationCtx: Context ?= null
+    private var applicationCtx: Context? = null
 
     @MainThread
     fun init(ctx: Context) {
@@ -36,7 +36,7 @@ object ToastUtils {
     }
 
     @JvmStatic
-    fun show(msg: String) {
+    fun show(msg: String?) {
         applicationCtx?.let { ctx ->
             Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
         }
@@ -48,5 +48,4 @@ object ToastUtils {
             Toast.makeText(ctx, ctx.getString(resId), Toast.LENGTH_LONG).show()
         }
     }
-
 }
